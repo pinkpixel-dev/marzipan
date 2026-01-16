@@ -158,7 +158,9 @@ export interface MarzipanInstance {
   getValue(): string;
   setValue(value: string): void;
   getStats(): Stats;
-  getHTML(): string;
+  getRenderedHTML(options?: RenderOptions): string;
+  getCleanHTML(): string;
+  getPreviewHTML(): string;
   getContainer(): HTMLElement | null;
   focus(): void;
   blur(): void;
