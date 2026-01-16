@@ -37,6 +37,8 @@ export interface Stats {
   words: number;
   chars: number;
   lines: number;
+  line: number;
+  column: number;
 }
 
 export interface MobileOptions {
