@@ -15,8 +15,38 @@ export { generateStyles } from './styles'
 export * as actions from './actions'
 
 // Export plugins
-export { BlockHandlesPlugin } from './plugins'
-export type { BlockHandle, BlockHandlesConfig } from './plugins'
+export { 
+  BlockHandlesPlugin,
+  accentSwatchPlugin,
+  accentSwatchStyles,
+  imageManagerPlugin,
+  imageManagerStyles,
+  imagePickerPlugin,
+  mermaidPlugin,
+  mermaidExternalPlugin,
+  tablePlugin,
+  tableGridPlugin,
+  tableGridStyles,
+  tableGeneratorPlugin,
+  tinyHighlightPlugin,
+  tinyHighlightStyles,
+  buildTableMarkdown,
+  resolvePositiveInteger,
+  coreImagePickerPlugin
+} from './plugins'
+
+export type { 
+  BlockHandle, 
+  BlockHandlesConfig,
+  ImagePickerOptions,
+  TablePluginOptions,
+  TableGridPluginOptions,
+  MarzipanLike,
+  CoreImagePickerOptions
+} from './plugins'
+
+// Export all plugins as a namespace for convenience
+export * as plugins from './plugins'
 
 // Export all types
 export type { MarkdownActions } from './actions'

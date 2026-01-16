@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+### Fixed
+- **Plugin Exports**: Added missing plugin exports to `src/plugins/index.ts` and main package
+  - All plugins now properly exported: `accentSwatchPlugin`, `imageManagerPlugin`, `imagePickerPlugin`, `mermaidPlugin`, `mermaidExternalPlugin`, `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin`, `tinyHighlightPlugin`
+  - Added corresponding TypeScript type exports for all plugin options and interfaces
+  - Plugins can now be imported both individually (`@pinkpixel/marzipan/plugins/tablePlugin`) and from main package (`import { tablePlugin } from '@pinkpixel/marzipan'`)
+  - Added convenience namespace export (`import { plugins } from '@pinkpixel/marzipan'`)
+  - Resolves issue where documented plugins were not accessible via standard import paths
+
 
 ## [1.0.9] - 2025-01-05
 
