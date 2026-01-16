@@ -193,12 +193,11 @@ export interface MarzipanInstance {
   getContainer(): HTMLElement;
   focus(): void;
   blur(): void;
-  reinit(): void;
-  showStats(show?: boolean): boolean;
+  reinit(options?: Partial<Options>): void;
+  showStats(show: boolean): void;
   showPlainTextarea(show?: boolean): boolean;
-  showPreview(show?: boolean): boolean;
-  setupAutoResize(): void;
-  teardownAutoResize(): void;
+  showPreviewMode(show?: boolean): boolean;
+
   destroy(): void;
 }
 
@@ -207,7 +206,7 @@ export interface MarzipanConstructor {
   new (target: HTMLTextAreaElement[], options?: Options): MarzipanInstance[];
   init(target: string | HTMLTextAreaElement, options?: Options): MarzipanInstance;
   init(target: HTMLTextAreaElement[], options?: Options): MarzipanInstance[];
-  getInstance(textarea: HTMLTextAreaElement): MarzipanInstance | undefined;
+  getInstance(element: Element): MarzipanInstance | null;
   destroyAll(): void;
   injectStyles(): void;
   setTheme(theme: string | Theme, colors?: Partial<ThemeColors>): void;
