@@ -5,52 +5,114 @@ export interface ThemeColors {
   bgSecondary?: string;
   text?: string;
   textSecondary?: string;
-  h1?: string;
-  h2?: string;
-  h3?: string;
-  strong?: string;
-  em?: string;
-  link?: string;
-  code?: string;
-  codeBg?: string;
-  blockquote?: string;
-  hr?: string;
-  syntaxMarker?: string;
-  cursor?: string;
-  selection?: string;
-  listMarker?: string;
-  rawLine?: string;
-  border?: string;
-  toolbarBg?: string;
-  toolbarBorder?: string;
-  toolbarIcon?: string;
-  toolbarHover?: string;
-  toolbarActive?: string;
+
+/**
+ * Color palette used to render the Marzipan editor UI and document content.
+ * All values are CSS color strings (e.g. hex, rgb, hsl, or named colors).
+ */
+export interface ThemeColors {
+  /** Background color for the main editor surface and primary containers. */
+  bgPrimary: string;
+  /** Background color for secondary surfaces such as sidebars and panels. */
+  bgSecondary: string;
+  /** Default text color for body content. */
+  text: string;
+  /** Text color for level‑1 headings. */
+  h1: string;
+  /** Text color for level‑2 headings. */
+  h2: string;
+  /** Text color for level‑3 headings. */
+  h3: string;
+  /** Text color for strong / bold text. */
+  strong: string;
+  /** Text color for emphasized / italic text. */
+  em: string;
+  /** Text color for hyperlinks. */
+  link: string;
+  /** Text color for inline code spans. */
+  code: string;
+  /** Background color for inline code and code blocks. */
+  codeBg: string;
+  /** Text color for blockquote content. */
+  blockquote: string;
+  /** Color used for horizontal rules. */
+  hr: string;
+  /** Color used for syntax highlight markers or decorations. */
+  syntaxMarker: string;
+  /** Color of the text cursor / caret. */
+  cursor: string;
+  /** Background color for the current text selection. */
+  selection: string;
+  /** Color used for list bullets or ordered list markers. */
+  listMarker: string;
+  /** Background color of the editor toolbar. */
+  toolbarBg: string;
+  /** Border color of the editor toolbar. */
+  toolbarBorder: string;
+  /** Default color for toolbar icons. */
+  toolbarIcon: string;
+  /** Color used when a toolbar item is hovered. */
+  toolbarHover: string;
+  /** Color used when a toolbar item is active or toggled on. */
+  toolbarActive: string;
 }
 
+/**
+ * A named visual theme that can be applied to the Marzipan editor.
+ */
 export interface Theme {
+  /** Human‑readable name of the theme (e.g. "Light", "Dark"). */
   name: string;
+  /** Color configuration used when this theme is active. */
   colors: ThemeColors;
 }
 
+/**
+ * Basic statistics about the current document content.
+ */
 export interface Stats {
+  /** Number of words in the document. */
   words: number;
-  chars: number;
+  /** Number of characters in the document, typically excluding formatting. */
+  characters: number;
+  /** Number of lines in the document. */
   lines: number;
-  line: number;
-  column: number;
 }
 
+/**
+ * Configuration options for adjusting the editor behavior on mobile devices.
+ */
 export interface MobileOptions {
-  fontSize?: number;
-  padding?: number;
-  lineHeight?: number;
+  /**
+   * Whether mobile‑specific behaviors and layout adjustments are enabled.
+   */
+  enabled: boolean;
+  /**
+   * Viewport width (in pixels) at which the editor should switch
+   * to its mobile layout or behavior.
+   */
+  breakpoint: number;
 }
 
+/**
+ * Configuration for an individual button in the editor toolbar.
+ */
 export interface ToolbarButtonConfig {
+  /**
+   * Identifier or command name for the action invoked when the button is clicked.
+   */
   action: string;
+  /**
+   * Optional icon identifier or CSS class for the toolbar button.
+   */
   icon?: string;
+  /**
+   * Optional title or tooltip text displayed for the button.
+   */
   title?: string;
+  /**
+   * When true, renders this entry as a visual separator instead of a button.
+   */
   separator?: boolean;
 }
 
