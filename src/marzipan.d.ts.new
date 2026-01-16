@@ -104,8 +104,10 @@ export interface MarzipanInstance {
 }
 
 export interface MarzipanConstructor {
-  new (target: string | HTMLTextAreaElement | HTMLTextAreaElement[], options?: Options): [MarzipanInstance, ...MarzipanInstance[]];
-  init(target: string | HTMLTextAreaElement | HTMLTextAreaElement[], options?: Options): [MarzipanInstance, ...MarzipanInstance[]];
+  new (target: string | HTMLTextAreaElement, options?: Options): MarzipanInstance;
+  new (target: HTMLTextAreaElement[], options?: Options): MarzipanInstance[];
+  init(target: string | HTMLTextAreaElement, options?: Options): MarzipanInstance;
+  init(target: HTMLTextAreaElement[], options?: Options): MarzipanInstance[];
   getInstance(textarea: HTMLTextAreaElement): MarzipanInstance | undefined;
   destroyAll(): void;
   injectStyles(): void;
