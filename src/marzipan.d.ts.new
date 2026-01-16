@@ -121,8 +121,7 @@ export interface ToolbarButtonConfig {
 export type ToolbarConfig = boolean | Array<string | ToolbarButtonConfig>;
 
 export interface EditorHooks {
-  onChange?: (value: string) => void;
-  onKeydown?: (event: KeyboardEvent) => void;
+  afterPreviewRender?: (root: HTMLElement, instance: MarzipanInstance) => void;
 }
 
 export interface RenderOptions {
