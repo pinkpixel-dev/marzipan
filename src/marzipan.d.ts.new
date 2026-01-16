@@ -128,11 +128,7 @@ export interface RenderOptions {
   cleanHTML?: boolean;
 }
 
-export interface MarzipanPlugin {
-  name: string;
-  init: (editor: MarzipanInstance) => void;
-  destroy?: () => void;
-}
+export type MarzipanPlugin = (editor: MarzipanInstance) => void;
 
 export interface Options {
   theme?: string | Theme;
