@@ -1,28 +1,31 @@
 // Core Marzipan Types
 
 export interface ThemeColors {
-  bgPrimary: string;
-  bgSecondary: string;
-  text: string;
-  h1: string;
-  h2: string;
-  h3: string;
-  strong: string;
-  em: string;
-  link: string;
-  code: string;
-  codeBg: string;
-  blockquote: string;
-  hr: string;
-  syntaxMarker: string;
-  cursor: string;
-  selection: string;
-  listMarker: string;
-  toolbarBg: string;
-  toolbarBorder: string;
-  toolbarIcon: string;
-  toolbarHover: string;
-  toolbarActive: string;
+  bgPrimary?: string;
+  bgSecondary?: string;
+  text?: string;
+  textSecondary?: string;
+  h1?: string;
+  h2?: string;
+  h3?: string;
+  strong?: string;
+  em?: string;
+  link?: string;
+  code?: string;
+  codeBg?: string;
+  blockquote?: string;
+  hr?: string;
+  syntaxMarker?: string;
+  cursor?: string;
+  selection?: string;
+  listMarker?: string;
+  rawLine?: string;
+  border?: string;
+  toolbarBg?: string;
+  toolbarBorder?: string;
+  toolbarIcon?: string;
+  toolbarHover?: string;
+  toolbarActive?: string;
 }
 
 export interface Theme {
