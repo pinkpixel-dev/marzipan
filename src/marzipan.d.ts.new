@@ -78,8 +78,7 @@ export interface Options {
   mobile?: MobileOptions;
   plugins?: MarzipanPlugin[];
   blockHandles?: boolean;
-  onChange?: (value: string) => void;
-  onKeydown?: (event: KeyboardEvent) => void;
+  hooks?: EditorHooks;
 }
 
 export interface MarzipanInstance {
