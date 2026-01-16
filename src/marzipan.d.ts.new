@@ -1,0 +1,213 @@
+// Core Marzipan Types
+
+export interface ThemeColors {
+  bgPrimary?: string;
+  bgSecondary?: string;
+  text?: string;
+  textSecondary?: string;
+
+/**
+ * Color palette used to render the Marzipan editor UI and document content.
+ * All values are CSS color strings (e.g. hex, rgb, hsl, or named colors).
+ */
+export interface ThemeColors {
+  /** Background color for the main editor surface and primary containers. */
+  bgPrimary: string;
+  /** Background color for secondary surfaces such as sidebars and panels. */
+  bgSecondary: string;
+  /** Default text color for body content. */
+  text: string;
+  /** Text color for level‑1 headings. */
+  h1: string;
+  /** Text color for level‑2 headings. */
+  h2: string;
+  /** Text color for level‑3 headings. */
+  h3: string;
+  /** Text color for strong / bold text. */
+  strong: string;
+  /** Text color for emphasized / italic text. */
+  em: string;
+  /** Text color for hyperlinks. */
+  link: string;
+  /** Text color for inline code spans. */
+  code: string;
+  /** Background color for inline code and code blocks. */
+  codeBg: string;
+  /** Text color for blockquote content. */
+  blockquote: string;
+  /** Color used for horizontal rules. */
+  hr: string;
+  /** Color used for syntax highlight markers or decorations. */
+  syntaxMarker: string;
+  /** Color of the text cursor / caret. */
+  cursor: string;
+  /** Background color for the current text selection. */
+  selection: string;
+  /** Color used for list bullets or ordered list markers. */
+  listMarker: string;
+  /** Background color of the editor toolbar. */
+  toolbarBg: string;
+  /** Border color of the editor toolbar. */
+  toolbarBorder: string;
+  /** Default color for toolbar icons. */
+  toolbarIcon: string;
+  /** Color used when a toolbar item is hovered. */
+  toolbarHover: string;
+  /** Color used when a toolbar item is active or toggled on. */
+  toolbarActive: string;
+}
+
+/**
+ * A named visual theme that can be applied to the Marzipan editor.
+ */
+export interface Theme {
+  /** Human‑readable name of the theme (e.g. "Light", "Dark"). */
+  name: string;
+  /** Color configuration used when this theme is active. */
+  colors: ThemeColors;
+}
+
+/**
+ * Basic statistics about the current document content.
+ */
+export interface Stats {
+  /** Number of words in the document. */
+  words: number;
+  /** Number of characters in the document, typically excluding formatting. */
+  characters: number;
+  /** Number of lines in the document. */
+  lines: number;
+}
+
+/**
+ * Configuration options for adjusting the editor behavior on mobile devices.
+ */
+export interface MobileOptions {
+  /**
+   * Whether mobile‑specific behaviors and layout adjustments are enabled.
+   */
+  enabled: boolean;
+  /**
+   * Viewport width (in pixels) at which the editor should switch
+   * to its mobile layout or behavior.
+   */
+  breakpoint: number;
+}
+
+/**
+ * Configuration for an individual button in the editor toolbar.
+ */
+export interface ToolbarButtonConfig {
+  /**
+   * Identifier or command name for the action invoked when the button is clicked.
+   */
+  action: string;
+  /**
+   * Optional icon identifier or CSS class for the toolbar button.
+   */
+  icon?: string;
+  /**
+   * Optional title or tooltip text displayed for the button.
+   */
+  title?: string;
+  name?: keyof typeof icons | string;
+  action?: string;
+  icon?: string;
+  title?: string;
+  separator?: boolean;
+  hasDropdown?: boolean;
+}
+
+export type ToolbarConfig = boolean | Array<string | ToolbarButtonConfig>;
+
+export interface EditorHooks {
+  afterPreviewRender?: (root: HTMLElement, instance: MarzipanInstance) => void;
+}
+
+export interface RenderOptions {
+  cleanHTML?: boolean;
+}
+
+export type MarzipanPlugin = (editor: MarzipanInstance) => void;
+
+export interface Options {
+  theme?: string | Theme;
+  colors?: Partial<ThemeColors>;
+  toolbar?: ToolbarConfig;
+  placeholder?: string;
+  smartLists?: boolean;
+  autoResize?: boolean;
+  showStats?: boolean;
+  statsFormatter?: (stats: Stats) => string;
+  preview?: 'overlay' | 'plain' | 'preview-only';
+  mobile?: MobileOptions;
+  plugins?: MarzipanPlugin[];
+  blockHandles?: boolean;
+  hooks?: EditorHooks;
+}
+
+export interface MarzipanInstance {
+  textarea: HTMLTextAreaElement | null;
+  container: HTMLElement | null;
+  textarea: HTMLTextAreaElement;
+  container: HTMLElement;
+  preview: HTMLElement;
+  /**
+   * The wrapper element that contains the editor UI.
+   */
+  wrapper: HTMLElement | null;
+  /**
+   * The statistics bar element, if enabled.
+   */
+  statsBar: HTMLElement | null;
+  /**
+   * The toolbar element, if enabled.
+   */
+  toolbar: HTMLElement | null;
+  /**
+   * The keyboard shortcuts helper element, if present.
+   */
+  shortcuts: HTMLElement | null;
+  /**
+   * The link tooltip element, if present.
+   */
+  linkTooltip: HTMLElement | null;
+  /**
+   * Whether this instance has completed initialization.
+   */
+  initialized: boolean;
+  /**
+   * A unique identifier for this Marzipan instance.
+   */
+  instanceId: string;
+  /**
+   * The underlying element this instance was created for.
+   */
+  element: HTMLElement;
+  options: Required<Options>;
+  
+  getValue(): string;
+  setValue(value: string): void;
+  getStats(): Stats;
+  getHTML(): string;
+  getContainer(): HTMLElement;
+  focus(): void;
+  blur(): void;
+  reinit(options?: Partial<Options>): void;
+  showStats(show: boolean): void;
+  showPlainTextarea(show?: boolean): boolean;
+  showPreviewMode(show?: boolean): boolean;
+
+  destroy(): void;
+}
+
+export interface MarzipanConstructor {
+  new (target: string | HTMLTextAreaElement, options?: Options): MarzipanInstance;
+  new (target: HTMLTextAreaElement[], options?: Options): MarzipanInstance[];
+  init(target: string | HTMLTextAreaElement, options?: Options): MarzipanInstance;
+  init(target: HTMLTextAreaElement[], options?: Options): MarzipanInstance[];
+  getInstance(element: Element): MarzipanInstance | null;
+  destroyAll(): void;
+  injectStyles(): void;
+  setTheme(theme: string | Theme, colors?: Partial<ThemeColors>): void;
+}
