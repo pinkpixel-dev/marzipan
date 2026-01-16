@@ -1,0 +1,114 @@
+// Core Marzipan Types
+
+export interface ThemeColors {
+  bgPrimary: string;
+  bgSecondary: string;
+  text: string;
+  h1: string;
+  h2: string;
+  h3: string;
+  strong: string;
+  em: string;
+  link: string;
+  code: string;
+  codeBg: string;
+  blockquote: string;
+  hr: string;
+  syntaxMarker: string;
+  cursor: string;
+  selection: string;
+  listMarker: string;
+  toolbarBg: string;
+  toolbarBorder: string;
+  toolbarIcon: string;
+  toolbarHover: string;
+  toolbarActive: string;
+}
+
+export interface Theme {
+  name: string;
+  colors: ThemeColors;
+}
+
+export interface Stats {
+  words: number;
+  characters: number;
+  lines: number;
+}
+
+export interface MobileOptions {
+  enabled: boolean;
+  breakpoint: number;
+}
+
+export interface ToolbarButtonConfig {
+  action: string;
+  icon?: string;
+  title?: string;
+  separator?: boolean;
+}
+
+export type ToolbarConfig = boolean | Array<string | ToolbarButtonConfig>;
+
+export interface EditorHooks {
+  onChange?: (value: string) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
+}
+
+export interface RenderOptions {
+  preserveScroll?: boolean;
+}
+
+export interface MarzipanPlugin {
+  name: string;
+  init: (editor: MarzipanInstance) => void;
+  destroy?: () => void;
+}
+
+export interface Options {
+  theme?: string | Theme;
+  colors?: Partial<ThemeColors>;
+  toolbar?: ToolbarConfig;
+  placeholder?: string;
+  smartLists?: boolean;
+  autoResize?: boolean;
+  showStats?: boolean;
+  statsFormatter?: (stats: Stats) => string;
+  preview?: 'overlay' | 'plain' | 'preview-only';
+  mobile?: MobileOptions;
+  plugins?: MarzipanPlugin[];
+  blockHandles?: boolean;
+  onChange?: (value: string) => void;
+  onKeydown?: (event: KeyboardEvent) => void;
+}
+
+export interface MarzipanInstance {
+  textarea: HTMLTextAreaElement | null;
+  container: HTMLElement | null;
+  preview: HTMLElement | null;
+  options: Required<Options>;
+  
+  getValue(): string;
+  setValue(value: string): void;
+  getStats(): Stats;
+  getHTML(): string;
+  getContainer(): HTMLElement | null;
+  focus(): void;
+  blur(): void;
+  reinit(): void;
+  showStats(show?: boolean): boolean;
+  showPlainTextarea(show?: boolean): boolean;
+  showPreview(show?: boolean): boolean;
+  setupAutoResize(): void;
+  teardownAutoResize(): void;
+  destroy(): void;
+}
+
+export interface MarzipanConstructor {
+  new (target: string | HTMLTextAreaElement | HTMLTextAreaElement[], options?: Options): [MarzipanInstance, ...MarzipanInstance[]];
+  init(target: string | HTMLTextAreaElement | HTMLTextAreaElement[], options?: Options): [MarzipanInstance, ...MarzipanInstance[]];
+  getInstance(textarea: HTMLTextAreaElement): MarzipanInstance | undefined;
+  destroyAll(): void;
+  injectStyles(): void;
+  setTheme(theme: string | Theme, colors?: Partial<ThemeColors>): void;
+}
