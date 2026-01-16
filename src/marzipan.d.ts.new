@@ -35,7 +35,7 @@ export interface Theme {
 
 export interface Stats {
   words: number;
-  characters: number;
+  chars: number;
   lines: number;
 }
 
