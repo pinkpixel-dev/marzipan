@@ -86,7 +86,7 @@ export interface MarzipanInstance {
   textarea: HTMLTextAreaElement | null;
   container: HTMLElement | null;
   preview: HTMLElement | null;
-  options: Required<Options>;
+  options: Options;
   
   getValue(): string;
   setValue(value: string): void;
