@@ -10,10 +10,9 @@ Specify which versions of the Marzipan project are currently supported with secu
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| 2.x.x   | :white_check_mark: |
+| 1.x.x   | :warning: Critical fixes only |
+| < 1.0   | :x:                |
 
 ## Reporting a Vulnerability
 
