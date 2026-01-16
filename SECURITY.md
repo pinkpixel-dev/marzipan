@@ -16,8 +16,14 @@ Specify which versions of the Marzipan project are currently supported with secu
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+To report a security vulnerability, please follow these steps:
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+1. **DO NOT** create a public GitHub issue for security vulnerabilities
+2. Email security concerns to: security@pinkpixel-dev.com
+3. Include detailed information about the vulnerability and steps to reproduce
+4. You can expect an initial response within 48 hours
+5. We will provide regular updates on the investigation progress
+6. If the vulnerability is confirmed, we will work on a fix and coordinate disclosure
+7. If the report is declined, we will provide an explanation
+
+For urgent security issues, please include "URGENT SECURITY" in the email subject line.
