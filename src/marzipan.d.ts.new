@@ -110,10 +110,12 @@ export interface ToolbarButtonConfig {
    * Optional title or tooltip text displayed for the button.
    */
   title?: string;
-  /**
-   * When true, renders this entry as a visual separator instead of a button.
-   */
+  name?: keyof typeof icons | string;
+  action?: string;
+  icon?: string;
+  title?: string;
   separator?: boolean;
+  hasDropdown?: boolean;
 }
 
 export type ToolbarConfig = boolean | Array<string | ToolbarButtonConfig>;
