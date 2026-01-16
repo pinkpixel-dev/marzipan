@@ -2,8 +2,11 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Specify which versions of the Marzipan project are currently supported with security updates. For example:
+
+- Version 2.x.x: Fully supported with security updates
+- Version 1.x.x: Critical security fixes only
+- Versions < 1.0: No longer supported
 
 | Version | Supported          |
 | ------- | ------------------ |
