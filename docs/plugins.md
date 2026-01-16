@@ -4,6 +4,7 @@ Marzipan ships first-party plugins from the `src/plugins` directory. Each plugin
 
 ## Using a plugin
 
+### Individual plugin imports (recommended)
 ```ts
 import { Marzipan } from '@pinkpixel/marzipan';
 import { tablePlugin } from '@pinkpixel/marzipan/plugins/tablePlugin';
@@ -14,6 +15,28 @@ new Marzipan('#editor', {
     defaultColumns: 3,
     defaultRows: 4,
   })],
+});
+```
+
+### Main package imports (convenience)
+```ts
+import { Marzipan, tablePlugin, mermaidPlugin } from '@pinkpixel/marzipan';
+
+new Marzipan('#editor', {
+  plugins: [tablePlugin(), mermaidPlugin()],
+});
+```
+
+### Namespace imports (all plugins)
+```ts
+import { Marzipan, plugins } from '@pinkpixel/marzipan';
+
+new Marzipan('#editor', {
+  plugins: [
+    plugins.tablePlugin(),
+    plugins.mermaidPlugin(),
+    plugins.accentSwatchPlugin(),
+  ],
 });
 ```
 
