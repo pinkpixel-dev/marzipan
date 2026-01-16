@@ -42,8 +42,9 @@ export interface Stats {
 }
 
 export interface MobileOptions {
-  enabled: boolean;
-  breakpoint: number;
+  fontSize?: number;
+  padding?: number;
+  lineHeight?: number;
 }
 
 export interface ToolbarButtonConfig {
