@@ -149,16 +149,48 @@ export interface Options {
 export interface MarzipanInstance {
   textarea: HTMLTextAreaElement | null;
   container: HTMLElement | null;
-  preview: HTMLElement | null;
-  options: Options;
+  textarea: HTMLTextAreaElement;
+  container: HTMLElement;
+  preview: HTMLElement;
+  /**
+   * The wrapper element that contains the editor UI.
+   */
+  wrapper: HTMLElement | null;
+  /**
+   * The statistics bar element, if enabled.
+   */
+  statsBar: HTMLElement | null;
+  /**
+   * The toolbar element, if enabled.
+   */
+  toolbar: HTMLElement | null;
+  /**
+   * The keyboard shortcuts helper element, if present.
+   */
+  shortcuts: HTMLElement | null;
+  /**
+   * The link tooltip element, if present.
+   */
+  linkTooltip: HTMLElement | null;
+  /**
+   * Whether this instance has completed initialization.
+   */
+  initialized: boolean;
+  /**
+   * A unique identifier for this Marzipan instance.
+   */
+  instanceId: string;
+  /**
+   * The underlying element this instance was created for.
+   */
+  element: HTMLElement;
+  options: Required<Options>;
   
   getValue(): string;
   setValue(value: string): void;
   getStats(): Stats;
-  getRenderedHTML(options?: RenderOptions): string;
-  getCleanHTML(): string;
-  getPreviewHTML(): string;
-  getContainer(): HTMLElement | null;
+  getHTML(): string;
+  getContainer(): HTMLElement;
   focus(): void;
   blur(): void;
   reinit(): void;
