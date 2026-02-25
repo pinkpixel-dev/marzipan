@@ -43,6 +43,11 @@ export const FORMATS: Record<string, FormatStyleOptions> = {
     multiline: true,
     surroundWithNewlines: true,
   },
+  strikethrough: {
+    prefix: '~~',
+    suffix: '~~',
+    trimFirst: true,
+  },
   header1: { prefix: '# ' },
   header2: { prefix: '## ' },
   header3: { prefix: '### ' },
