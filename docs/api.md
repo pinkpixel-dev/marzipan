@@ -326,10 +326,13 @@ Available helpers include:
 - `toggleNumberedList(textarea)`
 - `toggleQuote(textarea)`
 - `toggleTaskList(textarea)`
-- `toggleH1/H2/H3(textarea)`
+- `insertHeader(textarea, level?, toggle?)`
+- `toggleH1(textarea)` / `toggleH2(textarea)` / `toggleH3(textarea)`
 - `applyCustomFormat(textarea, format)`
-- `getActiveFormats(textarea)`
+- `getActiveFormats(textarea)` / `hasFormat(textarea, format)`
+- `expandSelection(textarea)` / `preserveSelection(textarea, fn)`
 - `setUndoMethod(method)` / `getUndoMethod()`
+- `setDebugMode(enabled)` / `getDebugMode()`
 
 These functions mirror the toolbar and keyboard shortcut behaviour, making it easy to build custom UI without extra dependencies.
 

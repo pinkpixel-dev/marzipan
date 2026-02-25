@@ -47,6 +47,7 @@ Every factory returns an object that Marzipan consumes internally. You can mix a
 | Plugin | Import Path | Description |
 |--------|-------------|-------------|
 | `accentSwatchPlugin` | `@pinkpixel/marzipan/plugins/accentSwatchPlugin` | Adds a palette picker for accent colours and syncs with the toolbar + stats bar. |
+| `BlockHandlesPlugin` | `@pinkpixel/marzipan/plugins/block-handles` | Interactive block manipulation with visual handles, context menus, and keyboard shortcuts. See [Block Handles](./block-handles.md) for full documentation. |
 | `imageManagerPlugin` | `@pinkpixel/marzipan/plugins/imageManagerPlugin` | Dropzone and gallery UI for inserting images and managing uploads. |
 | `imagePickerPlugin` | `@pinkpixel/marzipan/plugins/imagePickerPlugin` | Toolbar button for inserting images via URL or optional uploader callback. |
 | `mermaidPlugin` | `@pinkpixel/marzipan/plugins/mermaidPlugin` | Lazy-loads Mermaid from npm/ESM and renders diagrams inline. |

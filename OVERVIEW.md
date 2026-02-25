@@ -3,7 +3,7 @@
 ## ✨ Project Snapshot
 
 - **Package:** `@pinkpixel/marzipan`
-- **Version:** 1.0.8 (Production Ready)
+- **Version:** 1.0.9 (Production Ready)
 - **Runtime dependencies:** **Zero** – Pure TypeScript with all markdown actions bundled internally
 - **Plugins:** First-party plugins published from `src/plugins` as tree-shakeable modules (`@pinkpixel/marzipan/plugins/*`)
 - **Demo:** `bakeshop-demo/` - Full-featured React playground demonstrating all capabilities
@@ -83,7 +83,7 @@ Key pillars:
 
 ## 📚 Documentation Overview
 
-Updated October 4, 2025 to reflect v1.0.8 features including toolbar enhancements and theme improvements:
+Updated to reflect v1.0.9 features including Block Handles Plugin and comprehensive plugin exports:
 - `README.md` – top-level orientation, quick start, plugin summary.
 - `docs/` – quick start, API reference, plugin catalogue, and type definitions.
 - `bakeshop-demo/README.md` – demo setup and panel walkthrough.
@@ -97,12 +97,13 @@ Updated October 4, 2025 to reflect v1.0.8 features including toolbar enhancement
 **Major Feature:** All markdown formatting logic is now bundled internally, eliminating the need for external dependencies like `markdown-actions`.
 
 **Available Actions:**
-- **Text Formatting:** `toggleBold`, `toggleItalic`, `toggleCode`, `toggleStrikethrough`
+- **Text Formatting:** `toggleBold`, `toggleItalic`, `toggleCode`
 - **Headers:** `insertHeader(level)`, `toggleH1`, `toggleH2`, `toggleH3` (supports H1-H6)
 - **Lists:** `toggleBulletList`, `toggleNumberedList`, `toggleTaskList`
-- **Blocks:** `toggleQuote`, `insertHorizontalRule`
+- **Blocks:** `toggleQuote`
 - **Links:** `insertLink(options)` with smart URL detection
 - **Utilities:** `getActiveFormats`, `hasFormat`, `expandSelection`, `preserveSelection`
+- **Undo:** `setUndoMethod`, `getUndoMethod`
 - **Debug Tools:** `setDebugMode`, `getDebugMode` for development
 - **Custom Formats:** `applyCustomFormat` for creating custom formatting rules
 
@@ -133,6 +134,8 @@ actions.insertLink(textarea, { url: 'https://example.com', text: 'Click here' })
 **Tree-Shakeable Design:** Each plugin is a factory function published as a separate import for optimal bundle size.
 
 **Available Plugins:**
+- **Block Manipulation:**
+  - `BlockHandlesPlugin` - Interactive block handles with visual handles, context menus, and keyboard shortcuts (v1.0.9+)
 - **Tables:**
   - `tablePlugin` - Basic table support
   - `tableGridPlugin` - Interactive table grid
@@ -199,7 +202,7 @@ The project targets **Node.js 20+** as defined in `package.json` and mirrored in
 
 ## 📊 Project Status
 
-- ✅ **Production Ready** - v1.0.8 stable release
+- ✅ **Production Ready** - v1.0.9 stable release
 - ✅ **Zero Dependencies** - Complete self-contained solution
 - ✅ **Enhanced Developer Experience** - Toolbar shorthands and simplified configuration
 - ✅ **Flexible Theming** - Light/dark aliases with custom color support
@@ -231,4 +234,4 @@ The project targets **Node.js 20+** as defined in `package.json` and mirrored in
 
 ---
 
-_Last updated: October 4, 2025 – Complete project analysis reflecting v1.0.8 release._
+_Last updated: February 2026 – Complete project analysis reflecting v1.0.9 release._
