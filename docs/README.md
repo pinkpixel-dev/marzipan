@@ -9,6 +9,7 @@ Welcome! This folder contains everything you need to install, configure, and ext
 | [Quick Start](./quick-start.md) | Install the library, render your first editor, and wire up bundled actions and plugins. |
 | [API Reference](./api.md) | Full class API, key options, utility methods, and action helper signatures. |
 | [Plugin Catalogue](./plugins.md) | Overview of the first-party plugins shipped from `src/plugins` with configuration tips. |
+| [Block Handles Plugin](./block-handles.md) | Interactive block manipulation with visual handles, context menus, and keyboard shortcuts. |
 | [Type Definitions](./types.d.ts) | Generated TypeScript declarations for deep integration and tooling. |
 
 ## 🧭 Orientation
@@ -22,7 +23,8 @@ Welcome! This folder contains everything you need to install, configure, and ext
 1. **Quick Start** – get an editor running in under five minutes.
 2. **API Reference** – understand the Marzipan class, events, and helper utilities.
 3. **Plugin Catalogue** – explore optional capabilities like tables, Mermaid, media helpers, and syntax highlight.
-4. **Type Definitions** – browse generated typings for IDE integration.
+4. **Block Handles** – interactive block manipulation for the preview overlay.
+5. **Type Definitions** – browse generated typings for IDE integration.
 
 ## 🧁 Related Resources
 

@@ -1,6 +1,6 @@
 /**
  * TypeScript definitions for Marzipan markdown editor
- * @version 1.0.7
+ * @version 1.0.9
  * @author Pink Pixel
  */
 

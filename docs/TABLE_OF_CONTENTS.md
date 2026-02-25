@@ -10,6 +10,7 @@
 
 ## Extensions
 - [Plugin Catalogue](./plugins.md)
+- [Block Handles Plugin](./block-handles.md)
 
 ## Related Root Docs
 - [Project Overview](../OVERVIEW.md)

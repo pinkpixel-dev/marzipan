@@ -6,7 +6,7 @@
 </div>
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.7-brightgreen.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.9-brightgreen.svg)](CHANGELOG.md)
 [![Docs](https://img.shields.io/badge/docs-marzipan.pinkpixel.dev-ff6fb7.svg)](https://marzipan.pinkpixel.dev)
 
 ## ✨ Highlights
@@ -73,6 +73,7 @@ Visit `http://localhost:5173` to explore every panel, plugin, and action in a li
 ## 🧩 Bundled Plugins
 
 The `src/plugins` directory publishes directly to consumers. Available helpers include:
+- `BlockHandlesPlugin` – interactive block manipulation with visual handles, context menus, and keyboard shortcuts.
 - `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin` – interactive table authoring.
 - `tinyHighlightPlugin` – lightweight syntax highlighting for fenced code blocks (ships `tinyHighlightStyles`).
 - `accentSwatchPlugin` – synced accent palette picker.
@@ -91,6 +92,7 @@ All guides live in `/docs`:
 - `docs/quick-start.md` – install, instantiate, and wire up actions/plugins.
 - `docs/api.md` – class API, action helpers, TypeScript signatures.
 - `docs/plugins.md` – plugin catalogue, configuration, and bundling tips.
+- `docs/block-handles.md` – Block Handles Plugin guide.
 - `docs/types.d.ts` – generated type definitions.
 
 The new [CHANGELOG](CHANGELOG.md) tracks releases and major documentation updates.
