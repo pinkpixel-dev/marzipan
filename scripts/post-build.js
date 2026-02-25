@@ -138,7 +138,9 @@ export interface MarkdownActions {
   toggleBold(textarea: HTMLTextAreaElement | null): void;
   toggleItalic(textarea: HTMLTextAreaElement | null): void;
   toggleCode(textarea: HTMLTextAreaElement | null): void;
+  toggleStrikethrough(textarea: HTMLTextAreaElement | null): void;
   insertLink(textarea: HTMLTextAreaElement | null, options?: LinkOptions): void;
+  insertHorizontalRule(textarea: HTMLTextAreaElement | null): void;
   toggleBulletList(textarea: HTMLTextAreaElement | null): void;
   toggleNumberedList(textarea: HTMLTextAreaElement | null): void;
   toggleQuote(textarea: HTMLTextAreaElement | null): void;
@@ -158,6 +160,61 @@ export interface MarkdownActions {
 }
 
 export declare const actions: MarkdownActions;
+
+// Plugin function type
+export type MarzipanPlugin = (editor: MarzipanInstance) => void;
+
+// Plugin type declarations
+export interface TablePluginOptions {
+  defaultRows?: number;
+  defaultColumns?: number;
+  label?: string;
+  title?: string;
+}
+
+export interface TableGridPluginOptions {
+  maxRows?: number;
+  maxColumns?: number;
+  maxCols?: number;
+  label?: string;
+  title?: string;
+}
+
+export interface BlockHandlesConfig {
+  colors?: {
+    hover?: string;
+    selected?: string;
+    handle?: string;
+  };
+}
+
+export interface ImagePickerOptions {
+  accept?: string;
+  multiple?: boolean;
+}
+
+export type MarzipanLike = {
+  options: { hooks?: { afterPreviewRender?: (root: HTMLElement, editor: any) => void } };
+};
+
+// Plugin factory functions
+export declare function tablePlugin(options?: TablePluginOptions): MarzipanPlugin;
+export declare function tableGridPlugin(options?: TableGridPluginOptions): MarzipanPlugin;
+export declare function tableGeneratorPlugin(): MarzipanPlugin;
+export declare function mermaidPlugin(config?: Record<string, any>): MarzipanPlugin;
+export declare function mermaidExternalPlugin(config?: Record<string, any>): MarzipanPlugin;
+export declare function tinyHighlightPlugin(): MarzipanPlugin;
+export declare function accentSwatchPlugin(opts?: {
+  max?: number;
+  defaults?: string[];
+  title?: string;
+  label?: string;
+}): MarzipanPlugin;
+export declare function imageManagerPlugin(opts?: Record<string, any>): MarzipanPlugin;
+export declare function imagePickerPlugin(opts?: ImagePickerOptions): MarzipanPlugin;
+export declare class BlockHandlesPlugin {
+  constructor(editor: MarzipanInstance, config?: BlockHandlesConfig);
+}
 `;
 
 writeFileSync(

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Marzipan } from '@pinkpixel/marzipan'
+import { Marzipan, tinyHighlightPlugin, mermaidPlugin } from '@pinkpixel/marzipan'
 import type { MarzipanInstance } from '@pinkpixel/marzipan'
 
 const SAMPLE_CONTENT = `# 🧁 Welcome to Marzipan!
@@ -40,12 +40,14 @@ Click the formatting buttons or use keyboard shortcuts to format your text.
 ### Code Blocks
 
 \`\`\`typescript
-import { Marzipan } from '@pinkpixel/marzipan';
+import { Marzipan, tinyHighlightPlugin, mermaidPlugin } from '@pinkpixel/marzipan';
 
 const [editor] = new Marzipan('#editor', {
   toolbar: true,
   theme: 'cave',
   smartLists: true,
+  blockHandles: true,
+  plugins: [tinyHighlightPlugin(), mermaidPlugin()],
 });
 \`\`\`
 
@@ -56,12 +58,6 @@ const [editor] = new Marzipan('#editor', {
 >
 > > Nested quotes work too!
 
-### Links and Images
-
-[Visit Pink Pixel](https://pinkpixel.dev)
-
-![Marzipan Logo](https://via.placeholder.com/400x200.png?text=Marzipan+Logo)
-
 ### Tables
 
 | Feature | Status | Notes |
@@ -69,6 +65,15 @@ const [editor] = new Marzipan('#editor', {
 | Overlay Preview | ✅ | Real-time rendering |
 | Smart Lists | ✅ | Auto-continuation |
 | Plugins | ✅ | Extensible architecture |
+| Themes | ✅ | Solar, Cave, and custom |
+
+### Mermaid Diagram
+
+\`\`\`mermaid
+graph LR
+    A[📝 Write] --> B[🔍 Preview]
+    B --> C[✅ Done]
+\`\`\`
 
 ---
 
@@ -101,6 +106,7 @@ export default function Playground() {
       minHeight: '600px',
       fontSize: '15px',
       lineHeight: 1.6,
+      plugins: [tinyHighlightPlugin(), mermaidPlugin()],
       onChange: (value) => {
         // Auto-save to localStorage
         localStorage.setItem('marzipan-playground-content', value)

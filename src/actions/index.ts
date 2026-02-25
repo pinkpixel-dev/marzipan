@@ -129,6 +129,24 @@ export function toggleTaskList(textarea: HTMLTextAreaElement | null): void {
   insertText(textarea, result);
 }
 
+export function toggleStrikethrough(textarea: HTMLTextAreaElement | null): void {
+  if (!ensureEditable(textarea)) return;
+  const style = mergeWithDefaults(FORMATS.strikethrough);
+  const result = blockStyle(textarea, style);
+  insertText(textarea, result);
+}
+
+export function insertHorizontalRule(textarea: HTMLTextAreaElement | null): void {
+  if (!ensureEditable(textarea)) return;
+  const pos = textarea.selectionStart;
+  const val = textarea.value;
+  const before = val.slice(0, pos);
+  const prefix = before.length > 0 && !before.endsWith('\n') ? '\n' : '';
+  const text = prefix + '\n---\n\n';
+  textarea.setRangeText(text, pos, textarea.selectionEnd, 'end');
+  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 function findLineBoundaries(value: string, start: number, end: number): { lineStart: number; lineEnd: number } {
   let lineStart = start;
   while (lineStart > 0 && value[lineStart - 1] !== '\n') {
@@ -284,7 +302,9 @@ export const actions = {
   toggleBold,
   toggleItalic,
   toggleCode,
+  toggleStrikethrough,
   insertLink,
+  insertHorizontalRule,
   toggleBulletList,
   toggleNumberedList,
   toggleQuote,
