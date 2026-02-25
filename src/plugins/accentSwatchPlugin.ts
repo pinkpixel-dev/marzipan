@@ -26,7 +26,7 @@ function load(): string[] {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; }
 }
 function save(arr: string[]) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(arr)); } catch {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify(arr)); } catch { /* localStorage not available */ }
 }
 
 async function pickWithEyedropper(): Promise<string | null> {

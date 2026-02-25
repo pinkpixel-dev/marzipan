@@ -28,7 +28,7 @@ function loadRecents(): RecentImage[] {
   catch { return []; }
 }
 function saveRecents(list: RecentImage[]) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 50))); } catch {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 50))); } catch { /* localStorage not available */ }
 }
 
 async function fileToDataURL(file: File): Promise<string> {
