@@ -559,7 +559,6 @@ export class MarkdownParser {
 
     const lines = text.split('\n');
     let inCodeBlock = false;
-    let codeBlockStart = -1;
 
     const parsedLines = lines.map((line, index) => {
       // Show raw markdown on active line if requested
@@ -572,9 +571,6 @@ export class MarkdownParser {
       // Check if this line is a code fence
       const codeFenceRegex = /^```[^`]*$/;
       if (codeFenceRegex.test(line)) {
-        if (!inCodeBlock) {
-          codeBlockStart = index;
-        }
         inCodeBlock = !inCodeBlock;
         // Parse fence markers normally to get styled output
         return this.parseLine(line, index);

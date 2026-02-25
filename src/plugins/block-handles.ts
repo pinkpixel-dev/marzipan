@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Block Handles Plugin
  * 
@@ -42,13 +41,19 @@ export class BlockHandlesPlugin {
   private selectedBlockId: string | null;
   private handleContainer: HTMLElement | null;
 
+  // Stored bound handlers for proper cleanup
+  private _boundMouseMove: (e: MouseEvent) => void;
+  private _boundMouseLeave: () => void;
+  private _boundClick: (e: MouseEvent) => void;
+  private _boundKeyDown: (e: KeyboardEvent) => void;
+
   constructor(editor: HTMLTextAreaElement, preview: HTMLElement, config: BlockHandlesConfig = {}) {
     this.editor = editor;
     this.preview = preview;
     this.config = {
       enabled: config.enabled ?? true,
       showOnHover: config.showOnHover ?? true,
-      handleOffset: config.handleOffset ?? -30,
+      handleOffset: config.handleOffset ?? 4,
       handleSize: config.handleSize ?? 20,
       colors: {
         hover: config.colors?.hover ?? 'rgba(59, 130, 246, 0.1)',
@@ -59,6 +64,12 @@ export class BlockHandlesPlugin {
     this.blocks = new Map();
     this.selectedBlockId = null;
     this.handleContainer = null;
+
+    // Bind handlers once for consistent add/remove
+    this._boundMouseMove = this.handleMouseMove.bind(this);
+    this._boundMouseLeave = this.handleMouseLeave.bind(this);
+    this._boundClick = this.handleClick.bind(this);
+    this._boundKeyDown = this.handleKeyDown.bind(this);
 
     this.initialize();
   }
@@ -80,7 +91,9 @@ export class BlockHandlesPlugin {
   }
 
   /**
-   * Create the container for block handles
+   * Create the container for block handles.
+   * Appended to the wrapper (parent of preview) so it sits above the textarea
+   * and is not subject to the preview's pointer-events: none rule.
    */
   private createHandleContainer(): void {
     this.handleContainer = document.createElement('div');
@@ -92,25 +105,30 @@ export class BlockHandlesPlugin {
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 10;
+      z-index: 2;
     `;
-    this.preview.style.position = 'relative';
-    this.preview.appendChild(this.handleContainer);
+    // Attach to the wrapper (preview's parent), not the preview itself.
+    // The preview has pointer-events: none which would prevent any interaction.
+    const wrapper = this.preview.parentElement;
+    if (wrapper) {
+      wrapper.appendChild(this.handleContainer);
+    }
   }
 
   /**
-   * Set up event listeners for block interactions
+   * Set up event listeners for block interactions.
+   * We listen on the textarea because the preview has pointer-events: none.
    */
   private setupEventListeners(): void {
-    // Mouse move for hover effects
-    this.preview.addEventListener('mousemove', this.handleMouseMove.bind(this));
-    this.preview.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
+    // Mouse move for hover effects - use the textarea which receives pointer events
+    this.editor.addEventListener('mousemove', this._boundMouseMove);
+    this.editor.addEventListener('mouseleave', this._boundMouseLeave);
 
     // Click for selection
-    this.preview.addEventListener('click', this.handleClick.bind(this));
+    this.editor.addEventListener('click', this._boundClick);
 
     // Keyboard shortcuts
-    document.addEventListener('keydown', this.handleKeyDown.bind(this));
+    document.addEventListener('keydown', this._boundKeyDown);
   }
 
   /**
@@ -127,23 +145,24 @@ export class BlockHandlesPlugin {
     // Find all elements with block metadata
     const blockElements = this.preview.querySelectorAll('[data-block-id]');
     
-    blockElements.forEach((element: HTMLElement) => {
-      const blockId = element.getAttribute('data-block-id');
-      const blockType = element.getAttribute('data-block-type');
-      const lineStart = parseInt(element.getAttribute('data-line-start') || '0', 10);
-      const lineEnd = parseInt(element.getAttribute('data-line-end') || '0', 10);
+    blockElements.forEach((element) => {
+      const el = element as HTMLElement;
+      const blockId = el.getAttribute('data-block-id');
+      const blockType = el.getAttribute('data-block-type');
+      const lineStart = parseInt(el.getAttribute('data-line-start') || '0', 10);
+      const lineEnd = parseInt(el.getAttribute('data-line-end') || '0', 10);
 
       if (!blockId) return;
 
       // Create handle for this block
-      const handle = this.createHandle(blockId, blockType || 'paragraph', element);
+      const handle = this.createHandle(blockId, blockType || 'paragraph');
 
       this.blocks.set(blockId, {
         id: blockId,
         type: blockType || 'paragraph',
         lineStart,
         lineEnd,
-        element,
+        element: el,
         handleElement: handle,
       });
     });
@@ -152,7 +171,7 @@ export class BlockHandlesPlugin {
   /**
    * Create a handle element for a block
    */
-  private createHandle(blockId: string, blockType: string, blockElement: HTMLElement): HTMLElement {
+  private createHandle(blockId: string, blockType: string): HTMLElement {
     const handle = document.createElement('div');
     handle.className = `mz-block-handle mz-block-handle-${blockType}`;
     handle.setAttribute('data-block-id', blockId);
@@ -166,7 +185,7 @@ export class BlockHandlesPlugin {
       cursor: pointer;
       opacity: 0;
       transition: opacity 0.2s ease;
-      pointer-events: auto;
+      pointer-events: none;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -216,7 +235,8 @@ export class BlockHandlesPlugin {
   }
 
   /**
-   * Update handle position based on block element position
+   * Update handle position based on block element position.
+   * Uses viewport-relative coordinates so scrolling is automatically accounted for.
    */
   private updateHandlePosition(blockId: string): void {
     const block = this.blocks.get(blockId);
@@ -225,8 +245,10 @@ export class BlockHandlesPlugin {
     const blockRect = block.element.getBoundingClientRect();
     const previewRect = this.preview.getBoundingClientRect();
 
-    const top = blockRect.top - previewRect.top + this.preview.scrollTop;
-    
+    // blockRect.top and previewRect.top are both viewport-relative,
+    // so their difference gives the offset within the visible preview area.
+    const top = blockRect.top - previewRect.top;
+
     block.handleElement.style.top = `${top}px`;
   }
 
@@ -234,19 +256,35 @@ export class BlockHandlesPlugin {
    * Update all handle positions (call on scroll/resize)
    */
   public updateAllHandlePositions(): void {
-    this.blocks.forEach((block, blockId) => {
+    this.blocks.forEach((_block, blockId) => {
       this.updateHandlePosition(blockId);
     });
   }
 
   /**
-   * Handle mouse move for hover effects
+   * Find the preview block element at a given viewport position.
+   * Used because the preview has pointer-events: none, so we detect
+   * the hovered block by comparing bounding rects.
+   */
+  private findBlockAtPoint(clientX: number, clientY: number): HTMLElement | null {
+    for (const block of this.blocks.values()) {
+      const rect = block.element.getBoundingClientRect();
+      if (clientX >= rect.left && clientX <= rect.right &&
+          clientY >= rect.top  && clientY <= rect.bottom) {
+        return block.element;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Handle mouse move for hover effects.
+   * Listens on the textarea because the preview has pointer-events: none.
    */
   private handleMouseMove(e: MouseEvent): void {
     if (!this.config.showOnHover) return;
 
-    const target = e.target as HTMLElement;
-    const blockElement = this.findBlockElement(target);
+    const blockElement = this.findBlockAtPoint(e.clientX, e.clientY);
 
     if (blockElement) {
       const blockId = blockElement.getAttribute('data-block-id');
@@ -269,11 +307,11 @@ export class BlockHandlesPlugin {
   }
 
   /**
-   * Handle click events for block selection
+   * Handle click events for block selection.
+   * Listens on the textarea; shift-click selects the block under the cursor.
    */
   private handleClick(e: MouseEvent): void {
-    const target = e.target as HTMLElement;
-    const blockElement = this.findBlockElement(target);
+    const blockElement = this.findBlockAtPoint(e.clientX, e.clientY);
 
     if (blockElement) {
       const blockId = blockElement.getAttribute('data-block-id');
@@ -281,7 +319,7 @@ export class BlockHandlesPlugin {
         e.preventDefault();
         this.selectBlock(blockId);
       }
-    } else if (!target.closest('.mz-block-handle')) {
+    } else if (!(e.target as HTMLElement).closest('.mz-block-handle')) {
       // Click outside blocks and handles - deselect
       this.deselectBlock();
     }
@@ -312,27 +350,13 @@ export class BlockHandlesPlugin {
   }
 
   /**
-   * Find the block element from any child element
-   */
-  private findBlockElement(element: HTMLElement | null): HTMLElement | null {
-    if (!element) return null;
-    
-    // Check if element itself is a block
-    if (element.hasAttribute('data-block-id')) {
-      return element;
-    }
-
-    // Look up the tree for a block element
-    return element.closest('[data-block-id]') as HTMLElement | null;
-  }
-
-  /**
    * Show a specific handle
    */
   private showHandle(blockId: string): void {
     const block = this.blocks.get(blockId);
     if (block?.handleElement) {
       block.handleElement.style.opacity = '1';
+      block.handleElement.style.pointerEvents = 'auto';
     }
   }
 
@@ -343,6 +367,7 @@ export class BlockHandlesPlugin {
     this.blocks.forEach((block) => {
       if (block.handleElement && block.id !== this.selectedBlockId) {
         block.handleElement.style.opacity = '0';
+        block.handleElement.style.pointerEvents = 'none';
       }
     });
   }
@@ -355,7 +380,7 @@ export class BlockHandlesPlugin {
     if (!block) return;
 
     const color = selected ? this.config.colors.selected : this.config.colors.hover;
-    block.element.style.backgroundColor = color;
+    block.element.style.backgroundColor = color ?? '';
   }
 
   /**
@@ -379,6 +404,7 @@ export class BlockHandlesPlugin {
       const prevBlock = this.blocks.get(this.selectedBlockId);
       if (prevBlock?.handleElement) {
         prevBlock.handleElement.style.opacity = '0';
+        prevBlock.handleElement.style.pointerEvents = 'none';
       }
     }
 
@@ -572,6 +598,7 @@ export class BlockHandlesPlugin {
    * Enable the plugin
    */
   public enable(): void {
+    if (this.config.enabled) return; // Already enabled
     this.config.enabled = true;
     this.initialize();
   }
@@ -585,6 +612,11 @@ export class BlockHandlesPlugin {
     this.handleContainer = null;
     this.blocks.clear();
     this.selectedBlockId = null;
+    // Remove event listeners
+    this.editor.removeEventListener('mousemove', this._boundMouseMove);
+    this.editor.removeEventListener('mouseleave', this._boundMouseLeave);
+    this.editor.removeEventListener('click', this._boundClick);
+    document.removeEventListener('keydown', this._boundKeyDown);
   }
 
   /**
@@ -613,9 +645,5 @@ export class BlockHandlesPlugin {
    */
   public destroy(): void {
     this.disable();
-    this.preview.removeEventListener('mousemove', this.handleMouseMove.bind(this));
-    this.preview.removeEventListener('mouseleave', this.handleMouseLeave.bind(this));
-    this.preview.removeEventListener('click', this.handleClick.bind(this));
-    document.removeEventListener('keydown', this.handleKeyDown.bind(this));
   }
 }

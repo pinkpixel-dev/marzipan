@@ -616,7 +616,7 @@ class Marzipan {
      * Handle input events
      * @private
      */
-    handleInput(event) {
+    handleInput() {
       this.updatePreview();
     }
 
@@ -641,7 +641,7 @@ class Marzipan {
           const after = value.substring(end);
           
           const lines = selection.split('\n');
-          const outdented = lines.map(line => line.replace(/^  /, '')).join('\n');
+          const outdented = lines.map(line => line.replace(/^ {2}/, '')).join('\n');
           
           // Try to use execCommand first to preserve undo history
           if (document.execCommand) {
@@ -847,7 +847,7 @@ class Marzipan {
      * Handle scroll events
      * @private
      */
-    handleScroll(event) {
+    handleScroll() {
       // Sync preview scroll with textarea
       this.preview.scrollTop = this.textarea.scrollTop;
       this.preview.scrollLeft = this.textarea.scrollLeft;
@@ -1261,6 +1261,11 @@ class Marzipan {
 
       this._teardownAutoResize();
 
+      if (this.blockHandlesPlugin) {
+        this.blockHandlesPlugin.destroy();
+        this.blockHandlesPlugin = null;
+      }
+
       if (this.linkTooltip) {
         this.linkTooltip.destroy();
         this.linkTooltip = null;
@@ -1438,7 +1443,7 @@ class Marzipan {
       }, true);
 
       // Selection change event
-      document.addEventListener('selectionchange', (e) => {
+      document.addEventListener('selectionchange', () => {
         const activeElement = document.activeElement;
         if (activeElement && activeElement.classList.contains('marzipan-input')) {
           const wrapper = activeElement.closest('.marzipan-wrapper');

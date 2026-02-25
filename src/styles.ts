@@ -447,22 +447,15 @@ export function generateStyles(options: any = {}) {
     .marzipan-stats {
       height: 40px !important;
       padding: 0 20px !important;
-      background: #f8f9fa !important;
-      border-top: 1px solid #e0e0e0 !important;
+      background: var(--bg-primary, #f8f9fa) !important;
+      border-top: 1px solid var(--toolbar-border, #e0e0e0) !important;
       display: flex !important;
       justify-content: space-between !important;
       align-items: center !important;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
       font-size: 0.85rem !important;
-      color: #666 !important;
+      color: var(--text, #666) !important;
       grid-row: 3 !important; /* Always third row in grid */
-    }
-    
-    /* Dark theme stats bar */
-    .marzipan-container[data-theme="cave"] .marzipan-stats {
-      background: var(--bg-secondary, #1D2D3E) !important;
-      border-top: 1px solid rgba(197, 221, 232, 0.1) !important;
-      color: var(--text, #c5dde8) !important;
     }
     
     .marzipan-stats .marzipan-stat {
