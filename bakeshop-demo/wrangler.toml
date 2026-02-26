@@ -15,4 +15,3 @@ VITE_APP_ENV = "production"
 # Preview environment for Pages
 [env.preview.vars]
 VITE_APP_ENV = "development"
-
