@@ -37,9 +37,10 @@ export function tableGridPlugin(opts: TableGridPluginOptions = {}) {
 
     const btn = document.createElement('button');
     btn.type = 'button';
-      btn.className = 'mz-btn mz-btn-tablegrid';
-      btn.title = title;
-      btn.textContent = label;
+    btn.className = 'marzipan-toolbar-button mz-btn-tablegrid';
+    btn.title = title;
+    btn.textContent = label;
+    btn.setAttribute('aria-label', title);
 
     let pop: HTMLElement | null = null;
 

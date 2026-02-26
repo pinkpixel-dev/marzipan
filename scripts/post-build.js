@@ -200,16 +200,19 @@ export type MarzipanLike = {
 // Plugin factory functions
 export declare function tablePlugin(options?: TablePluginOptions): MarzipanPlugin;
 export declare function tableGridPlugin(options?: TableGridPluginOptions): MarzipanPlugin;
+export declare const tableGridStyles: string;
 export declare function tableGeneratorPlugin(): MarzipanPlugin;
 export declare function mermaidPlugin(config?: Record<string, any>): MarzipanPlugin;
 export declare function mermaidExternalPlugin(config?: Record<string, any>): MarzipanPlugin;
 export declare function tinyHighlightPlugin(): MarzipanPlugin;
+export declare const tinyHighlightStyles: string;
 export declare function accentSwatchPlugin(opts?: {
   max?: number;
   defaults?: string[];
   title?: string;
   label?: string;
 }): MarzipanPlugin;
+export declare const accentSwatchStyles: string;
 export declare function imageManagerPlugin(opts?: Record<string, any>): MarzipanPlugin;
 export declare function imagePickerPlugin(opts?: ImagePickerOptions): MarzipanPlugin;
 export declare class BlockHandlesPlugin {

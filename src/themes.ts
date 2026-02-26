@@ -33,6 +33,7 @@ export const solar = {
     toolbarIcon: '#0d3b66',      // Yale Blue - icon color
     toolbarHover: '#f5f5f5',     // Light gray - hover background
     toolbarActive: '#faf0ca',    // Lemon Chiffon - active button background
+    border: 'rgba(13, 59, 102, 0.25)',  // Table/element borders
   }
 };
 
@@ -65,6 +66,7 @@ export const cave = {
     toolbarIcon: '#c5dde8',      // Light blue-gray - icon color
     toolbarHover: '#243546',     // Slightly lighter charcoal - hover background
     toolbarActive: '#2a3f52',    // Even lighter - active button background
+    border: 'rgba(197, 221, 232, 0.2)',  // Table/element borders
   }
 };
 

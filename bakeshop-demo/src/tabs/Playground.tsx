@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Marzipan, tinyHighlightPlugin, mermaidPlugin } from '@pinkpixel/marzipan'
+import { Marzipan, tinyHighlightPlugin, mermaidPlugin, tableGridPlugin, accentSwatchPlugin } from '@pinkpixel/marzipan'
 import type { MarzipanInstance } from '@pinkpixel/marzipan'
 
 const SAMPLE_CONTENT = `# 🧁 Welcome to Marzipan!
@@ -102,11 +102,15 @@ export default function Playground() {
       showStats: true,
       smartLists: true,
       blockHandles: true,
-      theme: 'solar',
-      minHeight: '600px',
+      theme: 'cave',
       fontSize: '15px',
       lineHeight: 1.6,
-      plugins: [tinyHighlightPlugin(), mermaidPlugin()],
+      plugins: [
+        tinyHighlightPlugin(),
+        mermaidPlugin(),
+        tableGridPlugin({ maxRows: 8, maxColumns: 8 }),
+        accentSwatchPlugin({ defaults: ['#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'] }),
+      ],
       onChange: (value) => {
         // Auto-save to localStorage
         localStorage.setItem('marzipan-playground-content', value)
@@ -154,7 +158,7 @@ export default function Playground() {
           🎨 Full-Featured Playground
         </h2>
         <p className="text-slate-300 mb-4">
-          Experience Marzipan with all features enabled. Edit the markdown below and see it render in real-time!
+          Experience Marzipan with all features enabled. The overlay preview updates <strong>live as you type</strong> — rendered markdown appears directly beneath the transparent text, keeping every character in perfect alignment. Use the <strong>View</strong> menu in the toolbar to switch modes.
         </p>
 
         <div className="flex gap-3">
@@ -175,7 +179,7 @@ export default function Playground() {
 
       {/* Editor */}
       <div className="card p-6">
-        <div ref={editorRef} className="marzipan-wrapper" />
+        <div ref={editorRef} style={{ height: '600px' }} />
       </div>
 
       {/* Features Guide */}
@@ -196,12 +200,12 @@ export default function Playground() {
         <div className="card p-6">
           <h3 className="text-xl font-bold text-pink-300 mb-3">✨ Smart Features</h3>
           <ul className="space-y-2 text-slate-200">
-            <li>✅ <strong>Smart Lists</strong> - Auto-continue lists on Enter</li>
-            <li>✅ <strong>Live Preview</strong> - Overlay rendering without drift</li>
-            <li>✅ <strong>Block Handles</strong> - Click handles to select/copy/delete blocks</li>
-            <li>✅ <strong>Stats Bar</strong> - Real-time character/word/line counts</li>
-            <li>✅ <strong>View Modes</strong> - Normal, Plain, and Preview-only</li>
-            <li>✅ <strong>Auto-save</strong> - Content saved to localStorage</li>
+            <li>✅ <strong>Smart Lists</strong> — Auto-continue lists on Enter</li>
+            <li>✅ <strong>Live Overlay Preview</strong> — Renders markdown beneath transparent text in real-time, always on</li>
+            <li>✅ <strong>Block Handles</strong> — Click handles to select/copy/delete blocks</li>
+            <li>✅ <strong>Stats Bar</strong> — Real-time character/word/line counts</li>
+            <li>✅ <strong>View Modes</strong> — Normal (live overlay), Plain (raw textarea), Preview-only (read-only rendered)</li>
+            <li>✅ <strong>Auto-save</strong> — Content saved to localStorage</li>
           </ul>
         </div>
       </div>

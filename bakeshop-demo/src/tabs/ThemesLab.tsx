@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Marzipan } from '@pinkpixel/marzipan'
+import { Marzipan, tinyHighlightPlugin, tableGridPlugin, accentSwatchPlugin } from '@pinkpixel/marzipan'
 
 const getSampleText = (themeName: string) => `# Theme Preview: ${themeName}
 
@@ -147,16 +147,16 @@ export default function ThemesLab() {
       value: getSampleText('Solar (Light)'),
       toolbar: true,
       theme: 'solar',
-      minHeight: '340px',
       showStats: true,
+      plugins: [tinyHighlightPlugin(), tableGridPlugin({ maxRows: 8, maxColumns: 8 }), accentSwatchPlugin({ defaults: ['#ec4899', '#8b5cf6', '#06b6d4'] })],
     })
 
     const [caveInstance] = new Marzipan(caveRef.current, {
       value: getSampleText('Cave (Dark)'),
       toolbar: true,
       theme: 'cave',
-      minHeight: '340px',
       showStats: true,
+      plugins: [tinyHighlightPlugin(), tableGridPlugin({ maxRows: 8, maxColumns: 8 }), accentSwatchPlugin({ defaults: ['#ec4899', '#8b5cf6', '#06b6d4'] })],
     })
 
     return () => {
@@ -173,7 +173,7 @@ export default function ThemesLab() {
       value: CUSTOM_THEME_SAMPLE,
       toolbar: true,
       theme: theme as any,
-      minHeight: '300px',
+      plugins: [tinyHighlightPlugin(), tableGridPlugin({ maxRows: 8, maxColumns: 8 }), accentSwatchPlugin({ defaults: ['#ec4899', '#8b5cf6', '#06b6d4'] })],
     })
 
     return () => {
@@ -200,7 +200,7 @@ export default function ThemesLab() {
             theme: 'solar'
           </span>
         </div>
-        <div ref={solarRef} />
+        <div ref={solarRef} style={{ height: '340px' }} />
       </div>
 
       {/* Cave Theme */}
@@ -211,7 +211,7 @@ export default function ThemesLab() {
             theme: 'cave'
           </span>
         </div>
-        <div ref={caveRef} />
+        <div ref={caveRef} style={{ height: '340px' }} />
       </div>
 
       {/* Custom Theme Live Demo */}
@@ -236,7 +236,7 @@ export default function ThemesLab() {
             ))}
           </div>
         </div>
-        <div ref={customRef} />
+        <div ref={customRef} style={{ height: '300px' }} />
       </div>
 
       {/* Theme Usage */}

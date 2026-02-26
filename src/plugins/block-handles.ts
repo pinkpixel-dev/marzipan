@@ -117,15 +117,19 @@ export class BlockHandlesPlugin {
 
   /**
    * Set up event listeners for block interactions.
-   * We listen on the textarea because the preview has pointer-events: none.
+   * We listen on both the textarea (normal mode) and the preview (preview mode),
+   * since in preview mode the textarea is display:none and the preview has pointer-events:auto.
    */
   private setupEventListeners(): void {
-    // Mouse move for hover effects - use the textarea which receives pointer events
+    // Normal overlay mode: textarea receives pointer events
     this.editor.addEventListener('mousemove', this._boundMouseMove);
     this.editor.addEventListener('mouseleave', this._boundMouseLeave);
-
-    // Click for selection
     this.editor.addEventListener('click', this._boundClick);
+
+    // Preview mode: preview has pointer-events:auto, textarea is display:none
+    this.preview.addEventListener('mousemove', this._boundMouseMove);
+    this.preview.addEventListener('mouseleave', this._boundMouseLeave);
+    this.preview.addEventListener('click', this._boundClick);
 
     // Keyboard shortcuts
     document.addEventListener('keydown', this._boundKeyDown);
@@ -263,13 +267,14 @@ export class BlockHandlesPlugin {
 
   /**
    * Find the preview block element at a given viewport position.
-   * Used because the preview has pointer-events: none, so we detect
-   * the hovered block by comparing bounding rects.
+   * Extends the hit rect to the left by handleOffset + handleSize so the
+   * mouse can reach the handle without triggering a hide.
    */
   private findBlockAtPoint(clientX: number, clientY: number): HTMLElement | null {
+    const handleReach = this.config.handleOffset + this.config.handleSize;
     for (const block of this.blocks.values()) {
       const rect = block.element.getBoundingClientRect();
-      if (clientX >= rect.left && clientX <= rect.right &&
+      if (clientX >= rect.left - handleReach && clientX <= rect.right &&
           clientY >= rect.top  && clientY <= rect.bottom) {
         return block.element;
       }
@@ -279,10 +284,14 @@ export class BlockHandlesPlugin {
 
   /**
    * Handle mouse move for hover effects.
-   * Listens on the textarea because the preview has pointer-events: none.
+   * Listens on both the textarea (normal mode) and the preview (preview mode).
    */
   private handleMouseMove(e: MouseEvent): void {
     if (!this.config.showOnHover) return;
+
+    // If the element actually under the cursor is a handle, keep it visible
+    const elementUnder = document.elementFromPoint(e.clientX, e.clientY);
+    if (elementUnder && (elementUnder as HTMLElement).closest?.('.mz-block-handle')) return;
 
     const blockElement = this.findBlockAtPoint(e.clientX, e.clientY);
 
@@ -290,11 +299,14 @@ export class BlockHandlesPlugin {
       const blockId = blockElement.getAttribute('data-block-id');
       if (blockId) {
         this.showHandle(blockId);
-        this.highlightBlock(blockId, false);
+        // Don't replace selected-color with hover-color on the selected block
+        if (blockId !== this.selectedBlockId) {
+          this.highlightBlock(blockId, false);
+        }
       }
     } else {
       this.hideAllHandles();
-      this.unhighlightAll();
+      this.unhighlightAll(true); // keep selected block highlighted
     }
   }
 
@@ -308,19 +320,29 @@ export class BlockHandlesPlugin {
 
   /**
    * Handle click events for block selection.
-   * Listens on the textarea; shift-click selects the block under the cursor.
+   * Clicks anywhere in the left handle-zone (the padding area left of block text)
+   * select the block — no shift key required. Shift+click anywhere on the block
+   * also selects it. Clicking in normal text area deselects.
    */
   private handleClick(e: MouseEvent): void {
     const blockElement = this.findBlockAtPoint(e.clientX, e.clientY);
 
     if (blockElement) {
       const blockId = blockElement.getAttribute('data-block-id');
-      if (blockId && e.shiftKey) {
-        e.preventDefault();
-        this.selectBlock(blockId);
+      if (blockId) {
+        const blockRect = blockElement.getBoundingClientRect();
+        // A click in the handle zone (left of where text starts) or shift+click selects
+        const inHandleZone = e.clientX < blockRect.left;
+        if (inHandleZone || e.shiftKey) {
+          e.preventDefault();
+          this.selectBlock(blockId);
+        } else {
+          // Normal click inside block text — deselect if something was selected
+          if (this.selectedBlockId) this.deselectBlock();
+        }
       }
-    } else if (!(e.target as HTMLElement).closest('.mz-block-handle')) {
-      // Click outside blocks and handles - deselect
+    } else if (!(e.target as HTMLElement).closest?.('.mz-block-handle')) {
+      // Click outside all blocks — deselect
       this.deselectBlock();
     }
   }
@@ -612,10 +634,13 @@ export class BlockHandlesPlugin {
     this.handleContainer = null;
     this.blocks.clear();
     this.selectedBlockId = null;
-    // Remove event listeners
+    // Remove event listeners from both textarea and preview
     this.editor.removeEventListener('mousemove', this._boundMouseMove);
     this.editor.removeEventListener('mouseleave', this._boundMouseLeave);
     this.editor.removeEventListener('click', this._boundClick);
+    this.preview.removeEventListener('mousemove', this._boundMouseMove);
+    this.preview.removeEventListener('mouseleave', this._boundMouseLeave);
+    this.preview.removeEventListener('click', this._boundClick);
     document.removeEventListener('keydown', this._boundKeyDown);
   }
 

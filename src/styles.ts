@@ -809,26 +809,37 @@ export function generateStyles(options: any = {}) {
     
     /* Tables - GFM-style table rendering */
     .marzipan-preview .marzipan-table {
-      border-collapse: collapse;
-      margin: 1em 0;
-      width: 100%;
-      overflow: auto;
+      border-collapse: collapse !important;
+      margin: 1em 0 !important;
+      width: 100% !important;
+      overflow: auto !important;
+      display: table !important;
     }
     
     .marzipan-preview .marzipan-table th,
     .marzipan-preview .marzipan-table td {
-      border: 1px solid var(--border, #ddd);
-      padding: 0.5em 1em;
-      text-align: left;
+      border: 1px solid var(--border, rgba(128,128,128,0.4)) !important;
+      padding: 0.4em 0.8em !important;
+      text-align: left !important;
     }
     
     .marzipan-preview .marzipan-table th {
-      background: var(--bg-secondary, #f5f5f5);
-      font-weight: 600;
+      background: var(--bg-secondary, rgba(128,128,128,0.15)) !important;
+      font-weight: 600 !important;
     }
     
-    .marzipan-preview .marzipan-table tr:nth-child(even) {
-      background: var(--bg-secondary, #f9f9f9);
+    .marzipan-preview .marzipan-table tr:nth-child(even) td {
+      background: var(--bg-secondary, rgba(128,128,128,0.05)) !important;
+    }
+    
+    .marzipan-preview .marzipan-table thead,
+    .marzipan-preview .marzipan-table tbody,
+    .marzipan-preview .marzipan-table tr {
+      display: table-row-group !important;
+    }
+    
+    .marzipan-preview .marzipan-table tr {
+      display: table-row !important;
     }
     
     /* In preview mode - hide table syntax markers */

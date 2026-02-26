@@ -65,9 +65,10 @@ export function accentSwatchPlugin(opts?: {
     // Button that opens the palette popover
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'mz-btn mz-btn-accent';
+    btn.className = 'marzipan-toolbar-button mz-btn-accent';
     btn.title = title;
     btn.textContent = label;
+    btn.setAttribute('aria-label', title);
 
     // Popover elements
     let pop: HTMLElement | null = null;
@@ -206,6 +207,7 @@ export function accentSwatchPlugin(opts?: {
       document.body.appendChild(pop);
 
       const r = btn.getBoundingClientRect();
+      pop.style.position = 'absolute';
       pop.style.left = `${Math.round(window.scrollX + r.left)}px`;
       pop.style.top  = `${Math.round(window.scrollY + r.bottom + 6)}px`;
 

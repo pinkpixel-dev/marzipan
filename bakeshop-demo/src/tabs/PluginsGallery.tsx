@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Marzipan, tinyHighlightPlugin, mermaidPlugin, tableGridPlugin, accentSwatchPlugin } from '@pinkpixel/marzipan'
+import type { MarzipanInstance } from '@pinkpixel/marzipan'
 
 const HIGHLIGHT_SAMPLE = `## 🎨 Syntax Highlighting
 
@@ -81,24 +82,73 @@ The accent swatch toolbar button lets you pick and persist a custom accent color
 
 Try clicking the **⭘** button in the toolbar to choose an accent color!`
 
+const BLOCK_HANDLES_SAMPLE = `# ✋ Block Handles Demo
+
+Hover over any block to see the **handle** appear on the left edge.
+
+## How to Use
+
+- **Hover** a block to reveal its handle icon
+- **Shift+Click** the handle to select the block
+- **Ctrl/Cmd+C** copies the selected block's text
+- **Delete** or **Backspace** removes the selected block
+
+> Blockquotes are blocks too — try hovering this one!
+
+\`\`\`typescript
+new Marzipan('#editor', {
+  blockHandles: true,
+  // or with custom handle colors:
+  blockHandles: {
+    colors: {
+      hover: 'rgba(236, 72, 153, 0.1)',
+      selected: 'rgba(236, 72, 153, 0.2)',
+      handle: 'rgba(236, 72, 153, 0.9)',
+    }
+  },
+});
+\`\`\`
+
+Handles work in both **edit** and **preview** modes. Try the toggle above!`
+
 export default function PluginsGallery() {
   const highlightRef = useRef<HTMLDivElement>(null)
   const mermaidRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLDivElement>(null)
   const accentRef = useRef<HTMLDivElement>(null)
+  const blockHandlesRef = useRef<HTMLDivElement>(null)
+
+  const [highlightInst, setHighlightInst] = useState<MarzipanInstance | null>(null)
+  const [mermaidInst, setMermaidInst] = useState<MarzipanInstance | null>(null)
+  const [tableInst, setTableInst] = useState<MarzipanInstance | null>(null)
+  const [accentInst, setAccentInst] = useState<MarzipanInstance | null>(null)
+  const [blockHandlesInst, setBlockHandlesInst] = useState<MarzipanInstance | null>(null)
+
+  const [hlPreview, setHlPreview] = useState(true)
+  const [mermaidPreview, setMermaidPreview] = useState(true)
+  const [tablePreview, setTablePreview] = useState(true)
+  const [accentPreview, setAccentPreview] = useState(true)
+  const [blockHandlesPreview, setBlockHandlesPreview] = useState(false)
+
+  const SHARED_PLUGINS = () => [
+    tinyHighlightPlugin(),
+    tableGridPlugin({ maxRows: 8, maxColumns: 8 }),
+    accentSwatchPlugin({ defaults: ['#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'] }),
+  ]
 
   useEffect(() => {
-    const instances: Array<{ destroy?: () => void }> = []
+    const instances: MarzipanInstance[] = []
 
     if (highlightRef.current) {
       const [inst] = new Marzipan(highlightRef.current, {
         value: HIGHLIGHT_SAMPLE,
         toolbar: true,
         theme: 'cave',
-        minHeight: '380px',
-        plugins: [tinyHighlightPlugin()],
+        plugins: SHARED_PLUGINS(),
       })
+      inst.showPreviewMode(true)
       instances.push(inst)
+      setHighlightInst(inst)
     }
 
     if (mermaidRef.current) {
@@ -106,21 +156,23 @@ export default function PluginsGallery() {
         value: MERMAID_SAMPLE,
         toolbar: true,
         theme: 'cave',
-        minHeight: '380px',
-        plugins: [mermaidPlugin({ theme: 'dark' })],
+        plugins: [...SHARED_PLUGINS(), mermaidPlugin({ theme: 'dark' })],
       })
+      inst.showPreviewMode(true)
       instances.push(inst)
+      setMermaidInst(inst)
     }
 
     if (tableRef.current) {
       const [inst] = new Marzipan(tableRef.current, {
         value: TABLE_SAMPLE,
         toolbar: true,
-        theme: 'solar',
-        minHeight: '300px',
-        plugins: [tableGridPlugin({ maxRows: 8, maxColumns: 8 })],
+        theme: 'cave',
+        plugins: SHARED_PLUGINS(),
       })
+      inst.showPreviewMode(true)
       instances.push(inst)
+      setTableInst(inst)
     }
 
     if (accentRef.current) {
@@ -128,16 +180,41 @@ export default function PluginsGallery() {
         value: ACCENT_SAMPLE,
         toolbar: true,
         theme: 'cave',
-        minHeight: '260px',
-        plugins: [accentSwatchPlugin({ defaults: ['#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'] })],
+        plugins: SHARED_PLUGINS(),
       })
+      inst.showPreviewMode(true)
       instances.push(inst)
+      setAccentInst(inst)
+    }
+
+    if (blockHandlesRef.current) {
+      const [inst] = new Marzipan(blockHandlesRef.current, {
+        value: BLOCK_HANDLES_SAMPLE,
+        toolbar: true,
+        theme: 'cave',
+        blockHandles: true,
+        plugins: SHARED_PLUGINS(),
+      })
+      // Start in normal (edit) mode so block handles are immediately visible
+      instances.push(inst)
+      setBlockHandlesInst(inst)
     }
 
     return () => {
       instances.forEach(inst => inst.destroy?.())
     }
   }, [])
+
+  function togglePreview(
+    inst: MarzipanInstance | null,
+    current: boolean,
+    setter: (v: boolean) => void
+  ) {
+    if (!inst) return
+    const next = !current
+    inst.showPreviewMode(next)
+    setter(next)
+  }
 
   return (
     <div className="space-y-6">
@@ -146,7 +223,7 @@ export default function PluginsGallery() {
           🧩 Plugins Gallery
         </h2>
         <p className="text-slate-300">
-          Live demos of all available Marzipan plugins. Each editor below has a specific plugin enabled — try editing the content to see plugins in action!
+          Live demos of all available Marzipan plugins. Every editor has the full plugin suite in its toolbar — syntax highlighting, table grid picker, and accent swatcher. Toggle between edit and preview to see rendered output.
         </p>
       </div>
 
@@ -158,11 +235,19 @@ export default function PluginsGallery() {
             <h3 className="text-xl font-bold text-emerald-300">Tiny Highlight Plugin</h3>
             <p className="text-slate-400 text-sm">Lightweight syntax highlighting — zero dependencies</p>
           </div>
-          <code className="ml-auto text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-emerald-200 hidden md:block">
-            tinyHighlightPlugin()
-          </code>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => togglePreview(highlightInst, hlPreview, setHlPreview)}
+              className="text-xs px-3 py-1 rounded border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 transition-colors"
+            >
+              {hlPreview ? '✏️ Edit' : '👁 Preview'}
+            </button>
+            <code className="text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-emerald-200 hidden md:block">
+              tinyHighlightPlugin()
+            </code>
+          </div>
         </div>
-        <div ref={highlightRef} />
+        <div ref={highlightRef} style={{ height: '420px' }} />
         <div className="mt-3 text-slate-400 text-sm">
           Supports: TypeScript, JavaScript, JSON, CSS, HTML, Bash, Markdown, INI
         </div>
@@ -176,11 +261,19 @@ export default function PluginsGallery() {
             <h3 className="text-xl font-bold text-purple-300">Mermaid Plugin</h3>
             <p className="text-slate-400 text-sm">Render flowcharts, sequences, and more — lazy-loaded</p>
           </div>
-          <code className="ml-auto text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-purple-200 hidden md:block">
-            mermaidPlugin()
-          </code>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => togglePreview(mermaidInst, mermaidPreview, setMermaidPreview)}
+              className="text-xs px-3 py-1 rounded border border-purple-500/40 text-purple-300 hover:bg-purple-500/10 transition-colors"
+            >
+              {mermaidPreview ? '✏️ Edit' : '👁 Preview'}
+            </button>
+            <code className="text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-purple-200 hidden md:block">
+              mermaidPlugin()
+            </code>
+          </div>
         </div>
-        <div ref={mermaidRef} />
+        <div ref={mermaidRef} style={{ height: '420px' }} />
         <div className="mt-3 text-slate-400 text-sm">
           Add a <code className="bg-slate-800 px-1 rounded">```mermaid</code> block and see it render live!
         </div>
@@ -194,11 +287,19 @@ export default function PluginsGallery() {
             <h3 className="text-xl font-bold text-pink-300">Table Grid Plugin</h3>
             <p className="text-slate-400 text-sm">Visual grid picker for inserting GFM tables</p>
           </div>
-          <code className="ml-auto text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-pink-200 hidden md:block">
-            tableGridPlugin()
-          </code>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => togglePreview(tableInst, tablePreview, setTablePreview)}
+              className="text-xs px-3 py-1 rounded border border-pink-500/40 text-pink-300 hover:bg-pink-500/10 transition-colors"
+            >
+              {tablePreview ? '✏️ Edit' : '👁 Preview'}
+            </button>
+            <code className="text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-pink-200 hidden md:block">
+              tableGridPlugin()
+            </code>
+          </div>
         </div>
-        <div ref={tableRef} />
+        <div ref={tableRef} style={{ height: '340px' }} />
         <div className="mt-3 text-slate-400 text-sm">
           Click the <strong>▦</strong> button in the toolbar to open the visual grid picker
         </div>
@@ -212,42 +313,45 @@ export default function PluginsGallery() {
             <h3 className="text-xl font-bold text-amber-300">Accent Swatch Plugin</h3>
             <p className="text-slate-400 text-sm">Persistent color palette with EyeDropper support</p>
           </div>
-          <code className="ml-auto text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-amber-200 hidden md:block">
-            accentSwatchPlugin()
-          </code>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => togglePreview(accentInst, accentPreview, setAccentPreview)}
+              className="text-xs px-3 py-1 rounded border border-amber-500/40 text-amber-300 hover:bg-amber-500/10 transition-colors"
+            >
+              {accentPreview ? '✏️ Edit' : '👁 Preview'}
+            </button>
+            <code className="text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-amber-200 hidden md:block">
+              accentSwatchPlugin()
+            </code>
+          </div>
         </div>
-        <div ref={accentRef} />
+        <div ref={accentRef} style={{ height: '300px' }} />
       </div>
 
-      {/* Block Handles info card */}
+      {/* Block Handles Demo */}
       <div className="card p-6">
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-2xl">🔲</span>
+          <span className="text-2xl">✋</span>
           <div>
             <h3 className="text-xl font-bold text-blue-300">Block Handles (Built-in)</h3>
             <p className="text-slate-400 text-sm">Hover handles for selecting, copying, and deleting blocks</p>
           </div>
-          <code className="ml-auto text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-blue-200 hidden md:block">
-            blockHandles: true
-          </code>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => togglePreview(blockHandlesInst, blockHandlesPreview, setBlockHandlesPreview)}
+              className="text-xs px-3 py-1 rounded border border-blue-500/40 text-blue-300 hover:bg-blue-500/10 transition-colors"
+            >
+              {blockHandlesPreview ? '✏️ Edit' : '👁 Preview'}
+            </button>
+            <code className="text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-blue-200 hidden md:block">
+              blockHandles: true
+            </code>
+          </div>
         </div>
-        <p className="text-slate-300 mb-3">
-          Block handles are a built-in feature enabled via the <code className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-200">blockHandles</code> option (not a plugin array entry).
-          Hover over blocks in the <strong>Playground</strong> tab to see them in action!
-        </p>
-        <pre className="code-block">
-{`new Marzipan('#editor', {
-  blockHandles: true,   // simple enable
-  // or with custom colors:
-  blockHandles: {
-    colors: {
-      hover: 'rgba(236, 72, 153, 0.1)',
-      selected: 'rgba(236, 72, 153, 0.2)',
-      handle: 'rgba(236, 72, 153, 0.9)',
-    }
-  },
-});`}
-        </pre>
+        <div className="mb-3 text-slate-400 text-sm">
+          ✏️ Edit mode: <strong className="text-slate-300">hover any block</strong> to see the handle icon appear on the left. Shift+Click to select, then Ctrl/Cmd+C to copy or Delete to remove.
+        </div>
+        <div ref={blockHandlesRef} style={{ height: '380px' }} />
       </div>
 
       {/* Usage code */}

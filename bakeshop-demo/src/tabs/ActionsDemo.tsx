@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Marzipan, actions } from '@pinkpixel/marzipan'
+import { Marzipan, actions, tinyHighlightPlugin } from '@pinkpixel/marzipan'
 
 const ACTION_GROUPS = [
   {
@@ -49,8 +49,8 @@ export default function ActionsDemo() {
       toolbar: false,
       showStats: false,
       smartLists: true,
-      theme: 'solar',
-      minHeight: '200px',
+      theme: 'cave',
+      plugins: [tinyHighlightPlugin()],
     })
 
     // Store textarea reference
@@ -89,7 +89,7 @@ export default function ActionsDemo() {
       {/* Editor */}
       <div className="card p-6">
         <h3 className="text-lg font-semibold text-slate-200 mb-3">Try It Out:</h3>
-        <div ref={editorRef} />
+        <div ref={editorRef} style={{ height: '200px' }} />
       </div>
 
       {/* Action Groups */}
