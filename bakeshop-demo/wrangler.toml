@@ -16,5 +16,3 @@ VITE_APP_ENV = "production"
 [env.preview.vars]
 VITE_APP_ENV = "development"
 
-# Secrets
-[env.production.secrets]
