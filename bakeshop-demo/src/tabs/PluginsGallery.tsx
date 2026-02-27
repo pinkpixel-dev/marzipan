@@ -82,53 +82,21 @@ The accent swatch toolbar button lets you pick and persist a custom accent color
 
 Try clicking the **⭘** button in the toolbar to choose an accent color!`
 
-const BLOCK_HANDLES_SAMPLE = `# ✋ Block Handles Demo
-
-Hover over any block to see the **handle** appear on the left edge.
-
-## How to Use
-
-- **Hover** a block to reveal its handle icon
-- **Shift+Click** the handle to select the block
-- **Ctrl/Cmd+C** copies the selected block's text
-- **Delete** or **Backspace** removes the selected block
-
-> Blockquotes are blocks too — try hovering this one!
-
-\`\`\`typescript
-new Marzipan('#editor', {
-  blockHandles: true,
-  // or with custom handle colors:
-  blockHandles: {
-    colors: {
-      hover: 'rgba(236, 72, 153, 0.1)',
-      selected: 'rgba(236, 72, 153, 0.2)',
-      handle: 'rgba(236, 72, 153, 0.9)',
-    }
-  },
-});
-\`\`\`
-
-Handles work in both **edit** and **preview** modes. Try the toggle above!`
-
 export default function PluginsGallery() {
   const highlightRef = useRef<HTMLDivElement>(null)
   const mermaidRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLDivElement>(null)
   const accentRef = useRef<HTMLDivElement>(null)
-  const blockHandlesRef = useRef<HTMLDivElement>(null)
 
   const [highlightInst, setHighlightInst] = useState<MarzipanInstance | null>(null)
   const [mermaidInst, setMermaidInst] = useState<MarzipanInstance | null>(null)
   const [tableInst, setTableInst] = useState<MarzipanInstance | null>(null)
   const [accentInst, setAccentInst] = useState<MarzipanInstance | null>(null)
-  const [blockHandlesInst, setBlockHandlesInst] = useState<MarzipanInstance | null>(null)
 
   const [hlPreview, setHlPreview] = useState(true)
   const [mermaidPreview, setMermaidPreview] = useState(true)
   const [tablePreview, setTablePreview] = useState(true)
   const [accentPreview, setAccentPreview] = useState(true)
-  const [blockHandlesPreview, setBlockHandlesPreview] = useState(false)
 
   const SHARED_PLUGINS = () => [
     tinyHighlightPlugin(),
@@ -185,19 +153,6 @@ export default function PluginsGallery() {
       inst.showPreviewMode(true)
       instances.push(inst)
       setAccentInst(inst)
-    }
-
-    if (blockHandlesRef.current) {
-      const [inst] = new Marzipan(blockHandlesRef.current, {
-        value: BLOCK_HANDLES_SAMPLE,
-        toolbar: true,
-        theme: 'cave',
-        blockHandles: true,
-        plugins: SHARED_PLUGINS(),
-      })
-      // Start in normal (edit) mode so block handles are immediately visible
-      instances.push(inst)
-      setBlockHandlesInst(inst)
     }
 
     return () => {
@@ -328,32 +283,6 @@ export default function PluginsGallery() {
         <div ref={accentRef} style={{ height: '300px' }} />
       </div>
 
-      {/* Block Handles Demo */}
-      <div className="card p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-2xl">✋</span>
-          <div>
-            <h3 className="text-xl font-bold text-blue-300">Block Handles (Built-in)</h3>
-            <p className="text-slate-400 text-sm">Hover handles for selecting, copying, and deleting blocks</p>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={() => togglePreview(blockHandlesInst, blockHandlesPreview, setBlockHandlesPreview)}
-              className="text-xs px-3 py-1 rounded border border-blue-500/40 text-blue-300 hover:bg-blue-500/10 transition-colors"
-            >
-              {blockHandlesPreview ? '✏️ Edit' : '👁 Preview'}
-            </button>
-            <code className="text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-blue-200 hidden md:block">
-              blockHandles: true
-            </code>
-          </div>
-        </div>
-        <div className="mb-3 text-slate-400 text-sm">
-          ✏️ Edit mode: <strong className="text-slate-300">hover any block</strong> to see the handle icon appear on the left. Shift+Click to select, then Ctrl/Cmd+C to copy or Delete to remove.
-        </div>
-        <div ref={blockHandlesRef} style={{ height: '380px' }} />
-      </div>
-
       {/* Usage code */}
       <div className="card p-6 bg-gradient-to-r from-pink-500/10 via-fuchsia-500/5 to-amber-500/10">
         <h3 className="text-lg font-bold text-pink-200 mb-4">💡 Using Plugins</h3>
@@ -368,7 +297,6 @@ export default function PluginsGallery() {
 
 new Marzipan('#editor', {
   toolbar: true,
-  blockHandles: true,
   plugins: [
     tinyHighlightPlugin(),
     mermaidPlugin({ theme: 'dark' }),

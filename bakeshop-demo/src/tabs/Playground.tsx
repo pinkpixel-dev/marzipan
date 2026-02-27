@@ -46,7 +46,6 @@ const [editor] = new Marzipan('#editor', {
   toolbar: true,
   theme: 'cave',
   smartLists: true,
-  blockHandles: true,
   plugins: [tinyHighlightPlugin(), mermaidPlugin()],
 });
 \`\`\`
@@ -101,7 +100,6 @@ export default function Playground() {
       toolbar: true,
       showStats: true,
       smartLists: true,
-      blockHandles: true,
       theme: 'cave',
       fontSize: '15px',
       lineHeight: 1.6,
@@ -190,8 +188,6 @@ export default function Playground() {
             <li><kbd className="px-2 py-1 bg-slate-800 border border-slate-600 rounded font-mono text-sm text-slate-100">Cmd/Ctrl+B</kbd> - Toggle bold</li>
             <li><kbd className="px-2 py-1 bg-slate-800 border border-slate-600 rounded font-mono text-sm text-slate-100">Cmd/Ctrl+I</kbd> - Toggle italic</li>
             <li><kbd className="px-2 py-1 bg-slate-800 border border-slate-600 rounded font-mono text-sm text-slate-100">Cmd/Ctrl+K</kbd> - Insert link</li>
-            <li><kbd className="px-2 py-1 bg-slate-800 border border-slate-600 rounded font-mono text-sm text-slate-100">Shift+Click</kbd> - Select block (hover to see handles)</li>
-            <li><kbd className="px-2 py-1 bg-slate-800 border border-slate-600 rounded font-mono text-sm text-slate-100">Cmd/Ctrl+C</kbd> - Copy selected block</li>
             <li><kbd className="px-2 py-1 bg-slate-800 border border-slate-600 rounded font-mono text-sm text-slate-100">Tab</kbd> - Indent</li>
             <li><kbd className="px-2 py-1 bg-slate-800 border border-slate-600 rounded font-mono text-sm text-slate-100">Shift+Tab</kbd> - Outdent</li>
           </ul>
@@ -202,7 +198,6 @@ export default function Playground() {
           <ul className="space-y-2 text-slate-200">
             <li>✅ <strong>Smart Lists</strong> — Auto-continue lists on Enter</li>
             <li>✅ <strong>Live Overlay Preview</strong> — Renders markdown beneath transparent text in real-time, always on</li>
-            <li>✅ <strong>Block Handles</strong> — Click handles to select/copy/delete blocks</li>
             <li>✅ <strong>Stats Bar</strong> — Real-time character/word/line counts</li>
             <li>✅ <strong>View Modes</strong> — Normal (live overlay), Plain (raw textarea), Preview-only (read-only rendered)</li>
             <li>✅ <strong>Auto-save</strong> — Content saved to localStorage</li>

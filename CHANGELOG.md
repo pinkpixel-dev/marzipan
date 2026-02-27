@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Block Handles Plugin**: Removed the `BlockHandlesPlugin` and all related code (`blockHandles` option, `BlockHandle`/`BlockHandlesConfig` types, `docs/block-handles.md`). The feature was not functioning correctly and has been pulled pending a future redesign. Parser block metadata attributes (`data-block-id`, `data-block-type`, etc.) remain in place for future plugin use.
+
 ---
 
 ## [1.1.0] - 2025-02-25

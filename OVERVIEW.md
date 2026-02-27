@@ -148,8 +148,6 @@ actions.insertLink(textarea, {
 
 **Available Plugins:**
 
-- **Block Manipulation:**
-  - `BlockHandlesPlugin` - Interactive block handles with visual handles, context menus, and keyboard shortcuts (v1.0.9+)
 - **Tables:**
   - `tablePlugin` - Basic table support
   - `tableGridPlugin` - Interactive table grid

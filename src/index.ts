@@ -16,7 +16,6 @@ export * as actions from './actions'
 
 // Export plugins
 export { 
-  BlockHandlesPlugin,
   accentSwatchPlugin,
   accentSwatchStyles,
   imageManagerPlugin,
@@ -36,8 +35,6 @@ export {
 } from './plugins'
 
 export type { 
-  BlockHandle, 
-  BlockHandlesConfig,
   ImagePickerOptions,
   TablePluginOptions,
   TableGridPluginOptions,

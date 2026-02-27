@@ -11,7 +11,6 @@ import { generateStyles } from './styles';
 import { getTheme, mergeTheme, solar } from './themes';
 import { Toolbar } from './toolbar';
 import { LinkTooltip } from './link-tooltip';
-import { BlockHandlesPlugin } from './plugins';
 
 /**
  * Marzipan Editor Class
@@ -126,21 +125,6 @@ class Marzipan {
         });
       }
       
-      // Setup block handles plugin if enabled
-      if (this.options.blockHandles !== false) {
-        this.blockHandlesPlugin = new BlockHandlesPlugin(
-          this.textarea,
-          this.preview,
-          typeof this.options.blockHandles === 'object' ? this.options.blockHandles : {}
-        );
-        
-        // Update handle positions on scroll — listen on the textarea since it
-        // scrolls first; the preview's scrollTop is synced from handleScroll().
-        this.textarea.addEventListener('scroll', () => {
-          this.blockHandlesPlugin?.updateAllHandlePositions?.();
-        });
-      }
-
       const pluginsApplied = this._applyPlugins();
       if (pluginsApplied) {
         this.updatePreview();
@@ -196,7 +180,6 @@ class Marzipan {
         toolbar: false,
         statsFormatter: null,
         smartLists: true,  // Enable smart list continuation
-        blockHandles: true, // Enable block handles plugin
 
         // Theme overrides
         theme: null,
@@ -550,11 +533,6 @@ class Marzipan {
         }
       }
       
-      // Refresh block handles plugin if enabled
-      if (this.blockHandlesPlugin) {
-        this.blockHandlesPlugin.refresh();
-      }
-
       // Apply code block backgrounds
       this._applyCodeBlockBackgrounds();
       
@@ -1261,11 +1239,6 @@ class Marzipan {
       }
 
       this._teardownAutoResize();
-
-      if (this.blockHandlesPlugin) {
-        this.blockHandlesPlugin.destroy();
-        this.blockHandlesPlugin = null;
-      }
 
       if (this.linkTooltip) {
         this.linkTooltip.destroy();

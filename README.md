@@ -80,7 +80,6 @@ Visit `http://localhost:5173` to explore every panel, plugin, and action in a li
 
 The `src/plugins` directory publishes directly to consumers. Available helpers include:
 
-- `BlockHandlesPlugin` – interactive block manipulation with visual handles, context menus, and keyboard shortcuts.
 - `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin` – interactive table authoring.
 - `tinyHighlightPlugin` – lightweight syntax highlighting for fenced code blocks (ships `tinyHighlightStyles`).
 - `accentSwatchPlugin` – synced accent palette picker.
@@ -121,7 +120,6 @@ All guides live in `/docs`:
 - `docs/quick-start.md` – install, instantiate, and wire up actions/plugins.
 - `docs/api.md` – class API, action helpers, TypeScript signatures.
 - `docs/plugins.md` – plugin catalogue, configuration, and bundling tips.
-- `docs/block-handles.md` – Block Handles Plugin guide.
 - `docs/types.d.ts` – generated type definitions.
 
 The new [CHANGELOG](CHANGELOG.md) tracks releases and major documentation updates.
@@ -143,6 +141,34 @@ Run these from the repository root:
 | `npm run prettier`  | Format source and docs            |
 
 The Bakeshop has its own scripts inside `bakeshop-demo/` (`dev`, `build`, `preview`, `lint`, `typecheck`).
+
+## 🚀 Deployment
+
+### Docs Site → `marzipan.pinkpixel.dev`
+
+The docs are built with [VitePress](https://vitepress.dev) and deployed to **Cloudflare Pages** (project: `marzipan-docs`).
+
+```bash
+# 1. Build the VitePress site (outputs to docs-site/)
+npm run docs:build
+
+# 2. Deploy to Cloudflare Pages
+wrangler pages deploy docs-site --project-name marzipan-docs
+```
+
+### Bakeshop Demo → `bakeshop.pinkpixel.dev`
+
+The interactive playground is a Vite + React app deployed to **Cloudflare Pages** (project: `marzipan-bakeshop`).
+
+```bash
+# 1. Build the main library first
+npm run build
+
+# 2. Build and deploy the demo
+cd bakeshop-demo
+npm run build
+wrangler pages deploy dist --project-name marzipan-bakeshop
+```
 
 ## 🤝 Contributing
 

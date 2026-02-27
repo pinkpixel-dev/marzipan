@@ -1,0 +1,5 @@
+name = "marzipan-docs"
+compatibility_date = "2023-01-01"
+
+# Pages settings — points to the VitePress build output
+pages_build_output_dir = "docs-site"

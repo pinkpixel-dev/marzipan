@@ -5,9 +5,6 @@
  * Collection of plugins that extend Marzipan's functionality.
  */
 
-export { BlockHandlesPlugin } from './block-handles';
-export type { BlockHandle, BlockHandlesConfig } from './block-handles';
-
 // Accent Swatch Plugin
 export { accentSwatchPlugin, accentSwatchStyles } from './accentSwatchPlugin';
 

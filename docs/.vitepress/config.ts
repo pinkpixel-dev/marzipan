@@ -29,6 +29,7 @@ export default defineConfig({
       { text: 'Quick Start', link: '/quick-start' },
       { text: 'API', link: '/api' },
       { text: 'Plugins', link: '/plugins' },
+      { text: '🛝 Playground', link: 'https://bakeshop.pinkpixel.dev' },
       {
         text: 'v1.1.0',
         items: [
@@ -56,7 +57,6 @@ export default defineConfig({
         text: 'Plugins',
         items: [
           { text: 'Plugin Catalogue', link: '/plugins' },
-          { text: 'Block Handles', link: '/block-handles' },
         ]
       },
     ],

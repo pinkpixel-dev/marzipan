@@ -1,0 +1,221 @@
+Now I have enough information to provide a comprehensive assessment. Here's the feature-by-feature analysis:
+
+---
+
+## Marzipan Feature Wishlist Assessment
+
+### 1. Headings (Levels 1–6)
+**IMPLEMENTED** — `insertHeader()` in [actions/index.ts](src/actions/index.ts#L170) supports levels 1–6 with toggle logic. Formats defined for `header1` through `header6` in [formats.ts](src/actions/core/formats.ts#L49). Convenience toggles `toggleH1`, `toggleH2`, `toggleH3` exist. Parser in [parser.ts](src/parser.ts#L71) only renders **h1–h3** (`#{1,3}`). Missing: `toggleH4`/`toggleH5`/`toggleH6` convenience functions. Parser only highlights up to h3 visually.
+
+**Verdict: PARTIALLY** — Actions support 1–6, but parser rendering and toolbar buttons only cover 1–3.
+
+---
+
+### 2. Paragraphs and Hard Line Breaks
+**PARTIALLY** — Parser wraps lines in `<div>` blocks ([parser.ts](src/parser.ts#L541)) and uses `&nbsp;` for empty lines. There is no explicit hard line break handling (e.g., two trailing spaces → `<br>` or `\` at end of line).
+
+---
+
+### 3. Nested Blockquotes
+**PARTIALLY** — `toggleQuote` action exists ([actions/index.ts](src/actions/index.ts#L100)), and parser has `parseBlockquote` ([parser.ts](src/parser.ts#L97)). However, the blockquote regex only matches a single `>` level: `/^&gt; (.+)$/`. No support for nested `>>` or `> > >` blockquotes.
+
+---
+
+### 4. Lists (Ordered/Unordered) with Smart Continuation
+**IMPLEMENTED** — `toggleBulletList` and `toggleNumberedList` in [actions/index.ts](src/actions/index.ts#L87). Full smart list continuation via `handleSmartListContinuation()` in [marzipan.ts](src/marzipan.ts#L694) with `getListContext`, `createNewListItem`, `renumberLists` in parser. Enter key auto-continues bullets/numbers/checkboxes; empty item exits list. Tab indents, Shift+Tab outdents (generic 2-space indent/outdent, not list-aware marker shifting). `smartLists` is enabled by default.
+
+**Verdict: IMPLEMENTED** — with minor note that Shift+Tab does generic indent removal, not list-specific level change.
+
+---
+
+### 5. Task Lists (Checkboxes)
+**IMPLEMENTED** — `toggleTaskList` action with format `- [ ] ` defined in [formats.ts](src/actions/core/formats.ts#L40). Smart continuation supports checkboxes (detected by `LIST_PATTERNS.checkbox` in [parser.ts](src/parser.ts#L897)). Toolbar button and keyboard shortcut handler included.
+
+Missing: Interactive checkbox toggling by clicking in the preview overlay is not implemented.
+
+**Verdict: PARTIALLY** — Insertion/continuation works, but checkboxes are not interactive/clickable.
+
+---
+
+### 6. Fenced Code Blocks with Syntax Highlighting + Copy Button
+**PARTIALLY** — Code blocks are parsed and rendered by the parser ([parser.ts](src/parser.ts#L133) and post-processing consolidates them into `<pre><code>` blocks). `tinyHighlightPlugin` ([tinyHighlight.ts](src/plugins/tinyHighlight.ts)) provides regex-based syntax highlighting for JS/TS/JSON/CSS/HTML/Bash/INI/Markdown. **No copy button** is implemented anywhere in the codebase.
+
+---
+
+### 7. Tables with UI
+**IMPLEMENTED** — Three table plugins: `tablePlugin` (prompt-based), `tableGridPlugin` (Notion-style grid popover), and `tableGeneratorPlugin` (simple prompt). Parser has full table rendering with thead/tbody in `postProcessHTML` ([parser.ts](src/parser.ts#L607)). Missing: Tab-to-next-cell navigation and auto-alignment of ASCII pipes; no floating table toolbar.
+
+**Verdict: PARTIALLY** — Table insertion and rendering work well, but advanced editing (tab-to-cell, auto-align, floating toolbar) is missing.
+
+---
+
+### 8. Auto-Pairing & Wrap-Selection
+**NOT IMPLEMENTED** — No auto-pairing logic for brackets, backticks, asterisks, or quotes found in shortcuts.ts, marzipan.ts, or any other file. No wrap-selection behavior (select text → press `[` → wraps as `[text]`).
+
+---
+
+### 9. Math Blocks (LaTeX)
+**NOT IMPLEMENTED** — No LaTeX, MathJax, or KaTeX support found in parser.ts or any plugin. No `$...$` or `$$...$$` detection.
+
+---
+
+### 10. Horizontal Rules
+**IMPLEMENTED** — `insertHorizontalRule` action in [actions/index.ts](src/actions/index.ts#L143). Parser has `parseHorizontalRule` ([parser.ts](src/parser.ts#L81)) supporting `---`, `***`, and `___` patterns.
+
+---
+
+### 11. YAML Front Matter
+**NOT IMPLEMENTED** — No YAML front matter detection or handling in parser.ts.
+
+---
+
+### 12. TOC Generation
+**NOT IMPLEMENTED** — No `[TOC]` detection or table-of-contents generation in the codebase.
+
+---
+
+### 13. Footnotes
+**NOT IMPLEMENTED** — No footnote syntax (`[^1]`, `[^note]`) handling in parser.ts. No hover previews.
+
+---
+
+### 14. Callouts
+**NOT IMPLEMENTED** — No callout/admonition syntax (e.g., `> [!NOTE]`) in parser.ts.
+
+---
+
+### 15. Inline Elements
+
+| Element | Status | Notes |
+|---------|--------|-------|
+| **Bold** | IMPLEMENTED | `toggleBold` + parser `parseBold` — `**` and `__` |
+| **Italic** | IMPLEMENTED | `toggleItalic` + parser `parseItalic` — `*` and `_` |
+| **Strikethrough** | IMPLEMENTED | `toggleStrikethrough` + parser `parseStrikethrough` — `~~` and `~` |
+| **Underline** | NOT IMPLEMENTED | No underline support |
+| **Inline Code** | IMPLEMENTED | `toggleCode` + parser `parseInlineCode` |
+| **Inline Math** | NOT IMPLEMENTED | No `$...$` support |
+| **Highlights (`==text==`)** | NOT IMPLEMENTED | No highlight parsing, though the actions system supports the format pattern |
+| **Links** | IMPLEMENTED | `insertLink` action + parser `parseLinks` with URL sanitization + link tooltip |
+| **Images** | IMPLEMENTED | Parser `parseImages` + `imagePickerPlugin` + `imageManagerPlugin` (upload, drag-drop, paste, recents) |
+
+---
+
+### 16. Emoji Auto-complete
+**NOT IMPLEMENTED** — No emoji feature found anywhere in the codebase.
+
+---
+
+### 17. Subscript/Superscript
+**NOT IMPLEMENTED** — No subscript/superscript parsing in parser.ts.
+
+---
+
+### 18. Live Preview
+**IMPLEMENTED** — The core architecture is a textarea with an aligned HTML overlay ([marzipan.ts](src/marzipan.ts#L560)). Preview updates on every input via `updatePreview()`. Active line can optionally show raw markdown (`showActiveLineRaw`). Three view modes: Normal (overlay), Plain (text-only), Preview (read-only rendered). Implemented via toolbar dropdown in [toolbar.ts](src/toolbar.ts#L320).
+
+---
+
+### 19. Source Code Mode
+**IMPLEMENTED** — `showPlainTextarea(true)` in [marzipan.ts](src/marzipan.ts#L1193) hides the overlay and shows the raw textarea. Toggled via toolbar or programmatically. However, there's no "syntax highlighting" of the raw source in plain text mode — it's just a bare textarea.
+
+**Verdict: PARTIALLY** — Plain mode exists but lacks syntax highlighting of the raw markdown source.
+
+---
+
+### 20. Focus Mode
+**NOT IMPLEMENTED** — No focus mode, line dimming, or background dimming found in the codebase.
+
+---
+
+### 21. Typewriter Mode
+**NOT IMPLEMENTED** — No auto-scrolling or vertical cursor centering found.
+
+---
+
+### 22. Status Bar
+**IMPLEMENTED** — `showStats` option creates a stats bar ([marzipan.ts](src/marzipan.ts#L489)) displaying characters, words, lines, current line, and column. Supports a custom `statsFormatter` callback. Can be toggled programmatically via `showStats()`.
+
+Missing: Reading time, encoding, line endings not shown (only the basic stats).
+
+---
+
+### 23. Context Menu
+**NOT IMPLEMENTED** — No right-click context menu for markdown actions in the codebase. The only `oncontextmenu` handler is in the accent swatch plugin for removing swatches.
+
+---
+
+### 24. Mermaid
+**IMPLEMENTED** — Two plugins: `mermaidPlugin` ([mermaidPlugin.ts](src/plugins/mermaidPlugin.ts)) dynamically imports mermaid and renders ` ```mermaid ` blocks; `mermaidExternalPlugin` ([mermaidExternal.ts](src/plugins/mermaidExternal.ts)) uses `window.mermaid` from CDN. Both hook into `afterPreviewRender`.
+
+---
+
+### 25. Theming
+**PARTIALLY** — Two themes defined: `solar` (light) and `cave` (dark) in [themes.ts](src/themes.ts), with `light`/`dark` as aliases. Full CSS variable system. `Marzipan.setTheme()` applies globally; per-instance themes supported. `mergeTheme()` supports custom color overrides. `accentSwatchPlugin` allows color picking.
+
+Missing: No Dracula, Catppuccin, Tokyo Night, or other community themes. Only 2 themes exist.
+
+---
+
+### 26. Custom Actions
+**IMPLEMENTED** — `applyCustomFormat()` in [actions/index.ts](src/actions/index.ts#L257) accepts any `FormatStyleOptions` object and applies it. Users can define custom prefix/suffix patterns and apply them programmatically.
+
+---
+
+### 27. Custom Keybindings
+**NOT IMPLEMENTED** — Keybindings in [shortcuts.ts](src/shortcuts.ts) are hardcoded (`b`→bold, `i`→italic, `k`→link, `Ctrl+Shift+7`→numberedList, `Ctrl+Shift+8`→bulletList). No JSON config, no user-customizable keybinding system.
+
+---
+
+### 28. Toolbar
+**IMPLEMENTED** — Full toolbar system in [toolbar.ts](src/toolbar.ts) with preset buttons and customization via `toolbar.buttons` option. Supports separators, custom button configs with icons/titles/actions. View mode dropdown with Normal/Plain/Preview modes. Active state indicators.
+
+Missing: No way to add fully custom action buttons with user-chosen icons from the toolbar config alone (must create button programmatically via plugin).
+
+**Verdict: PARTIALLY** — Solid preset system but limited custom button support without Plugin API involvement.
+
+---
+
+### 29. Plugin System
+**IMPLEMENTED** — Robust plugin architecture: plugins are functions that receive the editor instance, with access to `hooks.afterPreviewRender`, DOM, textarea, toolbar, and all internal state. Nine plugins ship: `tinyHighlightPlugin`, `mermaidPlugin`, `mermaidExternalPlugin`, `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin`, `imagePickerPlugin`, `imageManagerPlugin`, `accentSwatchPlugin`. All exported from the library.
+
+Missing: No formal lifecycle hooks beyond `afterPreviewRender` (no `beforeParse`, `onDestroy`, `onInit` hooks). No event bus or plugin-to-plugin communication channel.
+
+**Verdict: PARTIALLY** — Working and useful but not "expose EVERYTHING via API" per the wishlist ambition.
+
+---
+
+## Summary Table
+
+| # | Feature | Status |
+|---|---------|--------|
+| 1 | Headings 1–6 | **PARTIALLY** (actions 1–6, parser/toolbar only 1–3) |
+| 2 | Paragraphs / Hard Line Breaks | **PARTIALLY** (paragraphs yes, hard breaks no) |
+| 3 | Nested Blockquotes | **PARTIALLY** (single level only) |
+| 4 | Lists + Smart Continuation | **IMPLEMENTED** |
+| 5 | Task Lists (Checkboxes) | **PARTIALLY** (not interactive/clickable) |
+| 6 | Code Blocks + Highlighting + Copy | **PARTIALLY** (no copy button) |
+| 7 | Tables with UI | **PARTIALLY** (no tab-to-cell or auto-align) |
+| 8 | Auto-Pairing & Wrap-Selection | **NOT IMPLEMENTED** |
+| 9 | Math Blocks (LaTeX) | **NOT IMPLEMENTED** |
+| 10 | Horizontal Rules | **IMPLEMENTED** |
+| 11 | YAML Front Matter | **NOT IMPLEMENTED** |
+| 12 | TOC Generation | **NOT IMPLEMENTED** |
+| 13 | Footnotes | **NOT IMPLEMENTED** |
+| 14 | Callouts | **NOT IMPLEMENTED** |
+| 15 | Inline Elements | **PARTIALLY** (missing underline, math, highlights) |
+| 16 | Emoji Auto-complete | **NOT IMPLEMENTED** |
+| 17 | Subscript / Superscript | **NOT IMPLEMENTED** |
+| 18 | Live Preview | **IMPLEMENTED** |
+| 19 | Source Code Mode | **PARTIALLY** (no source syntax highlighting) |
+| 20 | Focus Mode | **NOT IMPLEMENTED** |
+| 21 | Typewriter Mode | **NOT IMPLEMENTED** |
+| 22 | Status Bar | **IMPLEMENTED** |
+| 23 | Context Menu | **NOT IMPLEMENTED** |
+| 24 | Mermaid | **IMPLEMENTED** |
+| 25 | Theming | **PARTIALLY** (only 2 themes, need more) |
+| 26 | Custom Actions | **IMPLEMENTED** |
+| 27 | Custom Keybindings | **NOT IMPLEMENTED** |
+| 28 | Toolbar | **PARTIALLY** (limited custom buttons) |
+| 29 | Plugin System | **PARTIALLY** (limited hooks/API surface) |
+
+**Totals:** 6 IMPLEMENTED, 12 PARTIALLY, 11 NOT IMPLEMENTED.

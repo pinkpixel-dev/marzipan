@@ -5,33 +5,38 @@ Marzipan ships first-party plugins from the `src/plugins` directory. Each plugin
 ## Using a plugin
 
 ### Individual plugin imports (recommended)
-```ts
-import { Marzipan } from '@pinkpixel/marzipan';
-import { tablePlugin } from '@pinkpixel/marzipan/plugins/tablePlugin';
 
-new Marzipan('#editor', {
+```ts
+import { Marzipan } from "@pinkpixel/marzipan";
+import { tablePlugin } from "@pinkpixel/marzipan/plugins/tablePlugin";
+
+new Marzipan("#editor", {
   toolbar: true,
-  plugins: [tablePlugin({
-    defaultColumns: 3,
-    defaultRows: 4,
-  })],
+  plugins: [
+    tablePlugin({
+      defaultColumns: 3,
+      defaultRows: 4,
+    }),
+  ],
 });
 ```
 
 ### Main package imports (convenience)
-```ts
-import { Marzipan, tablePlugin, mermaidPlugin } from '@pinkpixel/marzipan';
 
-new Marzipan('#editor', {
+```ts
+import { Marzipan, tablePlugin, mermaidPlugin } from "@pinkpixel/marzipan";
+
+new Marzipan("#editor", {
   plugins: [tablePlugin(), mermaidPlugin()],
 });
 ```
 
 ### Namespace imports (all plugins)
-```ts
-import { Marzipan, plugins } from '@pinkpixel/marzipan';
 
-new Marzipan('#editor', {
+```ts
+import { Marzipan, plugins } from "@pinkpixel/marzipan";
+
+new Marzipan("#editor", {
   plugins: [
     plugins.tablePlugin(),
     plugins.mermaidPlugin(),
@@ -44,18 +49,17 @@ Every factory returns an object that Marzipan consumes internally. You can mix a
 
 ## Available plugins
 
-| Plugin | Import Path | Description |
-|--------|-------------|-------------|
-| `accentSwatchPlugin` | `@pinkpixel/marzipan/plugins/accentSwatchPlugin` | Adds a palette picker for accent colours and syncs with the toolbar + stats bar. |
-| `BlockHandlesPlugin` | `@pinkpixel/marzipan/plugins/block-handles` | Interactive block manipulation with visual handles, context menus, and keyboard shortcuts. See [Block Handles](./block-handles.md) for full documentation. |
-| `imageManagerPlugin` | `@pinkpixel/marzipan/plugins/imageManagerPlugin` | Dropzone and gallery UI for inserting images and managing uploads. |
-| `imagePickerPlugin` | `@pinkpixel/marzipan/plugins/imagePickerPlugin` | Toolbar button for inserting images via URL or optional uploader callback. |
-| `mermaidPlugin` | `@pinkpixel/marzipan/plugins/mermaidPlugin` | Lazy-loads Mermaid from npm/ESM and renders diagrams inline. |
-| `mermaidExternalPlugin` | `@pinkpixel/marzipan/plugins/mermaidExternal` | Mermaid integration that targets a CDN script tag—perfect for sandboxed playgrounds. |
-| `tablePlugin` | `@pinkpixel/marzipan/plugins/tablePlugin` | Toolbar-driven table generator with inline editing controls. |
-| `tableGridPlugin` | `@pinkpixel/marzipan/plugins/tableGridPlugin` | Grid overlay for rapid column/row creation (exports `tableGridStyles`). |
-| `tableGeneratorPlugin` | `@pinkpixel/marzipan/plugins/tableGenerator` | Quick GFM table inserter with prompt-driven sizing. |
-| `tinyHighlightPlugin` | `@pinkpixel/marzipan/plugins/tinyHighlight` | Zero-runtime syntax highlighting for fenced code blocks (`tinyHighlightStyles` helper available). |
+| Plugin                  | Import Path                                      | Description                                                                                       |
+| ----------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `accentSwatchPlugin`    | `@pinkpixel/marzipan/plugins/accentSwatchPlugin` | Adds a palette picker for accent colours and syncs with the toolbar + stats bar.                  |
+| `imageManagerPlugin`    | `@pinkpixel/marzipan/plugins/imageManagerPlugin` | Dropzone and gallery UI for inserting images and managing uploads.                                |
+| `imagePickerPlugin`     | `@pinkpixel/marzipan/plugins/imagePickerPlugin`  | Toolbar button for inserting images via URL or optional uploader callback.                        |
+| `mermaidPlugin`         | `@pinkpixel/marzipan/plugins/mermaidPlugin`      | Lazy-loads Mermaid from npm/ESM and renders diagrams inline.                                      |
+| `mermaidExternalPlugin` | `@pinkpixel/marzipan/plugins/mermaidExternal`    | Mermaid integration that targets a CDN script tag—perfect for sandboxed playgrounds.              |
+| `tablePlugin`           | `@pinkpixel/marzipan/plugins/tablePlugin`        | Toolbar-driven table generator with inline editing controls.                                      |
+| `tableGridPlugin`       | `@pinkpixel/marzipan/plugins/tableGridPlugin`    | Grid overlay for rapid column/row creation (exports `tableGridStyles`).                           |
+| `tableGeneratorPlugin`  | `@pinkpixel/marzipan/plugins/tableGenerator`     | Quick GFM table inserter with prompt-driven sizing.                                               |
+| `tinyHighlightPlugin`   | `@pinkpixel/marzipan/plugins/tinyHighlight`      | Zero-runtime syntax highlighting for fenced code blocks (`tinyHighlightStyles` helper available). |
 
 > 📝 The plugin names map 1:1 to files in `src/plugins`. Inspect those files for advanced configuration options.
 

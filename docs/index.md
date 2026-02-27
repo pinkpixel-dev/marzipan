@@ -16,6 +16,9 @@ hero:
       text: API Reference
       link: /api
     - theme: alt
+      text: 🛝 Playground
+      link: https://bakeshop.pinkpixel.dev
+    - theme: alt
       text: View on GitHub
       link: https://github.com/pinkpixel-dev/marzipan
 
@@ -49,11 +52,11 @@ npm install @pinkpixel/marzipan
 ## Create Your First Editor
 
 ```ts
-import { Marzipan } from '@pinkpixel/marzipan';
+import { Marzipan } from "@pinkpixel/marzipan";
 
-const [editor] = new Marzipan('#my-textarea', {
+const [editor] = new Marzipan("#my-textarea", {
   toolbar: true,
-  theme: 'cave',
+  theme: "cave",
   smartLists: true,
 });
 ```
@@ -61,35 +64,35 @@ const [editor] = new Marzipan('#my-textarea', {
 ## Use the Bundled Actions
 
 ```ts
-import { actions } from '@pinkpixel/marzipan';
+import { actions } from "@pinkpixel/marzipan";
 
-const textarea = document.querySelector('textarea')!;
+const textarea = document.querySelector("textarea")!;
 actions.toggleBold(textarea);
 ```
 
 ## Add a Plugin
 
 ```ts
-import { tablePlugin } from '@pinkpixel/marzipan/plugins/tablePlugin';
+import { tablePlugin } from "@pinkpixel/marzipan/plugins/tablePlugin";
 
-new Marzipan('#editor', {
+new Marzipan("#editor", {
   plugins: [tablePlugin()],
 });
 ```
 
 ## Bundled Plugins
 
-| Plugin | Description |
-|--------|-------------|
-| `tablePlugin` | Toolbar-driven table generator with inline editing controls |
-| `tableGridPlugin` | Grid overlay for rapid column/row creation |
-| `tableGeneratorPlugin` | Quick GFM table inserter with prompt-driven sizing |
-| `tinyHighlightPlugin` | Zero-runtime syntax highlighting for fenced code blocks |
-| `accentSwatchPlugin` | Synced accent palette picker |
-| `imageManagerPlugin` | Dropzone and gallery UI for inserting images and managing uploads |
-| `imagePickerPlugin` | Toolbar button for inserting images via URL or optional uploader callback |
-| `mermaidPlugin` | Diagram rendering via ESM import |
-| `mermaidExternalPlugin` | Mermaid integration via CDN script tag |
-| `BlockHandlesPlugin` | Interactive block manipulation with visual handles, context menus, and keyboard shortcuts |
+| Plugin                  | Description                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `tablePlugin`           | Toolbar-driven table generator with inline editing controls                               |
+| `tableGridPlugin`       | Grid overlay for rapid column/row creation                                                |
+| `tableGeneratorPlugin`  | Quick GFM table inserter with prompt-driven sizing                                        |
+| `tinyHighlightPlugin`   | Zero-runtime syntax highlighting for fenced code blocks                                   |
+| `accentSwatchPlugin`    | Synced accent palette picker                                                              |
+| `imageManagerPlugin`    | Dropzone and gallery UI for inserting images and managing uploads                         |
+| `imagePickerPlugin`     | Toolbar button for inserting images via URL or optional uploader callback                 |
+| `mermaidPlugin`         | Diagram rendering via ESM import                                                          |
+| `mermaidExternalPlugin` | Mermaid integration via CDN script tag                                                    |
+| `BlockHandlesPlugin`    | Interactive block manipulation with visual handles, context menus, and keyboard shortcuts |
 
 See the full [Plugin Catalogue](/plugins) for configuration details.

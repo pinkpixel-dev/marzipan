@@ -198,8 +198,7 @@ export interface Options {
   toolbar?: boolean | ToolbarConfig;
   /** Enable smart list continuation */
   smartLists?: boolean;
-  /** Enable block handles for selecting/copying/deleting blocks */
-  blockHandles?: boolean;
+
   /** Custom formatter for statistics display */
   statsFormatter?: (stats: Stats) => string;
 

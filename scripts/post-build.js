@@ -180,14 +180,6 @@ export interface TableGridPluginOptions {
   title?: string;
 }
 
-export interface BlockHandlesConfig {
-  colors?: {
-    hover?: string;
-    selected?: string;
-    handle?: string;
-  };
-}
-
 export interface ImagePickerOptions {
   accept?: string;
   multiple?: boolean;
@@ -215,9 +207,6 @@ export declare function accentSwatchPlugin(opts?: {
 export declare const accentSwatchStyles: string;
 export declare function imageManagerPlugin(opts?: Record<string, any>): MarzipanPlugin;
 export declare function imagePickerPlugin(opts?: ImagePickerOptions): MarzipanPlugin;
-export declare class BlockHandlesPlugin {
-  constructor(editor: MarzipanInstance, config?: BlockHandlesConfig);
-}
 `;
 
 writeFileSync(
