@@ -233,19 +233,34 @@ export function accentSwatchPlugin(opts?: {
 
 // Minimal CSS you can inject once in your app
 export const accentSwatchStyles = `
-.mz-accent-pop { width: 280px; max-width: calc(100vw - 24px); }
-.mz-accent-grid { display: grid; grid-template-columns: repeat(8, 28px); gap: 8px; padding: 6px; }
+.mz-accent-pop {
+  width: 280px; max-width: calc(100vw - 24px);
+  background: var(--mz-pop-bg, #1a1e24);
+  border: 1px solid var(--mz-pop-bd, #333);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.35);
+  z-index: 10000;
+  padding: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  color: var(--mz-pop-fg, #e7e7e7);
+}
+.mz-accent-grid { display: grid; grid-template-columns: repeat(auto-fill, 28px); gap: 8px; padding: 6px; }
 .mz-swatch {
   width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--mz-pop-bd, #333);
   background: var(--sw, #777); cursor: pointer; box-shadow: inset 0 0 0 2px rgba(0,0,0,.2);
+  transition: transform .1s;
 }
+.mz-swatch:hover { transform: scale(1.15); }
 .mz-swatch.sel { outline: 2px solid var(--mz-accent, #8b5cf6); outline-offset: 2px; }
 .mz-swatch-add { background: linear-gradient(135deg, #222, #2b2f36); color: #e7e7e7;
-  display:flex; align-items:center; justify-content:center; font-weight:700; }
+  display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; }
 .mz-accent-row { display:flex; gap:8px; padding: 6px; }
 .mz-accent-row button {
   flex:1; padding:6px 8px; border-radius:8px; border:1px solid var(--mz-bd, #2b2f36);
   background: var(--mz-btn-bg, #1a1e24); color: var(--mz-btn-fg, #e7e7e7); cursor:pointer;
+  font-size: 13px; transition: background .15s;
 }
+.mz-accent-row button:hover { background: var(--mz-btn-hover, #2b2f36); }
 .mz-accent-hint { font-size: 12px; opacity: .7; padding: 0 6px 6px; }
 `;

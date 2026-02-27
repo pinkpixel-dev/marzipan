@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.6/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.1] - 2025-02-27
+
+### Fixed
+
+- **tinyHighlightPlugin**: Rewrote the `applyRules` tokenizer to fix double-escaping bug. Regex patterns now run against raw source code instead of pre-escaped HTML, so strings, comments, HTML tags, and all other token types highlight correctly. Overlapping matches are properly filtered.
+- **accentSwatchPlugin**: Added missing base styles for the color-picker popover (`background`, `border`, `border-radius`, `box-shadow`, `z-index`, `padding`, `font-family`, `color`). The popover was rendering as an invisible transparent element.
 
 ### Removed
 
@@ -116,7 +121,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Live overlay preview, theming system, toolbar, keyboard shortcuts, stats panel, and plugin foundation.
 - TypeScript declarations, documentation set, and contribution guide.
 
-[Unreleased]: https://github.com/pinkpixel-dev/marzipan/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/pinkpixel-dev/marzipan/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/pinkpixel-dev/marzipan/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/pinkpixel-dev/marzipan/compare/v1.0.9...v1.1.0
 [1.0.9]: https://github.com/pinkpixel-dev/marzipan/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/pinkpixel-dev/marzipan/compare/v1.0.7...v1.0.8

@@ -13,12 +13,43 @@ function escHtml(s: string) {
 }
 
 function applyRules(code: string, rules: Rule[]) {
-  // Protect code by escaping, then re-inject spans via token placeholders
-  let html = escHtml(code);
-  // Run longer-span rules first (comments/strings), then keywords/numbers.
+  // Collect all matches from raw (unescaped) source
+  type Match = { start: number; end: number; cls: string };
+  const matches: Match[] = [];
+
   for (const { pattern, cls } of rules) {
-    html = html.replace(pattern, (m) => `<span class="tok ${cls}">${escHtml(m)}</span>`);
+    const re = new RegExp(pattern.source, pattern.flags);
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(code)) !== null) {
+      matches.push({ start: m.index, end: m.index + m[0].length, cls });
+      if (!re.global) break;
+      if (m[0].length === 0) { re.lastIndex++; }
+    }
   }
+
+  // Sort by position; longer matches first for ties at same start
+  matches.sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start));
+
+  // Filter overlapping: earlier/longer match wins
+  const kept: Match[] = [];
+  let cursor = 0;
+  for (const m of matches) {
+    if (m.start >= cursor) {
+      kept.push(m);
+      cursor = m.end;
+    }
+  }
+
+  // Build HTML: escape plain text, wrap matched segments in spans
+  let html = '';
+  let pos = 0;
+  for (const m of kept) {
+    if (m.start > pos) html += escHtml(code.slice(pos, m.start));
+    html += `<span class="tok ${m.cls}">${escHtml(code.slice(m.start, m.end))}</span>`;
+    pos = m.end;
+  }
+  if (pos < code.length) html += escHtml(code.slice(pos));
+
   return html;
 }
 
