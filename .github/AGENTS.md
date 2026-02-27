@@ -80,3 +80,68 @@ You are allowed to be proactive, but only when the user asks you to do something
 - Always provide modern, elegant, and stylized solutions.
 - Avoid basic or outdated implementations, even for simple tasks.
 - Ensure code, design, and UI/UX examples reflect contemporary best practices and thoughtful details
+
+---
+
+## Marzipan Project
+
+**Marzipan** (`@pinkpixel/marzipan`) is a **framework-agnostic, zero-dependency TypeScript markdown editor library** that renders a perfectly aligned HTML overlay over a standard `<textarea>`. Ships as ESM only, targeting ES2020+ browsers.
+
+### Build & Test Commands
+
+**Library root** (`/`):
+
+```sh
+npm run build       # tsc && vite build && node scripts/post-build.js
+npm run dev         # vite build --watch
+npm run typecheck   # tsc --noEmit
+npm run lint        # eslint .
+npm run prettier    # prettier --write .
+npm run docs:dev    # vitepress dev docs
+```
+
+> No test framework is configured — there are no unit tests.
+
+**Bakeshop demo** (`bakeshop-demo/`):
+
+```sh
+npm run dev         # Vite + React 18 dev server at localhost:5173
+npm run build       # tsc && vite build
+npm run lint        # eslint (zero warnings)
+npm run typecheck   # tsc --noEmit
+```
+
+### Architecture
+
+| Component       | Location          | Notes                                                              |
+| --------------- | ----------------- | ------------------------------------------------------------------ |
+| Core class      | `src/marzipan.ts` | Uses `// @ts-nocheck`; hand-authored types in `src/marzipan.d.ts`  |
+| Markdown parser | `src/parser.ts`   | `// @ts-nocheck`; char-aligned overlay rendering                   |
+| Actions system  | `src/actions/`    | Zero dependencies; `FORMATS` registry in `core/formats.ts`         |
+| Plugin system   | `src/plugins/`    | Each plugin is a factory fn; each file is its own Vite entry point |
+| Themes          | `src/themes.ts`   | `solar` (light) + `cave` (dark); ~30 CSS variable palette          |
+| Public entry    | `src/index.ts`    | Barrel re-exporting all public symbols + types                     |
+
+### Key Conventions
+
+1. **`// @ts-nocheck` on core files** — `marzipan.ts`, `parser.ts`, `link-tooltip.ts`, and `plugins/index.ts` all opt out of TS checking. The public API is defined in the hand-authored `src/marzipan.d.ts`. **Do not remove these directives.**
+
+2. **Constructor returns an array** — `new Marzipan(selector, opts)` always returns an array of instances. Consumers destructure: `const [editor] = new Marzipan('#my-textarea', opts)`. This is intentional—do not change.
+
+3. **Dual `.d.ts` generation** — `tsc` runs first (emits `.d.ts` into `dist/`), then `vite build` bundles JS (with `emptyOutDir: false` so `.d.ts` are not wiped), then `scripts/post-build.js` copies `src/marzipan.d.ts` → `dist/` and writes a custom `dist/index.d.ts`. Never change the build order.
+
+4. **Plugin entry points** — `vite.config.ts` auto-discovers all `.ts` files in `src/plugins/` and registers each as a separate entry. Adding a new plugin file automatically makes it available at `@pinkpixel/marzipan/plugins/<name>`.
+
+5. **ESLint flat config** — project uses ESLint 9 flat config (`eslint.config.js` with `defineConfig`). Do not use legacy `.eslintrc.*` patterns.
+
+6. **`satisfies` operator** — modern TS 4.9+ `satisfies` pattern is used in actions for shape validation without widening. Follow this pattern in new actions.
+
+7. **Bakeshop demo** depends on `"@pinkpixel/marzipan": "file:../"`. Run `npm install` in `bakeshop-demo/` after library changes to update the local link.
+
+### Key Files to Know
+
+- [`src/marzipan.d.ts`](../src/marzipan.d.ts) — hand-maintained public type declarations (source of truth for the API)
+- [`src/actions/core/formats.ts`](../src/actions/core/formats.ts) — `FORMATS` registry (add format descriptors here)
+- [`vite.config.ts`](../vite.config.ts) — auto-discovers plugin entry points
+- [`scripts/post-build.js`](../scripts/post-build.js) — post-build `.d.ts` copy + `index.d.ts` generation
+- [`docs/api.md`](../docs/api.md) — primary API reference documentation
