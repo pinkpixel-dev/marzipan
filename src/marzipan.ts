@@ -134,8 +134,9 @@ class Marzipan {
           typeof this.options.blockHandles === 'object' ? this.options.blockHandles : {}
         );
         
-        // Update handle positions on scroll
-        this.preview.addEventListener('scroll', () => {
+        // Update handle positions on scroll — listen on the textarea since it
+        // scrolls first; the preview's scrollTop is synced from handleScroll().
+        this.textarea.addEventListener('scroll', () => {
           this.blockHandlesPlugin?.updateAllHandlePositions?.();
         });
       }

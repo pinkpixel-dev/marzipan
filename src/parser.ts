@@ -511,14 +511,15 @@ export class MarkdownParser {
       return codeBlock.replace('<div', `<div${blockAttrs}`);
     }
     
-    // Detect block type from HTML patterns
-    if (html.match(/^<h[1-6]/)) {
+    // Detect block type from the raw line text (before HTML parsing transforms it)
+    const trimmedLine = line.trim();
+    if (/^#{1,6}\s/.test(trimmedLine)) {
       blockType = 'heading';
-    } else if (html.includes('class="blockquote"')) {
+    } else if (/^>/.test(trimmedLine)) {
       blockType = 'quote';
-    } else if (html.includes('class="bullet-list"')) {
+    } else if (/^[-*+]\s/.test(trimmedLine)) {
       blockType = 'list-item';
-    } else if (html.includes('class="ordered-list"')) {
+    } else if (/^\d+\.\s/.test(trimmedLine)) {
       blockType = 'list-item';
     }
 

@@ -39,13 +39,15 @@ export class BlockHandlesPlugin {
   private config: Required<BlockHandlesConfig>;
   private blocks: Map<string, BlockHandle>;
   private selectedBlockId: string | null;
+  private activeBlockId: string | null;
   private handleContainer: HTMLElement | null;
 
   // Stored bound handlers for proper cleanup
   private _boundMouseMove: (e: MouseEvent) => void;
-  private _boundMouseLeave: () => void;
+  private _boundMouseLeave: (e: MouseEvent) => void;
   private _boundClick: (e: MouseEvent) => void;
   private _boundKeyDown: (e: KeyboardEvent) => void;
+  private _boundCursorUpdate: () => void;
 
   constructor(editor: HTMLTextAreaElement, preview: HTMLElement, config: BlockHandlesConfig = {}) {
     this.editor = editor;
@@ -63,6 +65,7 @@ export class BlockHandlesPlugin {
     };
     this.blocks = new Map();
     this.selectedBlockId = null;
+    this.activeBlockId = null;
     this.handleContainer = null;
 
     // Bind handlers once for consistent add/remove
@@ -70,6 +73,7 @@ export class BlockHandlesPlugin {
     this._boundMouseLeave = this.handleMouseLeave.bind(this);
     this._boundClick = this.handleClick.bind(this);
     this._boundKeyDown = this.handleKeyDown.bind(this);
+    this._boundCursorUpdate = this.updateActiveBlock.bind(this);
 
     this.initialize();
   }
@@ -133,6 +137,11 @@ export class BlockHandlesPlugin {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', this._boundKeyDown);
+
+    // Cursor tracking for Notion-like active line handles
+    this.editor.addEventListener('input', this._boundCursorUpdate);
+    this.editor.addEventListener('mouseup', this._boundCursorUpdate);
+    this.editor.addEventListener('keyup', this._boundCursorUpdate);
   }
 
   /**
@@ -170,6 +179,10 @@ export class BlockHandlesPlugin {
         handleElement: handle,
       });
     });
+
+    // Now that all blocks are in the map, set their positions.
+    // (updateHandlePosition looks up blocks by id, so it must run after blocks.set)
+    this.updateAllHandlePositions();
   }
 
   /**
@@ -201,21 +214,32 @@ export class BlockHandlesPlugin {
     // Add icon based on block type
     handle.innerHTML = this.getHandleIcon(blockType);
 
-    // Handle click events
+    // Handle click — select block and show action menu
     handle.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       this.selectBlock(blockId);
+      this.showContextMenu(blockId, e);
     });
 
-    // Show context menu on right click
+    // Show context menu on right click too
     handle.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       e.stopPropagation();
       this.showContextMenu(blockId, e);
     });
 
+    // When mouse leaves the handle, hide it (unless going back to editor)
+    handle.addEventListener('mouseleave', (e: MouseEvent) => {
+      const related = e.relatedTarget as HTMLElement | null;
+      if (related === this.editor || related?.closest?.('.mz-block-handle') || related?.closest?.('.mz-block-handles')) {
+        return;
+      }
+      this.hideAllHandles();
+      this.unhighlightAll(true);
+    });
+
     this.handleContainer?.appendChild(handle);
-    this.updateHandlePosition(blockId);
 
     return handle;
   }
@@ -311,9 +335,15 @@ export class BlockHandlesPlugin {
   }
 
   /**
-   * Handle mouse leave event
+   * Handle mouse leave event.
+   * Checks relatedTarget so handles don't disappear when mouse moves to a handle.
    */
-  private handleMouseLeave(): void {
+  private handleMouseLeave(e: MouseEvent): void {
+    const related = e.relatedTarget as HTMLElement | null;
+    // Don't hide handles if mouse moved to a block handle element
+    if (related?.closest?.('.mz-block-handle') || related?.closest?.('.mz-block-handles')) {
+      return;
+    }
     this.hideAllHandles();
     this.unhighlightAll(true);
   }
@@ -372,6 +402,43 @@ export class BlockHandlesPlugin {
   }
 
   /**
+   * Update the active block handle based on the cursor position in the textarea.
+   * Shows the handle for the block containing the current editing line (Notion-like behavior).
+   */
+  private updateActiveBlock(): void {
+    const cursorPos = this.editor.selectionStart;
+    const text = this.editor.value.substring(0, cursorPos);
+    const lineIndex = text.split('\n').length - 1;
+
+    // Find block containing this line
+    let foundBlockId: string | null = null;
+    for (const [blockId, block] of this.blocks) {
+      if (lineIndex >= block.lineStart && lineIndex <= block.lineEnd) {
+        foundBlockId = blockId;
+        break;
+      }
+    }
+
+    // If same as current active, nothing to do
+    if (foundBlockId === this.activeBlockId) return;
+
+    // Clear previous active handle (if it's not selected)
+    if (this.activeBlockId && this.activeBlockId !== this.selectedBlockId) {
+      const prevBlock = this.blocks.get(this.activeBlockId);
+      if (prevBlock?.handleElement) {
+        prevBlock.handleElement.style.opacity = '0';
+        prevBlock.handleElement.style.pointerEvents = 'none';
+      }
+    }
+
+    this.activeBlockId = foundBlockId;
+
+    if (foundBlockId) {
+      this.showHandle(foundBlockId);
+    }
+  }
+
+  /**
    * Show a specific handle
    */
   private showHandle(blockId: string): void {
@@ -383,11 +450,11 @@ export class BlockHandlesPlugin {
   }
 
   /**
-   * Hide all handles except selected
+   * Hide all handles except selected and active cursor block
    */
   private hideAllHandles(): void {
     this.blocks.forEach((block) => {
-      if (block.handleElement && block.id !== this.selectedBlockId) {
+      if (block.handleElement && block.id !== this.selectedBlockId && block.id !== this.activeBlockId) {
         block.handleElement.style.opacity = '0';
         block.handleElement.style.pointerEvents = 'none';
       }
@@ -634,6 +701,7 @@ export class BlockHandlesPlugin {
     this.handleContainer = null;
     this.blocks.clear();
     this.selectedBlockId = null;
+    this.activeBlockId = null;
     // Remove event listeners from both textarea and preview
     this.editor.removeEventListener('mousemove', this._boundMouseMove);
     this.editor.removeEventListener('mouseleave', this._boundMouseLeave);
@@ -642,6 +710,10 @@ export class BlockHandlesPlugin {
     this.preview.removeEventListener('mouseleave', this._boundMouseLeave);
     this.preview.removeEventListener('click', this._boundClick);
     document.removeEventListener('keydown', this._boundKeyDown);
+    // Remove cursor tracking listeners
+    this.editor.removeEventListener('input', this._boundCursorUpdate);
+    this.editor.removeEventListener('mouseup', this._boundCursorUpdate);
+    this.editor.removeEventListener('keyup', this._boundCursorUpdate);
   }
 
   /**
