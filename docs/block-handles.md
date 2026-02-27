@@ -18,10 +18,10 @@ The **Block Handles Plugin** provides an interactive block manipulation system f
 The plugin is included with Marzipan by default. Simply enable it in your editor configuration:
 
 ```javascript
-import Marzipan from '@pinkpixel/marzipan';
+import Marzipan from "@pinkpixel/marzipan";
 
-const editor = new Marzipan('#editor', {
-  blockHandles: true  // Enabled by default
+const editor = new Marzipan("#editor", {
+  blockHandles: true, // Enabled by default
 });
 ```
 
@@ -30,32 +30,32 @@ const editor = new Marzipan('#editor', {
 You can customize the plugin's behavior and appearance:
 
 ```javascript
-const editor = new Marzipan('#editor', {
+const editor = new Marzipan("#editor", {
   blockHandles: {
-    enabled: true,           // Enable/disable the plugin
-    showOnHover: true,       // Show handles on hover
-    handleOffset: -30,       // Horizontal offset from block (px)
-    handleSize: 20,          // Handle size (px)
+    enabled: true, // Enable/disable the plugin
+    showOnHover: true, // Show handles on hover
+    handleOffset: 4, // Horizontal offset from block's left edge (px)
+    handleSize: 20, // Handle size (px)
     colors: {
-      hover: 'rgba(59, 130, 246, 0.1)',      // Hover highlight color
-      selected: 'rgba(59, 130, 246, 0.2)',   // Selection highlight color
-      handle: 'rgba(59, 130, 246, 0.8)',     // Handle background color
-    }
-  }
+      hover: "rgba(59, 130, 246, 0.1)", // Hover highlight color
+      selected: "rgba(59, 130, 246, 0.2)", // Selection highlight color
+      handle: "rgba(59, 130, 246, 0.8)", // Handle background color
+    },
+  },
 });
 ```
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `enabled` | `boolean` | `true` | Enable or disable the plugin |
-| `showOnHover` | `boolean` | `true` | Show handles when hovering over blocks |
-| `handleOffset` | `number` | `-30` | Horizontal offset of handles from blocks (in pixels) |
-| `handleSize` | `number` | `20` | Size of handle buttons (in pixels) |
-| `colors.hover` | `string` | `'rgba(59, 130, 246, 0.1)'` | Background color when hovering over blocks |
-| `colors.selected` | `string` | `'rgba(59, 130, 246, 0.2)'` | Background color for selected blocks |
-| `colors.handle` | `string` | `'rgba(59, 130, 246, 0.8)'` | Background color of handle buttons |
+| Option            | Type      | Default                     | Description                                                         |
+| ----------------- | --------- | --------------------------- | ------------------------------------------------------------------- |
+| `enabled`         | `boolean` | `true`                      | Enable or disable the plugin                                        |
+| `showOnHover`     | `boolean` | `true`                      | Show handles when hovering over blocks                              |
+| `handleOffset`    | `number`  | `4`                         | Horizontal offset of handles from the block's left edge (in pixels) |
+| `handleSize`      | `number`  | `20`                        | Size of handle buttons (in pixels)                                  |
+| `colors.hover`    | `string`  | `'rgba(59, 130, 246, 0.1)'` | Background color when hovering over blocks                          |
+| `colors.selected` | `string`  | `'rgba(59, 130, 246, 0.2)'` | Background color for selected blocks                                |
+| `colors.handle`   | `string`  | `'rgba(59, 130, 246, 0.8)'` | Background color of handle buttons                                  |
 
 ## Usage
 
@@ -86,25 +86,25 @@ Right-click any handle to access these actions:
 
 Each markdown block type has a unique icon:
 
-| Block Type | Icon | Description |
-|------------|------|-------------|
-| Heading | ⚡ | H1-H6 headers |
-| Paragraph | ¶ | Regular text paragraphs |
-| List Item | • | Bullet and numbered lists |
-| Quote | " | Blockquotes |
-| Code Fence | { | Code fence markers |
-| Code Content | {} | Content inside code blocks |
-| Horizontal Rule | ― | Horizontal lines |
-| Table Row | ⊞ | Table data rows |
-| Table Separator | ═ | Table header separators |
+| Block Type      | Icon | Description                |
+| --------------- | ---- | -------------------------- |
+| Heading         | ⚡   | H1-H6 headers              |
+| Paragraph       | ¶    | Regular text paragraphs    |
+| List Item       | •    | Bullet and numbered lists  |
+| Quote           | "    | Blockquotes                |
+| Code Fence      | {    | Code fence markers         |
+| Code Content    | {}   | Content inside code blocks |
+| Horizontal Rule | ―    | Horizontal lines           |
+| Table Row       | ⊞    | Table data rows            |
+| Table Separator | ═    | Table header separators    |
 
 ## Programmatic API
 
 Access the plugin instance through your Marzipan editor:
 
 ```javascript
-const editor = new Marzipan('#editor', {
-  blockHandles: true
+const editor = new Marzipan("#editor", {
+  blockHandles: true,
 });
 
 const plugin = editor[0].blockHandlesPlugin;
@@ -113,6 +113,7 @@ const plugin = editor[0].blockHandlesPlugin;
 ### Methods
 
 #### `refresh()`
+
 Rescan blocks and update handle positions.
 
 ```javascript
@@ -120,6 +121,7 @@ plugin.refresh();
 ```
 
 #### `updateAllHandlePositions()`
+
 Update positions of all handles (useful after scroll or resize).
 
 ```javascript
@@ -127,16 +129,18 @@ plugin.updateAllHandlePositions();
 ```
 
 #### `getSelectedBlock()`
+
 Get the currently selected block.
 
 ```javascript
 const block = plugin.getSelectedBlock();
 if (block) {
-  console.log('Selected block:', block.type, block.lineStart, block.lineEnd);
+  console.log("Selected block:", block.type, block.lineStart, block.lineEnd);
 }
 ```
 
 #### `getAllBlocks()`
+
 Get all blocks tracked by the plugin.
 
 ```javascript
@@ -145,6 +149,7 @@ console.log(`Found ${blocks.length} blocks`);
 ```
 
 #### `enable()`
+
 Enable the plugin.
 
 ```javascript
@@ -152,6 +157,7 @@ plugin.enable();
 ```
 
 #### `disable()`
+
 Disable the plugin and remove all handles.
 
 ```javascript
@@ -159,6 +165,7 @@ plugin.disable();
 ```
 
 #### `destroy()`
+
 Clean up and remove the plugin completely.
 
 ```javascript
@@ -172,12 +179,12 @@ Listen for block selection events:
 ```javascript
 const preview = editor[0].preview;
 
-preview.addEventListener('blockSelected', (e) => {
-  console.log('Block selected:', e.detail.blockId, e.detail.block);
+preview.addEventListener("blockSelected", (e) => {
+  console.log("Block selected:", e.detail.blockId, e.detail.block);
 });
 
-preview.addEventListener('blockDeselected', (e) => {
-  console.log('Block deselected:', e.detail.blockId);
+preview.addEventListener("blockDeselected", (e) => {
+  console.log("Block deselected:", e.detail.blockId);
 });
 ```
 
@@ -187,12 +194,12 @@ Each block object contains:
 
 ```typescript
 interface BlockHandle {
-  id: string;              // Unique block identifier
-  type: string;            // Block type (heading, paragraph, etc.)
-  lineStart: number;       // Starting line number in editor
-  lineEnd: number;         // Ending line number in editor
-  element: HTMLElement;    // DOM element for the block
-  handleElement: HTMLElement | null;  // Handle DOM element
+  id: string; // Unique block identifier
+  type: string; // Block type (heading, paragraph, etc.)
+  lineStart: number; // Starting line number in editor
+  lineEnd: number; // Ending line number in editor
+  element: HTMLElement; // DOM element for the block
+  handleElement: HTMLElement | null; // Handle DOM element
 }
 ```
 
@@ -224,14 +231,14 @@ You can override handle styles with CSS:
 Enable handles only for certain conditions:
 
 ```javascript
-const editor = new Marzipan('#editor', {
+const editor = new Marzipan("#editor", {
   blockHandles: {
-    enabled: window.innerWidth > 768  // Only on desktop
-  }
+    enabled: window.innerWidth > 768, // Only on desktop
+  },
 });
 
 // Toggle based on user preference
-window.addEventListener('resize', () => {
+window.addEventListener("resize", () => {
   if (window.innerWidth > 768) {
     editor[0].blockHandlesPlugin?.enable();
   } else {
@@ -245,17 +252,17 @@ window.addEventListener('resize', () => {
 ```javascript
 const preview = editor[0].preview;
 
-preview.addEventListener('blockSelected', (e) => {
+preview.addEventListener("blockSelected", (e) => {
   const block = e.detail.block;
-  
+
   // Add custom toolbar for selected block
   showCustomToolbar(block);
-  
+
   // Highlight corresponding line in editor
   highlightEditorLines(block.lineStart, block.lineEnd);
 });
 
-preview.addEventListener('blockDeselected', () => {
+preview.addEventListener("blockDeselected", () => {
   hideCustomToolbar();
   clearEditorHighlights();
 });
@@ -270,6 +277,7 @@ The Block Handles Plugin requires:
 - CSS Grid support for handle positioning
 
 Supported browsers:
+
 - Chrome/Edge 90+
 - Firefox 88+
 - Safari 14+
@@ -279,14 +287,16 @@ Supported browsers:
 ### Handles Not Appearing
 
 1. Verify the plugin is enabled:
+
    ```javascript
    console.log(editor[0].blockHandlesPlugin);
    ```
 
 2. Check if block metadata is present:
+
    ```javascript
-   const blocks = editor[0].preview.querySelectorAll('[data-block-id]');
-   console.log('Blocks found:', blocks.length);
+   const blocks = editor[0].preview.querySelectorAll("[data-block-id]");
+   console.log("Blocks found:", blocks.length);
    ```
 
 3. Ensure preview has relative positioning:
@@ -307,8 +317,11 @@ editor[0].blockHandlesPlugin.updateAllHandlePositions();
 If you notice performance issues with many blocks:
 
 1. Disable hover effects:
+
    ```javascript
-   blockHandles: { showOnHover: false }
+   blockHandles: {
+     showOnHover: false;
+   }
    ```
 
 2. Throttle position updates on scroll

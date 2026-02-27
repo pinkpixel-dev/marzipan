@@ -30,7 +30,7 @@ export default defineConfig({
       { text: 'API', link: '/api' },
       { text: 'Plugins', link: '/plugins' },
       {
-        text: 'v1.0.9',
+        text: 'v1.1.0',
         items: [
           { text: 'Changelog', link: 'https://github.com/pinkpixel-dev/marzipan/blob/main/CHANGELOG.md' },
         ]

@@ -6,7 +6,7 @@
 </div>
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.9-brightgreen.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-brightgreen.svg)](CHANGELOG.md)
 [![Docs](https://img.shields.io/badge/docs-marzipan.pinkpixel.dev-ff6fb7.svg)](https://marzipan.pinkpixel.dev)
 
 ## ✨ Highlights
@@ -20,59 +20,66 @@
 
 ## 🍰 What’s in the repo?
 
-| Package | Description |
-|---------|-------------|
-| **`@pinkpixel/marzipan`** | Core editor library located in `src/` (bundled to `dist/`). Ships the actions toolkit and plugin exports by default. |
-| **`@pinkpixel/marzipan/plugins/*`** | Individual plugin entry points compiled from `src/plugins`. Import only the helpers you need. |
-| **`bakeshop-demo/`** | React playground showcasing toolbar presets, actions, plugins, and theming workflows. |
+| Package                             | Description                                                                                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **`@pinkpixel/marzipan`**           | Core editor library located in `src/` (bundled to `dist/`). Ships the actions toolkit and plugin exports by default. |
+| **`@pinkpixel/marzipan/plugins/*`** | Individual plugin entry points compiled from `src/plugins`. Import only the helpers you need.                        |
+| **`bakeshop-demo/`**                | React playground showcasing toolbar presets, actions, plugins, and theming workflows.                                |
 
 ## 🚀 Quick Start
 
 ### 1. Install
+
 ```bash
 npm install @pinkpixel/marzipan
 ```
 
 ### 2. Create an editor
-```ts
-import { Marzipan } from '@pinkpixel/marzipan';
 
-const [editor] = new Marzipan('#my-textarea', {
+```ts
+import { Marzipan } from "@pinkpixel/marzipan";
+
+const [editor] = new Marzipan("#my-textarea", {
   toolbar: true,
-  theme: 'cave',
+  theme: "cave",
   smartLists: true,
 });
 ```
 
 ### 3. Use the bundled actions
+
 ```ts
-import { actions } from '@pinkpixel/marzipan';
+import { actions } from "@pinkpixel/marzipan";
 
 // Toggle bold formatting using our zero-dependency action suite
-const textarea = document.querySelector('textarea')!;
+const textarea = document.querySelector("textarea")!;
 actions.toggleBold(textarea);
 ```
 
 ### 4. Opt into a plugin
-```ts
-import { tablePlugin } from '@pinkpixel/marzipan/plugins/tablePlugin';
 
-new Marzipan('#editor', {
+```ts
+import { tablePlugin } from "@pinkpixel/marzipan/plugins/tablePlugin";
+
+new Marzipan("#editor", {
   plugins: [tablePlugin()],
 });
 ```
 
 ### 5. Try the Bakeshop playground
+
 ```bash
 cd bakeshop-demo
 npm install
 npm run dev
 ```
+
 Visit `http://localhost:5173` to explore every panel, plugin, and action in a live environment.
 
 ## 🧩 Bundled Plugins
 
 The `src/plugins` directory publishes directly to consumers. Available helpers include:
+
 - `BlockHandlesPlugin` – interactive block manipulation with visual handles, context menus, and keyboard shortcuts.
 - `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin` – interactive table authoring.
 - `tinyHighlightPlugin` – lightweight syntax highlighting for fenced code blocks (ships `tinyHighlightStyles`).
@@ -81,13 +88,35 @@ The `src/plugins` directory publishes directly to consumers. Available helpers i
 - `mermaidPlugin`, `mermaidExternalPlugin` – diagram rendering via ESM or CDN.
 
 Import only what you need:
+
 ```ts
-import { mermaidPlugin } from '@pinkpixel/marzipan/plugins/mermaidPlugin';
+import { mermaidPlugin } from "@pinkpixel/marzipan/plugins/mermaidPlugin";
 ```
+
+## 🎬 Bundled Actions
+
+The `src/actions` module ships a zero-dependency markdown formatting toolkit. All actions accept an `HTMLTextAreaElement`:
+
+| Action                               | Description                            |
+| ------------------------------------ | -------------------------------------- |
+| `toggleBold`                         | Toggle `**bold**`                      |
+| `toggleItalic`                       | Toggle `_italic_`                      |
+| `toggleCode`                         | Toggle `` `code` ``                    |
+| `toggleStrikethrough`                | Toggle `~~strikethrough~~` or `~text~` |
+| `insertHorizontalRule`               | Insert `---` divider                   |
+| `insertLink`                         | Insert `[text](url)`                   |
+| `toggleBulletList`                   | Toggle bullet list                     |
+| `toggleNumberedList`                 | Toggle numbered list                   |
+| `toggleTaskList`                     | Toggle task list (`- [ ]`)             |
+| `toggleQuote`                        | Toggle `> blockquote`                  |
+| `insertHeader(level)`                | Insert `#` through `######`            |
+| `toggleH1` / `toggleH2` / `toggleH3` | Toggle specific heading level          |
+| `applyCustomFormat`                  | Apply a custom format rule             |
 
 ## 📚 Documentation
 
 All guides live in `/docs`:
+
 - `docs/README.md` – orientation & navigation.
 - `docs/quick-start.md` – install, instantiate, and wire up actions/plugins.
 - `docs/api.md` – class API, action helpers, TypeScript signatures.
@@ -105,13 +134,13 @@ Read [OVERVIEW.md](OVERVIEW.md) for architecture, tooling, and roadmap context, 
 
 Run these from the repository root:
 
-| Script | Purpose |
-|--------|---------|
-| `npm run dev` | Library build in watch mode |
-| `npm run build` | Type check then bundle to `dist/` |
-| `npm run typecheck` | Strict TypeScript validation |
-| `npm run lint` | ESLint flat config |
-| `npm run prettier` | Format source and docs |
+| Script              | Purpose                           |
+| ------------------- | --------------------------------- |
+| `npm run dev`       | Library build in watch mode       |
+| `npm run build`     | Type check then bundle to `dist/` |
+| `npm run typecheck` | Strict TypeScript validation      |
+| `npm run lint`      | ESLint flat config                |
+| `npm run prettier`  | Format source and docs            |
 
 The Bakeshop has its own scripts inside `bakeshop-demo/` (`dev`, `build`, `preview`, `lint`, `typecheck`).
 

@@ -8,18 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+
+## [1.1.0] - 2025-02-25
+
+### Added
+
+- **`toggleStrikethrough` Action**: New built-in formatting action supporting both `~~text~~` (double-tilde) and `~text~` (single-tilde) strikethrough syntax; available from the main package alongside the existing action toolkit
+- **`insertHorizontalRule` Action**: New built-in action that inserts a `---` horizontal divider at the cursor position, automatically adding surrounding newlines for correct markdown output
+- **Link Tooltip**: Context-aware URL preview tooltip that appears when the cursor is positioned inside a markdown link in the editor
+  - Uses the modern CSS Anchor Positioning API (`position-anchor` / `position-area`) for pixel-accurate placement below the link
+  - Gracefully degrades in browsers without CSS anchor support — silently disabled with no impact on the editor
+  - Implemented as a `LinkTooltip` class instance attached automatically to every editor and cleaned up on `destroy()`
+
 ### Fixed
+
 - **Plugin Exports**: Added missing plugin exports to `src/plugins/index.ts` and main package
   - All plugins now properly exported: `accentSwatchPlugin`, `imageManagerPlugin`, `imagePickerPlugin`, `mermaidPlugin`, `mermaidExternalPlugin`, `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin`, `tinyHighlightPlugin`
   - Added corresponding TypeScript type exports for all plugin options and interfaces
-  - Plugins can now be imported both individually (`@pinkpixel/marzipan/plugins/tablePlugin`) and from main package (`import { tablePlugin } from '@pinkpixel/marzipan'`)
+  - Plugins can now be imported both individually (`@pinkpixel/marzipan/plugins/tablePlugin`) and from the main package (`import { tablePlugin } from '@pinkpixel/marzipan'`)
   - Added convenience namespace export (`import { plugins } from '@pinkpixel/marzipan'`)
   - Resolves issue where documented plugins were not accessible via standard import paths
+- **Block Handles `handleOffset` default**: Documentation corrected — the actual runtime default is `4`, not `-30`
+- **Syntax Highlighting**: `tinyHighlightPlugin` recognises `md` and `markdown` as valid language identifiers for fenced code blocks
 
+---
 
 ## [1.0.9] - 2025-01-05
 
 ### Added
+
 - **Block Handles Plugin**: Interactive block manipulation system for the preview overlay
   - Visual handles appear on hover for each markdown block
   - Click handles to select blocks with visual feedback
@@ -37,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `npm run serve` script for running examples locally
 
 ### Changed
+
 - Block handles plugin is enabled by default (can be disabled with `blockHandles: false`)
 
 ---
@@ -44,15 +62,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.8] - 2025-10-04
 
 ### Added
+
 - Toolbar button shorthands (`plain`, `view`, and separators) so custom toolbars can be composed quickly with strings instead of verbose config objects.
 - Prompt customization for the image picker plugin via `placeholder` and `promptMessage` options.
 
 ### Changed
+
 - Restored per-instance theme overrides and shipped `light`/`dark` aliases alongside `solar`/`cave`, ensuring `colors` merges reliably.
 - Exposed `getStats()` and `getContainer()` on editor instances and made `showPlainTextarea()` return the current state when called without arguments.
 - Refreshed documentation (core docs + VitePress site) to cover the new toolbar presets, theme color tokens, and expanded preview examples.
 
 ### Fixed
+
 - Table styling now respects themed secondary backgrounds for consistent appearance across custom palettes.
 
 ---
@@ -60,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.7] - 2025-10-04
 
 ### Added
+
 - Bundled the full markdown action suite under `src/actions` and exported it from the core package so projects no longer need the external `markdown-actions` dependency.
 - Documented the plugin collection now published from `src/plugins`, including usage guides in the main README, docs, and demo walkthroughs.
 - Introduced a comprehensive documentation refresh covering the new action utilities, plugin APIs, and demo workflows across `/docs`, `README.md`, `OVERVIEW.md`, and `bakeshop-demo/README.md`.
@@ -70,11 +92,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved type safety with proper interface definitions for `MarkdownParser`, themes, and configuration options
 
 ### Changed
+
 - Updated contribution guidance and quick-start instructions to reflect the streamlined package layout and Node.js 20+ support.
 - Refined the documentation structure, aligning the table of contents with the shipped guides and clarifying how to access bundled plugins and formatting helpers.
 - Enhanced post-build script to automatically generate comprehensive type declarations
 
 ### Fixed
+
 - Corrected TypeScript type usage in bakeshop demo (using `MarzipanInstance` instead of `typeof Marzipan`)
 - Resolved type inference issues in demo application
 
@@ -83,11 +107,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.6] - 2025-09-26
 
 ### Added
+
 - Initial public release of the Marzipan core editor library and Bakeshop demo application.
 - Live overlay preview, theming system, toolbar, keyboard shortcuts, stats panel, and plugin foundation.
 - TypeScript declarations, documentation set, and contribution guide.
 
-[Unreleased]: https://github.com/pinkpixel-dev/marzipan/compare/v1.0.8...HEAD
+[Unreleased]: https://github.com/pinkpixel-dev/marzipan/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/pinkpixel-dev/marzipan/compare/v1.0.9...v1.1.0
+[1.0.9]: https://github.com/pinkpixel-dev/marzipan/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/pinkpixel-dev/marzipan/compare/v1.0.7...v1.0.8
 [1.0.8-release]: https://github.com/pinkpixel-dev/marzipan/releases/tag/v1.0.8
 [1.0.7]: https://github.com/pinkpixel-dev/marzipan/compare/v1.0.6...v1.0.7
