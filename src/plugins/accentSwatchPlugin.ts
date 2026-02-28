@@ -39,12 +39,26 @@ async function pickWithEyedropper(): Promise<string | null> {
   } catch { return null; }
 }
 
-function setAccent(editor: MzEditor, hex: string) {
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function setAccent(editor: MzEditor, hex: string, btnIndicator?: HTMLElement | null) {
   // Prefer core hook if you have one
   if (typeof editor.setAccent === 'function') editor.setAccent(hex);
-  // Always set CSS var as a fallback
+  // Always set CSS var
   document.documentElement.style.setProperty('--mz-accent', hex);
   editor.container.style.setProperty('--mz-accent', hex);
+  // Bridge accent to actual editor CSS variables for visible effect
+  editor.container.style.setProperty('--cursor', hex);
+  editor.container.style.setProperty('--selection', hexToRgba(hex, 0.25));
+  editor.container.style.setProperty('--toolbar-active', hexToRgba(hex, 0.2));
+  editor.container.style.setProperty('--link', hex);
+  // Update toolbar button indicator
+  if (btnIndicator) btnIndicator.style.background = hex;
   // Broadcast (optional) for any listeners
   editor.container.dispatchEvent(new CustomEvent('marzipan:accent', { detail: { color: hex } }));
 }
@@ -57,7 +71,6 @@ export function accentSwatchPlugin(opts?: {
 }) {
   const max = Math.max(1, opts?.max ?? 12);
   const title = opts?.title ?? 'Accent color';
-  const label = opts?.label ?? '⭘';
 
   return (editor: MzEditor) => {
     const bar = editor.container.querySelector('.marzipan-toolbar') as HTMLElement ?? editor.container;
@@ -67,8 +80,21 @@ export function accentSwatchPlugin(opts?: {
     btn.type = 'button';
     btn.className = 'marzipan-toolbar-button mz-btn-accent';
     btn.title = title;
-    btn.textContent = label;
     btn.setAttribute('aria-label', title);
+    // Colored dot indicator instead of plain text
+    const indicator = document.createElement('span');
+    indicator.className = 'mz-accent-indicator';
+    Object.assign(indicator.style, {
+      display: 'block',
+      width: '16px',
+      height: '16px',
+      borderRadius: '50%',
+      border: '2px solid rgba(255,255,255,0.25)',
+      background: '#8b5cf6',
+      boxSizing: 'border-box',
+      flexShrink: '0',
+    });
+    btn.appendChild(indicator);
 
     // Popover elements
     let pop: HTMLElement | null = null;
@@ -119,11 +145,16 @@ export function accentSwatchPlugin(opts?: {
         const sw = document.createElement('button');
         sw.type = 'button';
         sw.className = 'mz-swatch';
-        sw.style.setProperty('--sw', hex);
+        Object.assign(sw.style, {
+          width: '28px', height: '28px', borderRadius: '50%',
+          border: '1px solid #333', background: hex, cursor: 'pointer',
+          boxShadow: 'inset 0 0 0 2px rgba(0,0,0,.2)',
+          padding: '0', margin: '0', boxSizing: 'border-box',
+        });
+        if (hex === cur) sw.style.outline = '2px solid var(--mz-accent, #8b5cf6)';
         sw.title = hex;
-        if (hex === cur) sw.classList.add('sel');
         sw.onclick = () => {
-          setAccent(editor, hex);
+          setAccent(editor, hex, indicator);
           ensureFront(hex);
           render();
         };
@@ -142,6 +173,13 @@ export function accentSwatchPlugin(opts?: {
       plus.className = 'mz-swatch mz-swatch-add';
       plus.textContent = '+';
       plus.title = 'Add color (click to pick, ⇧click to type, ⌥click eyedropper)';
+      Object.assign(plus.style, {
+        width: '28px', height: '28px', borderRadius: '50%',
+        background: 'linear-gradient(135deg, #222, #2b2f36)', color: '#e7e7e7',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontWeight: '700', fontSize: '16px', cursor: 'pointer',
+        border: '1px solid #333', padding: '0', margin: '0', boxSizing: 'border-box',
+      });
       plus.onclick = async (e) => {
         let hex: string | null = null;
 
@@ -158,7 +196,7 @@ export function accentSwatchPlugin(opts?: {
           input.onchange = () => {
             const v = normHex(input.value);
             if (!v) return;
-            setAccent(editor, v);
+            setAccent(editor, v, indicator);
             ensureFront(v);
             render();
           };
@@ -167,7 +205,7 @@ export function accentSwatchPlugin(opts?: {
         }
 
         if (hex) {
-          setAccent(editor, hex);
+          setAccent(editor, hex, indicator);
           ensureFront(hex);
           render();
         }
@@ -206,10 +244,51 @@ export function accentSwatchPlugin(opts?: {
       `;
       document.body.appendChild(pop);
 
+      // Apply critical styles inline to avoid CSS framework resets (e.g. Tailwind)
       const r = btn.getBoundingClientRect();
-      pop.style.position = 'absolute';
-      pop.style.left = `${Math.round(window.scrollX + r.left)}px`;
-      pop.style.top  = `${Math.round(window.scrollY + r.bottom + 6)}px`;
+      Object.assign(pop.style, {
+        position: 'absolute',
+        left: `${Math.round(window.scrollX + r.left)}px`,
+        top: `${Math.round(window.scrollY + r.bottom + 6)}px`,
+        width: '280px',
+        maxWidth: 'calc(100vw - 24px)',
+        background: '#1a1e24',
+        border: '1px solid #333',
+        borderRadius: '10px',
+        boxShadow: '0 4px 16px rgba(0,0,0,.35)',
+        zIndex: '10000',
+        padding: '8px',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        fontSize: '14px',
+        color: '#e7e7e7',
+        boxSizing: 'border-box',
+      });
+
+      // Style inner elements inline to survive CSS resets
+      const grid = pop.querySelector('.mz-accent-grid') as HTMLElement;
+      if (grid) Object.assign(grid.style, {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, 28px)',
+        gap: '8px',
+        padding: '6px',
+      });
+      const row = pop.querySelector('.mz-accent-row') as HTMLElement;
+      if (row) Object.assign(row.style, { display: 'flex', gap: '8px', padding: '6px' });
+      pop.querySelectorAll('.mz-accent-row button').forEach(b => {
+        Object.assign((b as HTMLElement).style, {
+          flex: '1',
+          padding: '6px 8px',
+          borderRadius: '8px',
+          border: '1px solid #2b2f36',
+          background: '#1a1e24',
+          color: '#e7e7e7',
+          cursor: 'pointer',
+          fontSize: '13px',
+          fontFamily: 'inherit',
+        });
+      });
+      const hint = pop.querySelector('.mz-accent-hint') as HTMLElement;
+      if (hint) Object.assign(hint.style, { fontSize: '12px', opacity: '0.7', padding: '0 6px 6px' });
 
       render();
 
@@ -226,8 +305,10 @@ export function accentSwatchPlugin(opts?: {
     // Initialize CSS var if missing
     if (!getComputedStyle(editor.container).getPropertyValue('--mz-accent').trim()) {
       const seed = colors[0] || opts?.defaults?.[0] || '#8b5cf6';
-      setAccent(editor, seed);
+      setAccent(editor, seed, indicator);
     }
+    // Always sync the indicator to the current accent
+    indicator.style.background = currentAccent();
   };
 }
 

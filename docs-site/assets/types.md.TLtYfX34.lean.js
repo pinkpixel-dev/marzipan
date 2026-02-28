@@ -1,0 +1,1 @@
+import{_ as i,o as a,c as n,ag as t}from"./chunks/framework.ePeAWSvT.js";const o=JSON.parse('{"title":"Type Definitions","description":"","frontmatter":{},"headers":[],"relativePath":"types.md","filePath":"types.md"}'),h={name:"types.md"};function p(l,s,e,k,r,d){return a(),n("div",null,[...s[0]||(s[0]=[t("",36)])])}const g=i(h,[["render",p]]);export{o as __pageData,g as default};

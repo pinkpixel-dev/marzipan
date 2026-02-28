@@ -117,13 +117,13 @@ const rulesByLang: Record<string, Rule[]> = {
 
 function langToRules(langClass: string): Rule[] {
   const lang = langClass.replace(/^language-/, '').toLowerCase();
-  if (lang === 'ts' || lang === 'tsx') return rulesByLang.ts;
-  if (lang === 'js' || lang === 'jsx' || lang === 'mjs' || lang === 'cjs') return rulesByLang.js;
-  if (lang === 'json') return rulesByLang.json;
-  if (lang === 'html' || lang === 'xml') return rulesByLang.html;
-  if (lang === 'css') return rulesByLang.css;
-  if (lang === 'bash' || lang === 'sh' || lang === 'shell') return rulesByLang.bash;
-  if (lang === 'ini' || lang === 'conf') return rulesByLang.ini;
+  if (lang === 'ts' || lang === 'tsx' || lang === 'typescript') return rulesByLang.ts;
+  if (lang === 'js' || lang === 'jsx' || lang === 'mjs' || lang === 'cjs' || lang === 'javascript') return rulesByLang.js;
+  if (lang === 'json' || lang === 'jsonc') return rulesByLang.json;
+  if (lang === 'html' || lang === 'xml' || lang === 'svg') return rulesByLang.html;
+  if (lang === 'css' || lang === 'scss' || lang === 'less') return rulesByLang.css;
+  if (lang === 'bash' || lang === 'sh' || lang === 'shell' || lang === 'zsh' || lang === 'fish') return rulesByLang.bash;
+  if (lang === 'ini' || lang === 'conf' || lang === 'toml') return rulesByLang.ini;
   if (lang === 'md' || lang === 'markdown') return rulesByLang.md;
   return []; // unknown -> no-op
 }

@@ -1,6 +1,6 @@
 {
   "name": "@pinkpixel/marzipan",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Pure TypeScript markdown editor library with overlay preview",
   "license": "Apache-2.0",
   "type": "module",
