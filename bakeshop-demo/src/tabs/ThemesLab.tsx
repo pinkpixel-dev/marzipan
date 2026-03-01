@@ -200,7 +200,7 @@ export default function ThemesLab() {
             theme: 'solar'
           </span>
         </div>
-        <div ref={solarRef} style={{ height: '340px' }} />
+        <div ref={solarRef} style={{ height: '600px' }} />
       </div>
 
       {/* Cave Theme */}
@@ -211,7 +211,7 @@ export default function ThemesLab() {
             theme: 'cave'
           </span>
         </div>
-        <div ref={caveRef} style={{ height: '340px' }} />
+        <div ref={caveRef} style={{ height: '600px' }} />
       </div>
 
       {/* Custom Theme Live Demo */}
@@ -236,7 +236,7 @@ export default function ThemesLab() {
             ))}
           </div>
         </div>
-        <div ref={customRef} style={{ height: '300px' }} />
+        <div ref={customRef} style={{ height: '600px' }} />
       </div>
 
       {/* Theme Usage */}

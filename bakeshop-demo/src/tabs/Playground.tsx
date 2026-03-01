@@ -176,7 +176,7 @@ export default function Playground() {
 
       {/* Editor */}
       <div className="card p-6">
-        <div ref={editorRef} style={{ height: '600px' }} />
+        <div ref={editorRef} style={{ height: 'calc(100vh - 200px)', minHeight: '800px' }} />
       </div>
 
       {/* Features Guide */}

@@ -21,3 +21,5 @@ tinyHighlightPlugin - Zero-runtime syntax highlighting for fenced code blocks (t
 6. Note that Marzipan is supposed to be dependency free... however we have mermaid being used as a dependency on the bakeshop-demo package.json, which makes me wonder if mermaid is needed as a dependency to use mermaid charts or if we are capable of adding that to our code without needed a dependency in our demo. Please explain if that is possible or if not.
 
 7. Update the CHANGELOG.md with all of your changes, then deploy the new bake-shop demo to cloudflare with wrangler.
+
+8. Update all other documentation as needed - README.md, OVERVIEW.md, /docs directory, /docs-site directory.
