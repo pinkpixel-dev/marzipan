@@ -5,9 +5,6 @@
  * Collection of plugins that extend Marzipan's functionality.
  */
 
-// Accent Swatch Plugin
-export { accentSwatchPlugin, accentSwatchStyles } from './accentSwatchPlugin';
-
 // Image Plugins
 export { imageManagerPlugin, imageManagerStyles } from './imageManagerPlugin';
 export { imagePickerPlugin } from './imagePickerPlugin';
@@ -30,6 +27,7 @@ export type { MarzipanLike } from './tinyHighlight';
 
 // Table Utilities (for advanced usage)
 export { buildTableMarkdown, resolvePositiveInteger } from './utils/table';
+export type { TableBuildOptions, ColumnAlignment } from './utils/table';
 
 // Re-export core imagePicker for direct access
 export { imagePickerPlugin as coreImagePickerPlugin } from './imagePicker';

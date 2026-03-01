@@ -16,8 +16,6 @@ export * as actions from './actions'
 
 // Export plugins
 export { 
-  accentSwatchPlugin,
-  accentSwatchStyles,
   imageManagerPlugin,
   imageManagerStyles,
   imagePickerPlugin,

@@ -140,7 +140,7 @@ Missing: Reading time, encoding, line endings not shown (only the basic stats).
 ---
 
 ### 23. Context Menu
-**NOT IMPLEMENTED** — No right-click context menu for markdown actions in the codebase. The only `oncontextmenu` handler is in the accent swatch plugin for removing swatches.
+**NOT IMPLEMENTED** — No right-click context menu for markdown actions in the codebase.
 
 ---
 
@@ -150,7 +150,7 @@ Missing: Reading time, encoding, line endings not shown (only the basic stats).
 ---
 
 ### 25. Theming
-**PARTIALLY** — Two themes defined: `solar` (light) and `cave` (dark) in [themes.ts](src/themes.ts), with `light`/`dark` as aliases. Full CSS variable system. `Marzipan.setTheme()` applies globally; per-instance themes supported. `mergeTheme()` supports custom color overrides. `accentSwatchPlugin` allows color picking.
+**PARTIALLY** — Two themes defined: `solar` (light) and `cave` (dark) in [themes.ts](src/themes.ts), with `light`/`dark` as aliases. Full CSS variable system. `Marzipan.setTheme()` applies globally; per-instance themes supported. `mergeTheme()` supports custom color overrides.
 
 Missing: No Dracula, Catppuccin, Tokyo Night, or other community themes. Only 2 themes exist.
 
@@ -176,7 +176,7 @@ Missing: No way to add fully custom action buttons with user-chosen icons from t
 ---
 
 ### 29. Plugin System
-**IMPLEMENTED** — Robust plugin architecture: plugins are functions that receive the editor instance, with access to `hooks.afterPreviewRender`, DOM, textarea, toolbar, and all internal state. Nine plugins ship: `tinyHighlightPlugin`, `mermaidPlugin`, `mermaidExternalPlugin`, `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin`, `imagePickerPlugin`, `imageManagerPlugin`, `accentSwatchPlugin`. All exported from the library.
+**IMPLEMENTED** — Robust plugin architecture: plugins are functions that receive the editor instance, with access to `hooks.afterPreviewRender`, DOM, textarea, toolbar, and all internal state. Eight plugins ship: `tinyHighlightPlugin`, `mermaidPlugin`, `mermaidExternalPlugin`, `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin`, `imagePickerPlugin`, `imageManagerPlugin`. All exported from the library.
 
 Missing: No formal lifecycle hooks beyond `afterPreviewRender` (no `beforeParse`, `onDestroy`, `onInit` hooks). No event bus or plugin-to-plugin communication channel.
 

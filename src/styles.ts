@@ -807,46 +807,87 @@ export function generateStyles(options: any = {}) {
       height: 2px !important;
     }
     
-    /* Tables - GFM-style table rendering */
+    /* ──────────────────────────────────────────────────────────────────
+     * TABLES
+     *
+     * Strategy: in edit mode the raw pipe lines (table-row, table-separator,
+     * mz-table-annotation) stay as plain <div> text lines — perfectly
+     * line-aligned with the textarea because they are just text.  The
+     * postProcessHTML assembles a real <table> in the DOM alongside those
+     * divs, but we hide the <table> in edit mode and show only the raw lines.
+     * In preview mode we flip: hide the raw lines, show the <table>.
+     * ────────────────────────────────────────────────────────────────── */
+
+    /* Edit mode: hide the rendered <table>, show the raw lines */
+    .marzipan-container:not(.preview-mode) .marzipan-preview .marzipan-table {
+      display: none !important;
+    }
+
+    /* Edit mode: dim annotation comment and separator so they look secondary */
+    .marzipan-container:not(.preview-mode) .marzipan-preview .mz-table-annotation,
+    .marzipan-container:not(.preview-mode) .marzipan-preview .table-separator {
+      opacity: 0.45 !important;
+    }
+
+    /* Preview mode: hide raw pipe lines, show the <table> */
+    .marzipan-container.preview-mode .marzipan-preview .table-row,
+    .marzipan-container.preview-mode .marzipan-preview .table-separator,
+    .marzipan-container.preview-mode .marzipan-preview .mz-table-annotation {
+      display: none !important;
+    }
+
+    /* ── Rendered table styles (preview mode only) ── */
     .marzipan-preview .marzipan-table {
       border-collapse: collapse !important;
-      margin: 1em 0 !important;
-      width: 100% !important;
-      overflow: auto !important;
+      margin: 0.5em 0 !important;
+      width: auto !important;
       display: table !important;
     }
-    
+
     .marzipan-preview .marzipan-table th,
     .marzipan-preview .marzipan-table td {
       border: 1px solid var(--border, rgba(128,128,128,0.4)) !important;
-      padding: 0.4em 0.8em !important;
+      padding: 0.5em 1em !important;
       text-align: left !important;
     }
-    
+
     .marzipan-preview .marzipan-table th {
       background: var(--bg-secondary, rgba(128,128,128,0.15)) !important;
       font-weight: 600 !important;
+      padding: 0.65em 1em !important;
     }
-    
+
     .marzipan-preview .marzipan-table tr:nth-child(even) td {
       background: var(--bg-secondary, rgba(128,128,128,0.05)) !important;
     }
-    
+
     .marzipan-preview .marzipan-table thead,
     .marzipan-preview .marzipan-table tbody,
     .marzipan-preview .marzipan-table tr {
       display: table-row-group !important;
     }
-    
+
     .marzipan-preview .marzipan-table tr {
       display: table-row !important;
     }
-    
-    /* In preview mode - hide table syntax markers */
-    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview .table-row,
-    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview .table-separator {
-      display: none !important;
+
+    /* Column alignment */
+    .marzipan-preview .marzipan-table th[style*="text-align: center"],
+    .marzipan-preview .marzipan-table td[style*="text-align: center"] {
+      text-align: center !important;
     }
+    .marzipan-preview .marzipan-table th[style*="text-align: right"],
+    .marzipan-preview .marzipan-table td[style*="text-align: right"] {
+      text-align: right !important;
+    }
+
+    /* Header color options */
+    .marzipan-preview .marzipan-table.mz-header-pink    th { background: rgba(236,72,153,0.22)  !important; }
+    .marzipan-preview .marzipan-table.mz-header-purple  th { background: rgba(139,92,246,0.22)  !important; }
+    .marzipan-preview .marzipan-table.mz-header-blue    th { background: rgba(59,130,246,0.22)  !important; }
+    .marzipan-preview .marzipan-table.mz-header-cyan    th { background: rgba(6,182,212,0.22)   !important; }
+    .marzipan-preview .marzipan-table.mz-header-green   th { background: rgba(16,185,129,0.22)  !important; }
+    .marzipan-preview .marzipan-table.mz-header-amber   th { background: rgba(245,158,11,0.22)  !important; }
     
     /* Images - responsive and styled */
     .marzipan-preview .marzipan-image {

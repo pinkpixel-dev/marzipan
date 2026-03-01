@@ -31,7 +31,7 @@ export default defineConfig({
       { text: 'Plugins', link: '/plugins' },
       { text: '🛝 Playground', link: 'https://bakeshop.pinkpixel.dev' },
       {
-        text: 'v1.1.0',
+        text: 'v1.2.2',
         items: [
           { text: 'Changelog', link: 'https://github.com/pinkpixel-dev/marzipan/blob/main/CHANGELOG.md' },
         ]

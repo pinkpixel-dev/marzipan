@@ -7,10 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.2.2] - 2026-02-28
+
+### Changed
+
+- **`tableGridPlugin` Popover**: Simplified the options panel — removed the Style Presets row and Border Style row entirely. Replaced with a single **Header Color** row offering six pastel swatches (pink, purple, blue, cyan, green, amber) plus a "none" option. Preferences continue to be persisted to `localStorage`.
+- **`TableBuildOptions` Interface**: Removed `style` (`TableStyle`) and `borderStyle` (`BorderStyle`) fields. Added `headerColor?: string` — one of `'pink' | 'purple' | 'blue' | 'cyan' | 'green' | 'amber'` (or omit for no color).
+- **Table Annotation Syntax**: Simplified from `<!-- mz-table: style=<preset> border=<style> -->` to `<!-- mz-table: header=<color> -->`. Only the header color is configurable via annotation.
+
 ### Fixed
 
-- **accentSwatchPlugin**: Accent color changes now have a visible effect on the editor. The plugin was setting a `--mz-accent` CSS variable that no editor style rule referenced. `setAccent()` now bridges the chosen color to the actual editor CSS variables (`--cursor`, `--selection`, `--toolbar-active`, `--link`) so picking a swatch immediately updates the caret color, text selection highlight, active toolbar button background, and link color.
-- **accentSwatchPlugin**: Replaced the plain-text `⭘` toolbar button with a colored dot indicator that reflects the current accent color, providing immediate visual feedback.
+- **Table Body Cell Text Insertion**: Typing inside body cells of a newly inserted table now correctly places the cursor within the cell. Body cell text was previously inserted after the row because cells were too narrow (9 chars) while the header row was wider, causing click offsets past the end of the line. `buildTableMarkdown()` now pads body cells to match the header column widths.
+- **Table Edit-Mode Overlay Alignment**: The `<table>` element is now hidden (`display: none`) in edit mode. The raw pipe-text `<div>` lines are used as the overlay so the browser `<table>` layout engine can no longer cause cursor row misalignment. The styled `<table>` is shown only in preview mode. Annotation and separator lines are dimmed (`opacity: 0.45`) in edit mode so they remain legible but clearly secondary.
+
+### Removed
+
+- **`TableStyle` and `BorderStyle` types**: Both type aliases and all associated CSS classes (`mz-style-striped`, `mz-style-rainbow`, `mz-style-minimal`, `mz-border-dashed`, etc.) are removed. Migrate any `style` / `borderStyle` options in `buildTableMarkdown()` calls to the new `headerColor` option.
+
+---
+
+## [1.2.1] - 2026-02-28
+
+### Added
+
+- **Table Column Alignment**: GFM column alignment support (`:---`, `:---:`, `---:`) is now parsed and rendered with correct `text-align` styles in the preview.
+- **Table Style Presets**: Four built-in table style presets — `default`, `striped` (alternating row backgrounds), `rainbow` (six-colour row cycling), and `minimal` (reduced-chrome borders).
+- **Table Border Styles**: Configurable border styles — `solid`, `dashed`, `dotted`, `double`, and `none` — applied via CSS classes.
+- **Table Annotation Syntax**: New `<!-- mz-table: style=<preset> border=<style> -->` HTML comment convention that Marzipan parses to apply style/border classes. Invisible to other renderers.
+- **Enhanced `tableGridPlugin` Popover**: Options panel below the grid with Align, Style, and Border toggle buttons. Preferences persist to `localStorage`.
+- **`TableBuildOptions` Interface**: `buildTableMarkdown()` now accepts a typed options object (`rows`, `cols`, `headers`, `alignment`, `style`, `borderStyle`) in addition to the original `(rows, cols)` signature.
+- **New type exports**: `ColumnAlignment`, `TableStyle`, `BorderStyle`, `TableBuildOptions` exported from the plugins barrel.
+
+### Fixed
+
+- **Table Width**: Tables no longer stretch to full page width. Changed from `width: 100%` to `width: auto` so tables size naturally to their content.
+
+### Removed
+
+- **accentSwatchPlugin**: Removed the accent color swatch plugin and all related code (`accentSwatchPlugin`, `accentSwatchStyles`). The plugin has been pulled from the core library. All references removed from documentation, demos, and type declarations.
 
 ---
 

@@ -3,7 +3,7 @@
 ## ✨ Project Snapshot
 
 - **Package:** `@pinkpixel/marzipan`
-- **Version:** 1.1.0 (Production Ready)
+- **Version:** 1.2.2 (Production Ready)
 - **Runtime dependencies:** **Zero** – Pure TypeScript with all markdown actions bundled internally
 - **Plugins:** First-party plugins published from `src/plugins` as tree-shakeable modules (`@pinkpixel/marzipan/plugins/*`)
 - **Demo:** `bakeshop-demo/` - Full-featured React playground demonstrating all capabilities
@@ -28,7 +28,6 @@ marzipan/
 │   │   ├── mermaidPlugin.ts
 │   │   ├── tinyHighlight.ts
 │   │   ├── imageManagerPlugin.ts
-│   │   ├── accentSwatchPlugin.ts
 │   │   └── [more plugins]
 │   ├── marzipan.ts           # Main Marzipan class
 │   ├── parser.ts             # Markdown parser
@@ -67,7 +66,7 @@ Key pillars:
 - **Live overlay preview** with pixel-perfect alignment.
 - **Typed action toolkit** available to consumers without any extra installs.
 - **Plugin architecture** for tables, syntax highlighting, media helpers, Mermaid diagrams, and more.
-- **Theming system** with built-in Solar (light) and Cave (dark) palettes plus accent swatches.
+- **Theming system** with built-in Solar (light) and Cave (dark) palettes and full CSS variable customization.
 
 ## ⚙️ Architecture Highlights
 
@@ -87,7 +86,7 @@ Key pillars:
 
 ## 📚 Documentation Overview
 
-Updated to reflect v1.1.0 features including Link Tooltip, new actions, and comprehensive plugin exports:
+Updated to reflect v1.2.2 features including simplified table plugin API, header color option, and overlay alignment fix:
 
 - `README.md` – top-level orientation, quick start, plugin summary.
 - `docs/` – quick start, API reference, plugin catalogue, and type definitions.
@@ -150,8 +149,12 @@ actions.insertLink(textarea, {
 
 - **Tables:**
   - `tablePlugin` - Basic table support
-  - `tableGridPlugin` - Interactive table grid
+  - `tableGridPlugin` - Interactive table grid with column alignment and header color options
   - `tableGeneratorPlugin` - Table creation wizard
+  - Column alignment (left, center, right) via GFM markers (`:---` / `:---:` / `---:`)
+  - Header color option: `pink`, `purple`, `blue`, `cyan`, `green`, `amber` (or none)
+  - Annotation syntax: `<!-- mz-table: header=<color> -->`
+  - Edit mode shows raw pipe-text (pixel-perfect overlay alignment); preview mode renders the full styled `<table>`
 - **Diagrams:**
   - `mermaidPlugin` - ESM import of Mermaid
   - `mermaidExternalPlugin` - CDN-based Mermaid loading
@@ -161,8 +164,6 @@ actions.insertLink(textarea, {
 - **Media:**
   - `imageManagerPlugin` - Image upload and management
   - `imagePickerPlugin` - Image selection interface with customizable prompts (v1.0.8+)
-- **Theming:**
-  - `accentSwatchPlugin` - Color accent picker synchronized across instances
 
 **Usage:**
 
@@ -197,7 +198,7 @@ The project targets **Node.js 20+** as defined in `package.json` and mirrored in
 ### Near-term Goals
 
 - Expand plugin configuration hooks (custom toolbar buttons, plugin APIs)
-- Enhanced table editing capabilities with more grid features
+- Enhanced table editing capabilities with column alignment, style presets, and border options
 - Additional syntax highlighting themes
 
 ### Mid-term Goals
@@ -218,7 +219,7 @@ The project targets **Node.js 20+** as defined in `package.json` and mirrored in
 
 ## 📊 Project Status
 
-- ✅ **Production Ready** - v1.0.9 stable release
+- ✅ **Production Ready** - v1.2.2 stable release
 - ✅ **Zero Dependencies** - Complete self-contained solution
 - ✅ **Enhanced Developer Experience** - Toolbar shorthands and simplified configuration
 - ✅ **Flexible Theming** - Light/dark aliases with custom color support
@@ -254,4 +255,4 @@ The project targets **Node.js 20+** as defined in `package.json` and mirrored in
 
 ---
 
-_Last updated: February 2026 – Complete project analysis reflecting v1.0.9 release._
+_Last updated: February 2026 – Complete project analysis reflecting v1.2.2 release._

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Marzipan, tinyHighlightPlugin, mermaidPlugin, tableGridPlugin, accentSwatchPlugin } from '@pinkpixel/marzipan'
+import { Marzipan, tinyHighlightPlugin, mermaidPlugin, tableGridPlugin } from '@pinkpixel/marzipan'
 import type { MarzipanInstance } from '@pinkpixel/marzipan'
 
 const HIGHLIGHT_SAMPLE = `## 🎨 Syntax Highlighting
@@ -62,46 +62,36 @@ sequenceDiagram
 
 const TABLE_SAMPLE = `## ▦ Table Grid Plugin
 
-Click the **▦** button in the toolbar to open a visual grid picker and insert a Markdown table.
+Click the **▦** button in the toolbar to open the visual grid picker.
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Grid picker | ✅ | Visual row/col selector |
-| GFM output | ✅ | GitHub Flavored Markdown |
-| Auto-focus | ✅ | Places cursor in first cell |
+Choose how many rows & columns, pick a column **alignment** (⬅ ⬌ ➡), and optionally pick a **header color** — then click a cell to insert.
+
+<!-- mz-table: header=purple -->
+| Feature        | Status | Notes                        |
+| -------------- | ------ | ---------------------------- |
+| Grid picker    | ✅     | Visual row/col selector      |
+| GFM output     | ✅     | GitHub Flavored Markdown     |
+| Alignment      | ✅     | Left, center, or right       |
+| Header color   | ✅     | Pink, purple, blue, and more |
 
 Try inserting a new table using the toolbar button above! 👆`
-
-const ACCENT_SAMPLE = `## ⭘ Accent Swatch Plugin
-
-The accent swatch toolbar button lets you pick and persist a custom accent color.
-
-- Recent colors are saved to **localStorage**
-- Supports the **EyeDropper API** (in compatible browsers)
-- Broadcasts a \`marzipan:accent\` custom event
-
-Try clicking the **⭘** button in the toolbar to choose an accent color!`
 
 export default function PluginsGallery() {
   const highlightRef = useRef<HTMLDivElement>(null)
   const mermaidRef = useRef<HTMLDivElement>(null)
   const tableRef = useRef<HTMLDivElement>(null)
-  const accentRef = useRef<HTMLDivElement>(null)
 
   const [highlightInst, setHighlightInst] = useState<MarzipanInstance | null>(null)
   const [mermaidInst, setMermaidInst] = useState<MarzipanInstance | null>(null)
   const [tableInst, setTableInst] = useState<MarzipanInstance | null>(null)
-  const [accentInst, setAccentInst] = useState<MarzipanInstance | null>(null)
 
   const [hlPreview, setHlPreview] = useState(true)
   const [mermaidPreview, setMermaidPreview] = useState(true)
   const [tablePreview, setTablePreview] = useState(true)
-  const [accentPreview, setAccentPreview] = useState(true)
 
   const SHARED_PLUGINS = () => [
     tinyHighlightPlugin(),
     tableGridPlugin({ maxRows: 8, maxColumns: 8 }),
-    accentSwatchPlugin({ defaults: ['#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'] }),
   ]
 
   useEffect(() => {
@@ -143,18 +133,6 @@ export default function PluginsGallery() {
       setTableInst(inst)
     }
 
-    if (accentRef.current) {
-      const [inst] = new Marzipan(accentRef.current, {
-        value: ACCENT_SAMPLE,
-        toolbar: true,
-        theme: 'cave',
-        plugins: SHARED_PLUGINS(),
-      })
-      inst.showPreviewMode(true)
-      instances.push(inst)
-      setAccentInst(inst)
-    }
-
     return () => {
       instances.forEach(inst => inst.destroy?.())
     }
@@ -178,7 +156,7 @@ export default function PluginsGallery() {
           🧩 Plugins Gallery
         </h2>
         <p className="text-slate-300">
-          Live demos of all available Marzipan plugins. Every editor has the full plugin suite in its toolbar — syntax highlighting, table grid picker, and accent swatcher. Toggle between edit and preview to see rendered output.
+          Live demos of all available Marzipan plugins. Every editor has the full plugin suite in its toolbar — syntax highlighting and table grid picker. Toggle between edit and preview to see rendered output.
         </p>
       </div>
 
@@ -240,7 +218,7 @@ export default function PluginsGallery() {
           <span className="text-2xl">▦</span>
           <div>
             <h3 className="text-xl font-bold text-pink-300">Table Grid Plugin</h3>
-            <p className="text-slate-400 text-sm">Visual grid picker for inserting GFM tables</p>
+            <p className="text-slate-400 text-sm">Visual grid picker — alignment &amp; header color options</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <button
@@ -256,31 +234,8 @@ export default function PluginsGallery() {
         </div>
         <div ref={tableRef} style={{ height: '340px' }} />
         <div className="mt-3 text-slate-400 text-sm">
-          Click the <strong>▦</strong> button in the toolbar to open the visual grid picker
+          Click the <strong>▦</strong> button in the toolbar · pick a size · choose alignment and an optional header color
         </div>
-      </div>
-
-      {/* Accent Swatch Plugin */}
-      <div className="card p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-2xl">🎨</span>
-          <div>
-            <h3 className="text-xl font-bold text-amber-300">Accent Swatch Plugin</h3>
-            <p className="text-slate-400 text-sm">Persistent color palette with EyeDropper support</p>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={() => togglePreview(accentInst, accentPreview, setAccentPreview)}
-              className="text-xs px-3 py-1 rounded border border-amber-500/40 text-amber-300 hover:bg-amber-500/10 transition-colors"
-            >
-              {accentPreview ? '✏️ Edit' : '👁 Preview'}
-            </button>
-            <code className="text-xs bg-slate-800 border border-slate-600 px-2 py-1 rounded text-amber-200 hidden md:block">
-              accentSwatchPlugin()
-            </code>
-          </div>
-        </div>
-        <div ref={accentRef} style={{ height: '300px' }} />
       </div>
 
       {/* Usage code */}
@@ -292,7 +247,6 @@ export default function PluginsGallery() {
   tinyHighlightPlugin,
   mermaidPlugin,
   tableGridPlugin,
-  accentSwatchPlugin,
 } from '@pinkpixel/marzipan';
 
 new Marzipan('#editor', {
@@ -301,7 +255,6 @@ new Marzipan('#editor', {
     tinyHighlightPlugin(),
     mermaidPlugin({ theme: 'dark' }),
     tableGridPlugin({ maxRows: 8, maxColumns: 8 }),
-    accentSwatchPlugin({ defaults: ['#ec4899', '#8b5cf6'] }),
   ],
 });`}
         </pre>

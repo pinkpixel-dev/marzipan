@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Marzipan, tinyHighlightPlugin, mermaidPlugin, tableGridPlugin, accentSwatchPlugin } from '@pinkpixel/marzipan'
+import { Marzipan, tinyHighlightPlugin, mermaidPlugin, tableGridPlugin } from '@pinkpixel/marzipan'
 import type { MarzipanInstance } from '@pinkpixel/marzipan'
 
 const SAMPLE_CONTENT = `# 🧁 Welcome to Marzipan!
@@ -107,7 +107,6 @@ export default function Playground() {
         tinyHighlightPlugin(),
         mermaidPlugin(),
         tableGridPlugin({ maxRows: 8, maxColumns: 8 }),
-        accentSwatchPlugin({ defaults: ['#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'] }),
       ],
       onChange: (value) => {
         // Auto-save to localStorage

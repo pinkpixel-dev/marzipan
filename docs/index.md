@@ -31,13 +31,13 @@ features:
     details: Formatting helpers live in src/actions and export with the library — no extra installs needed.
   - icon: 🧩
     title: Plugin Library
-    details: Production-ready plugins for tables, Mermaid, syntax highlighting, media helpers, and more.
+    details: Production-ready plugins for tables (with alignment, style presets & borders), Mermaid, syntax highlighting, media helpers, and more.
   - icon: 👁️
     title: Overlay Preview
     details: Renders markdown directly over the textarea so alignment never drifts.
   - icon: 🎨
     title: Themeable UI
-    details: Includes Solar (light) and Cave (dark) themes, plus accent swatch tooling for custom palettes.
+    details: Includes Solar (light) and Cave (dark) themes with full CSS variable customization.
   - icon: 🛝
     title: Demo Bakeshop
     details: A Vite + React playground that exercises every option and plugin in a live environment.
@@ -88,7 +88,6 @@ new Marzipan("#editor", {
 | `tableGridPlugin`       | Grid overlay for rapid column/row creation                                                |
 | `tableGeneratorPlugin`  | Quick GFM table inserter with prompt-driven sizing                                        |
 | `tinyHighlightPlugin`   | Zero-runtime syntax highlighting for fenced code blocks                                   |
-| `accentSwatchPlugin`    | Synced accent palette picker                                                              |
 | `imageManagerPlugin`    | Dropzone and gallery UI for inserting images and managing uploads                         |
 | `imagePickerPlugin`     | Toolbar button for inserting images via URL or optional uploader callback                 |
 | `mermaidPlugin`         | Diagram rendering via ESM import                                                          |

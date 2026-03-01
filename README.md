@@ -6,16 +6,16 @@
 </div>
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.0-brightgreen.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.2-brightgreen.svg)](CHANGELOG.md)
 [![Docs](https://img.shields.io/badge/docs-marzipan.pinkpixel.dev-ff6fb7.svg)](https://marzipan.pinkpixel.dev)
 
 ## ✨ Highlights
 
 - **Pure TypeScript core** – ships typed ESM builds and declaration files.
 - **First-party actions** – formatting helpers live in `src/actions` and export with the library, so you can drop `markdown-actions` entirely.
-- **Plugin library** – production-ready plugins (tables, Mermaid, syntax highlighting, media helpers, accent swatches, and more) live in `src/plugins` and publish under `@pinkpixel/marzipan/plugins/*`.
+- **Plugin library** – production-ready plugins (tables, Mermaid, syntax highlighting, media helpers, and more) live in `src/plugins` and publish under `@pinkpixel/marzipan/plugins/*`.
 - **Overlay preview** – renders markdown directly over the textarea so alignment never drifts.
-- **Themeable UI** – includes Solar (light), Cave (dark), and accent swatch tooling for custom palettes.
+- **Themeable UI** – includes Solar (light), Cave (dark), and full CSS variable customization for custom palettes.
 - **Demo Bakeshop** – a Vite + React playground that exercises every option and plugin.
 
 ## 🍰 What’s in the repo?
@@ -80,9 +80,8 @@ Visit `http://localhost:5173` to explore every panel, plugin, and action in a li
 
 The `src/plugins` directory publishes directly to consumers. Available helpers include:
 
-- `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin` – interactive table authoring.
+- `tablePlugin`, `tableGridPlugin`, `tableGeneratorPlugin` – interactive table authoring with column alignment and header color options.
 - `tinyHighlightPlugin` – lightweight syntax highlighting for fenced code blocks (ships `tinyHighlightStyles`).
-- `accentSwatchPlugin` – synced accent palette picker.
 - `imageManagerPlugin`, `imagePickerPlugin` – opinionated media workflows.
 - `mermaidPlugin`, `mermaidExternalPlugin` – diagram rendering via ESM or CDN.
 

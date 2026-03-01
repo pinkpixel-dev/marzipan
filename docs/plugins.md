@@ -37,11 +37,7 @@ new Marzipan("#editor", {
 import { Marzipan, plugins } from "@pinkpixel/marzipan";
 
 new Marzipan("#editor", {
-  plugins: [
-    plugins.tablePlugin(),
-    plugins.mermaidPlugin(),
-    plugins.accentSwatchPlugin(),
-  ],
+  plugins: [plugins.tablePlugin(), plugins.mermaidPlugin()],
 });
 ```
 
@@ -51,17 +47,88 @@ Every factory returns an object that Marzipan consumes internally. You can mix a
 
 | Plugin                  | Import Path                                      | Description                                                                                       |
 | ----------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `accentSwatchPlugin`    | `@pinkpixel/marzipan/plugins/accentSwatchPlugin` | Adds a palette picker for accent colours and syncs with the toolbar + stats bar.                  |
 | `imageManagerPlugin`    | `@pinkpixel/marzipan/plugins/imageManagerPlugin` | Dropzone and gallery UI for inserting images and managing uploads.                                |
 | `imagePickerPlugin`     | `@pinkpixel/marzipan/plugins/imagePickerPlugin`  | Toolbar button for inserting images via URL or optional uploader callback.                        |
 | `mermaidPlugin`         | `@pinkpixel/marzipan/plugins/mermaidPlugin`      | Lazy-loads Mermaid from npm/ESM and renders diagrams inline.                                      |
 | `mermaidExternalPlugin` | `@pinkpixel/marzipan/plugins/mermaidExternal`    | Mermaid integration that targets a CDN script tag—perfect for sandboxed playgrounds.              |
 | `tablePlugin`           | `@pinkpixel/marzipan/plugins/tablePlugin`        | Toolbar-driven table generator with inline editing controls.                                      |
-| `tableGridPlugin`       | `@pinkpixel/marzipan/plugins/tableGridPlugin`    | Grid overlay for rapid column/row creation (exports `tableGridStyles`).                           |
+| `tableGridPlugin`       | `@pinkpixel/marzipan/plugins/tableGridPlugin`    | Grid popover with alignment and header color options (exports `tableGridStyles`).                 |
 | `tableGeneratorPlugin`  | `@pinkpixel/marzipan/plugins/tableGenerator`     | Quick GFM table inserter with prompt-driven sizing.                                               |
 | `tinyHighlightPlugin`   | `@pinkpixel/marzipan/plugins/tinyHighlight`      | Zero-runtime syntax highlighting for fenced code blocks (`tinyHighlightStyles` helper available). |
 
 > 📝 The plugin names map 1:1 to files in `src/plugins`. Inspect those files for advanced configuration options.
+
+## Table Plugin Enhancements
+
+The table plugins support GFM alignment markers and an optional header color annotation.
+
+### Column Alignment
+
+GFM column alignment is fully supported. Use `:---` (left), `:---:` (center), or `---:` (right) in the separator row:
+
+```markdown
+| Left | Center | Right |
+| :--- | :----: | ----: |
+| A    |   B    |     C |
+```
+
+The `tableGridPlugin` popover includes alignment buttons (Left / Center / Right) that set the alignment for all columns.
+
+### Header Color
+
+The `tableGridPlugin` popover includes a **Header Color** row with six pastel swatches plus a “none” option:
+
+| Color value | Appearance                   |
+| ----------- | ---------------------------- |
+| `pink`      | Soft pink header background  |
+| `purple`    | Muted purple background      |
+| `blue`      | Light blue background        |
+| `cyan`      | Aqua/teal background         |
+| `green`     | Sage green background        |
+| `amber`     | Warm amber/yellow background |
+| _(none)_    | No color — plain header      |
+
+### Annotation Syntax
+
+Place a hidden HTML comment immediately before the table to apply a header color:
+
+```markdown
+<!-- mz-table: header=purple -->
+
+| Name  | Score |
+| ----- | ----- |
+| Alice | 95    |
+| Bob   | 87    |
+```
+
+The comment is invisible to standard markdown renderers and is only parsed by Marzipan. In edit mode the raw pipe-text lines are shown directly in the overlay (preserving pixel-perfect cursor alignment); the styled `<table>` is rendered only in preview mode.
+
+### `tableGridPlugin` Popover
+
+The grid popover includes an options panel below the size grid with:
+
+- **Align** – Left / Center / Right toggle buttons.
+- **Header color** – Six pastel color swatches plus a “none” dot.
+
+Preferences are persisted to `localStorage` (key `marzipan.table.prefs`) so they survive page reloads.
+
+### `buildTableMarkdown` Utility
+
+The `buildTableMarkdown()` helper (exported from `@pinkpixel/marzipan`) accepts a `TableBuildOptions` object:
+
+```ts
+import { buildTableMarkdown } from "@pinkpixel/marzipan";
+import type { TableBuildOptions } from "@pinkpixel/marzipan";
+
+const md = buildTableMarkdown({
+  rows: 3,
+  cols: 4,
+  alignment: ["left", "center", "right", "left"],
+  headerColor: "blue",
+});
+```
+
+The original `(rows, cols)` signature remains supported for backward compatibility.
 
 ## Configuration tips
 

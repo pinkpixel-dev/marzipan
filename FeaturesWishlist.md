@@ -198,7 +198,7 @@
 
 - [x] **Theming System (CSS-based) with Custom CSS Overrides** 🟡
 
-  > ✅ Two themes: Solar (light) and Cave (dark) with `light`/`dark` aliases. Full CSS variable system. `mergeTheme()` for custom color overrides. `accentSwatchPlugin` for color picking.
+  > ✅ Two themes: Solar (light) and Cave (dark) with `light`/`dark` aliases. Full CSS variable system. `mergeTheme()` for custom color overrides.
   > 🟡 Only 2 themes exist — need more. Plan: Add Dracula, Catppuccin (Mocha, Latte), Tokyo Night, Nord, Solarized, One Dark, Gruvbox. Each theme is just a `ThemeColors` object — quick to create. Ship as optional imports: `import { dracula } from '@pinkpixel/marzipan/themes/dracula'`.
 
 - [ ] **Preferences Dialog (Settings UI)** ⬜

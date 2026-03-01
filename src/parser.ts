@@ -199,20 +199,40 @@ export class MarkdownParser {
   }
   
   /**
+   * Parse column alignments from a table separator row
+   * @param {string} separatorText - Raw text of the separator row
+   * @returns {string[]} Array of alignment values ('left', 'center', 'right')
+   */
+  static parseTableAlignments(separatorText) {
+    const inner = separatorText.slice(1, -1); // strip outer pipes
+    return inner.split(/(?<!\\)\|/).map(cell => {
+      const trimmed = cell.trim();
+      const left = trimmed.startsWith(':');
+      const right = trimmed.endsWith(':');
+      if (left && right) return 'center';
+      if (right) return 'right';
+      return 'left';
+    });
+  }
+
+  /**
    * Parse a table row into cells
    * @param {string} html - HTML table row
    * @param {string} tag - Tag to use for cells (th or td)
+   * @param {string[]} alignments - Optional column alignment array
    * @returns {string} HTML table row
    */
-  static parseTableRow(html, tag = 'td') {
+  static parseTableRow(html, tag = 'td', alignments = []) {
     // Remove leading and trailing pipes
     const inner = html.slice(1, -1);
     // Split by pipes (but not escaped pipes)
-    const cells = inner.split(/(?<!\\)\|/).map(cell => {
+    const cells = inner.split(/(?<!\\)\|/).map((cell, idx) => {
       const trimmed = cell.trim();
       // Parse inline markdown in cells
       const parsed = this.parseInlineElements(trimmed || '&nbsp;');
-      return `<${tag}>${parsed}</${tag}>`;
+      const align = alignments[idx];
+      const style = align && align !== 'left' ? ` style="text-align: ${align}"` : '';
+      return `<${tag}${style}>${parsed}</${tag}>`;
     });
     return `<tr>${cells.join('')}</tr>`;
   }
@@ -587,6 +607,16 @@ export class MarkdownParser {
       
       // Check if this is a table row - mark it for post-processing
       const escaped = this.escapeHtml(line);
+
+      // Check for mz-table annotation comment
+      const mzTableMatch = line.match(/^<!--\s*mz-table:\s*(.+?)\s*-->$/);
+      if (mzTableMatch) {
+        const blockId = this.generateBlockId();
+        // Render as a dimmed plain-text line so the overlay stays line-aligned.
+        // postProcessHTML will read the annotation attr and apply it to the table.
+        return `<div class="mz-table-annotation" data-mz-annotation="${this.escapeHtml(mzTableMatch[1])}" data-block-id="${blockId}" data-block-type="table-annotation" data-line-start="${index}" data-line-end="${index}">${escaped}</div>`;
+      }
+
       if (this.isTableRow(escaped)) {
         const blockId = this.generateBlockId();
         if (this.isTableSeparator(escaped)) {
@@ -629,6 +659,8 @@ export class MarkdownParser {
     let inCodeBlock = false;
     let currentTable = null;
     let isTableHeader = false;
+    let tableAlignments = [];
+    let pendingTableAnnotation = null;
 
     // Process all direct children - need to be careful with live NodeList
     const children = Array.from(container.children);
@@ -639,20 +671,34 @@ export class MarkdownParser {
       // Skip if child was already processed/removed
       if (!child.parentNode) continue;
       
+      // Check for table annotation
+      if (child.classList && child.classList.contains('mz-table-annotation')) {
+        pendingTableAnnotation = child.getAttribute('data-mz-annotation') || '';
+        continue;
+      }
+
       // Check for table rows
       if (child.classList && (child.classList.contains('table-row') || child.classList.contains('table-separator'))) {
         const isSeparator = child.classList.contains('table-separator');
         
         if (isSeparator) {
-          // This is a table separator - create thead if this is the first separator
+          // This is a table separator - parse alignments
           if (!currentTable) {
-            // This shouldn't happen but handle it
             child.remove();
             continue;
           }
+          // Parse alignment markers from separator text
+          tableAlignments = this.parseTableAlignments(child.textContent || '');
+          // Re-apply alignment to existing header cells
+          const headerCells = currentTable.querySelectorAll('thead th');
+          headerCells.forEach((th, idx) => {
+            const align = tableAlignments[idx];
+            if (align && align !== 'left') {
+              th.style.textAlign = align;
+            }
+          });
           // Mark that header is done and body begins
           isTableHeader = false;
-          child.remove();
           continue;
         }
         
@@ -661,14 +707,21 @@ export class MarkdownParser {
           // Start a new table
           currentTable = document.createElement('table');
           currentTable.className = 'marzipan-table';
+          // Apply annotation styles if present
+          if (pendingTableAnnotation) {
+            const headerMatch = pendingTableAnnotation.match(/header=(\S+)/);
+            if (headerMatch) currentTable.classList.add(`mz-header-${headerMatch[1]}`);
+            pendingTableAnnotation = null;
+          }
           container.insertBefore(currentTable, child);
           isTableHeader = true;
+          tableAlignments = [];
         }
         
         // Parse the row
         const rowHtml = child.textContent;
         const tag = isTableHeader ? 'th' : 'td';
-        const parsedRow = this.parseTableRow(rowHtml, tag);
+        const parsedRow = this.parseTableRow(rowHtml, tag, isTableHeader ? [] : tableAlignments);
         
         // Create tbody or thead if needed
         let section;
@@ -688,12 +741,13 @@ export class MarkdownParser {
         
         // Add the row to the section
         section.innerHTML += parsedRow;
-        child.remove();
         continue;
       } else {
         // Non-table element ends current table
         currentTable = null;
         isTableHeader = false;
+        tableAlignments = [];
+        // Don't clear pendingTableAnnotation here - it may be followed by whitespace then a table
       }
 
       // Check for code fence start/end
