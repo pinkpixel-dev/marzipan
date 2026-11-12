@@ -12,7 +12,7 @@ const pluginEntries = Object.fromEntries(
 
 export default defineConfig({
   build: {
-    emptyOutDir: false, // Don't clear dist folder to preserve TypeScript declarations
+    emptyOutDir: true, // Declarations are emitted by tsc after the bundle
     lib: {
       entry: {
         index: path.resolve(__dirname, 'src/index.ts'),

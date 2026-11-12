@@ -92,7 +92,8 @@ You are allowed to be proactive, but only when the user asks you to do something
 **Library root** (`/`):
 
 ```sh
-npm run build       # tsc && vite build && node scripts/post-build.js
+npm run build       # vite build && tsc -p tsconfig.build.json
+npm test            # vitest run
 npm run dev         # vite build --watch
 npm run typecheck   # tsc --noEmit
 npm run lint        # eslint .
@@ -100,7 +101,7 @@ npm run prettier    # prettier --write .
 npm run docs:dev    # vitepress dev docs
 ```
 
-> No test framework is configured — there are no unit tests.
+> Tests use Vitest with happy-dom and live in `tests/`. happy-dom has no working `execCommand`, so tests exercise the `setRangeText` fallback paths.
 
 **Bakeshop demo** (`bakeshop-demo/`):
 
@@ -115,8 +116,8 @@ npm run typecheck   # tsc --noEmit
 
 | Component       | Location          | Notes                                                              |
 | --------------- | ----------------- | ------------------------------------------------------------------ |
-| Core class      | `src/marzipan.ts` | Uses `// @ts-nocheck`; hand-authored types in `src/marzipan.d.ts`  |
-| Markdown parser | `src/parser.ts`   | `// @ts-nocheck`; char-aligned overlay rendering                   |
+| Core class      | `src/marzipan.ts` | Fully typed; public option/theme types live in `src/types.ts`      |
+| Markdown parser | `src/parser.ts`   | Fully typed; char-aligned overlay rendering                        |
 | Actions system  | `src/actions/`    | Zero dependencies; `FORMATS` registry in `core/formats.ts`         |
 | Plugin system   | `src/plugins/`    | Each plugin is a factory fn; each file is its own Vite entry point |
 | Themes          | `src/themes.ts`   | `solar` (light) + `cave` (dark); ~30 CSS variable palette          |
@@ -124,11 +125,11 @@ npm run typecheck   # tsc --noEmit
 
 ### Key Conventions
 
-1. **`// @ts-nocheck` on core files** — `marzipan.ts`, `parser.ts`, `link-tooltip.ts`, and `plugins/index.ts` all opt out of TS checking. The public API is defined in the hand-authored `src/marzipan.d.ts`. **Do not remove these directives.**
+1. **Types come from the code.** Every source file is type-checked under `strict`. Public types live in `src/types.ts`, and the editor instance type is the class itself. Don't add `// @ts-nocheck` or hand-written `.d.ts` files.
 
-2. **Constructor returns an array** — `new Marzipan(selector, opts)` always returns an array of instances. Consumers destructure: `const [editor] = new Marzipan('#my-textarea', opts)`. This is intentional—do not change.
+2. **Constructor returns an array** — `new Marzipan(selector, opts)` always returns an array of instances. Consumers destructure: `const [editor] = new Marzipan('#my-textarea', opts)`. This is intentional, so don't change it. Instances are built with `Object.create` + `_init`, which is why class fields use `declare` and are never initialized in the class body.
 
-3. **Dual `.d.ts` generation** — `tsc` runs first (emits `.d.ts` into `dist/`), then `vite build` bundles JS (with `emptyOutDir: false` so `.d.ts` are not wiped), then `scripts/post-build.js` copies `src/marzipan.d.ts` → `dist/` and writes a custom `dist/index.d.ts`. Never change the build order.
+3. **Build order.** `vite build` runs first and empties `dist/`, then `tsc -p tsconfig.build.json` emits only the `.d.ts` files next to the bundle. The root `tsconfig.json` is `noEmit` and also covers `tests/`.
 
 4. **Plugin entry points** — `vite.config.ts` auto-discovers all `.ts` files in `src/plugins/` and registers each as a separate entry. Adding a new plugin file automatically makes it available at `@pinkpixel/marzipan/plugins/<name>`.
 
@@ -140,8 +141,7 @@ npm run typecheck   # tsc --noEmit
 
 ### Key Files to Know
 
-- [`src/marzipan.d.ts`](../src/marzipan.d.ts) — hand-maintained public type declarations (source of truth for the API)
+- [`src/types.ts`](../src/types.ts): public option, theme and plugin types
 - [`src/actions/core/formats.ts`](../src/actions/core/formats.ts) — `FORMATS` registry (add format descriptors here)
 - [`vite.config.ts`](../vite.config.ts) — auto-discovers plugin entry points
-- [`scripts/post-build.js`](../scripts/post-build.js) — post-build `.d.ts` copy + `index.d.ts` generation
 - [`docs/api.md`](../docs/api.md) — primary API reference documentation

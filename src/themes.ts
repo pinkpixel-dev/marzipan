@@ -1,3 +1,5 @@
+import type { Theme, ThemeColors } from './types';
+
 /**
  * Built-in themes for Marzipan editor (TypeScript)
  * Each theme provides a complete color palette for the editor
@@ -6,7 +8,7 @@
 /**
  * Solar theme - Light, warm and bright
  */
-export const solar = {
+export const solar: Theme = {
   name: 'solar',
   colors: {
     bgPrimary: '#faf0ca',        // Lemon Chiffon - main background
@@ -39,7 +41,7 @@ export const solar = {
 /**
  * Cave theme - Dark ocean depths
  */
-export const cave = {
+export const cave: Theme = {
   name: 'cave',
   colors: {
     bgPrimary: '#141E26',        // Deep ocean - main background
@@ -72,7 +74,7 @@ export const cave = {
 /**
  * Default themes registry
  */
-export const themes = {
+export const themes: Record<'solar' | 'cave' | 'light' | 'dark', Theme> = {
   solar,
   cave,
   // Aliases for backward compatibility
@@ -85,9 +87,9 @@ export const themes = {
  * @param {string|Object} theme - Theme name or custom theme object
  * @returns {Object} Theme configuration
  */
-export function getTheme(theme) {
+export function getTheme(theme: string | Theme): Theme {
   if (typeof theme === 'string') {
-    const themeObj = themes[theme] || themes.solar;
+    const themeObj = themes[theme as keyof typeof themes] || themes.solar;
     // Preserve the requested theme name (important for 'light' and 'dark' aliases)
     return { ...themeObj, name: theme };
   }
@@ -99,8 +101,8 @@ export function getTheme(theme) {
  * @param {Object} colors - Theme colors object
  * @returns {string} CSS custom properties string
  */
-export function themeToCSSVars(colors) {
-  const vars = [];
+export function themeToCSSVars(colors: ThemeColors): string {
+  const vars: string[] = [];
   for (const [key, value] of Object.entries(colors)) {
     // Convert camelCase to kebab-case
     const varName = key.replace(/([A-Z])/g, '-$1').toLowerCase();
@@ -115,7 +117,7 @@ export function themeToCSSVars(colors) {
  * @param {Object} customColors - Custom color overrides
  * @returns {Object} Merged theme object
  */
-export function mergeTheme(baseTheme, customColors = {}) {
+export function mergeTheme(baseTheme: Theme, customColors: Partial<ThemeColors> = {}): Theme {
   return {
     ...baseTheme,
     colors: {

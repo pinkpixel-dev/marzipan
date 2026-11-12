@@ -1,6 +1,7 @@
 // tablePlugin.ts
 
 import { buildTableMarkdown, resolvePositiveInteger } from './utils/table';
+import type { MarzipanInstance } from '../types';
 
 export interface TablePluginOptions {
   defaultRows?: number;
@@ -9,12 +10,12 @@ export interface TablePluginOptions {
   title?: string;
 }
 
-function insertAtCursor(editor: any, text: string) {
-  const ta = editor.textarea as HTMLTextAreaElement;
+function insertAtCursor(editor: MarzipanInstance, text: string) {
+  const ta = editor.textarea;
   const s = ta.selectionStart ?? 0;
   const e = ta.selectionEnd ?? 0;
   ta.setRangeText(text, s, e, 'end');
-  editor.updatePreview?.();
+  editor.updatePreview();
   ta.focus();
 }
 
@@ -24,7 +25,7 @@ export function tablePlugin(options: TablePluginOptions = {}) {
   const label = options.label ?? '▦';
   const title = options.title ?? 'Insert table';
 
-  return (editor: any) => {
+  return (editor: MarzipanInstance) => {
     const bar = editor.container.querySelector('.marzipan-toolbar') as HTMLElement;
     if (!bar) return;
 

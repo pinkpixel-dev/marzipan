@@ -9,7 +9,7 @@ Welcome! This folder contains everything you need to install, configure, and ext
 | [Quick Start](./quick-start.md)  | Install the library, render your first editor, and wire up bundled actions and plugins. |
 | [API Reference](./api.md)        | Full class API, key options, utility methods, and action helper signatures.             |
 | [Plugin Catalogue](./plugins.md) | Overview of the first-party plugins shipped from `src/plugins` with configuration tips. |
-| [Type Definitions](./types.d.ts) | Generated TypeScript declarations for deep integration and tooling.                     |
+| [Type Definitions](./types.md)   | The exported TypeScript types. The `.d.ts` files ship with the package.                  |
 
 ## 🧭 Orientation
 
@@ -26,7 +26,7 @@ Welcome! This folder contains everything you need to install, configure, and ext
 
 ## 🧁 Related Resources
 
-- Project overview and roadmap: [../OVERVIEW.md](../OVERVIEW.md)
+- Project overview and roadmap: [../DOCS/OVERVIEW.md](../DOCS/OVERVIEW.md)
 - Repository changelog: [../CHANGELOG.md](../CHANGELOG.md)
 - Demo playground guide: [../bakeshop-demo/README.md](../bakeshop-demo/README.md)
 

@@ -1,6 +1,6 @@
 {
   "name": "@pinkpixel/marzipan",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Pure TypeScript markdown editor library with overlay preview",
   "license": "Apache-2.0",
   "type": "module",
@@ -20,12 +20,12 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./plugins/*": {
-      "import": "./dist/plugins/*.js",
-      "types": "./dist/plugins/*.d.ts"
+      "types": "./dist/plugins/*.d.ts",
+      "import": "./dist/plugins/*.js"
     }
   },
   "files": [
@@ -35,7 +35,7 @@
   ],
   "scripts": {
     "dev": "vite build --watch",
-    "build": "tsc && vite build && node scripts/post-build.js",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "prettier": "prettier --write .",
     "prepublishOnly": "npm run build",

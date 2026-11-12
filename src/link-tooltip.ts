@@ -47,10 +47,37 @@ function ensureTooltipStyles() {
   tooltipStylesInjected = true;
 }
 
-export class LinkTooltip {
-  [key: string]: any;
+interface TooltipHost {
+  textarea: HTMLTextAreaElement;
+  preview: HTMLElement;
+  container: HTMLElement;
+}
 
-  constructor(editor: any) {
+export interface LinkInfo {
+  text: string;
+  url: string;
+  /** CSS anchor name of the rendered link, like --link-3 */
+  index: string;
+  start: number;
+  end: number;
+}
+
+type Handler = (() => void) | null;
+
+export class LinkTooltip {
+  editor: TooltipHost;
+  tooltip: HTMLDivElement | null;
+  currentLink: LinkInfo | null;
+  hideTimeout: ReturnType<typeof setTimeout> | null;
+  supportsAnchor: boolean;
+  private _selectionHandler: Handler;
+  private _keyupHandler: ((e: KeyboardEvent) => void) | null;
+  private _inputHandler: Handler;
+  private _scrollHandler: Handler;
+  private _tooltipEnterHandler: Handler;
+  private _tooltipLeaveHandler: Handler;
+
+  constructor(editor: TooltipHost) {
     this.editor = editor;
     this.tooltip = null;
     this.currentLink = null;
@@ -169,7 +196,7 @@ export class LinkTooltip {
     }
   }
 
-  findLinkAtPosition(text, position) {
+  findLinkAtPosition(text: string, position: number): LinkInfo | null {
     // Only look at the cursor's line, then match it to the link the parser rendered
     const lineIndex = text.slice(0, position).split('\n').length - 1;
     const lineStart = text.lastIndexOf('\n', position - 1) + 1;
@@ -177,7 +204,7 @@ export class LinkTooltip {
     const line = text.slice(lineStart, lineEndIdx === -1 ? text.length : lineEndIdx);
 
     // Blank out inline code so links inside it don't count (lengths stay the same)
-    const masked = line.replace(/(?<!`)(`+)(?!`)((?:(?!\1).)+?)(\1)(?!`)/g, m => ' '.repeat(m.length));
+    const masked = line.replace(/(?<!`)(`+)(?!`)((?:(?!\1).)+?)(\1)(?!`)/g, (m: string) => ' '.repeat(m.length));
 
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
     let match;
@@ -207,7 +234,7 @@ export class LinkTooltip {
     return null;
   }
 
-  findRenderedAnchor(lineIndex, nth) {
+  findRenderedAnchor(lineIndex: number, nth: number): string | null {
     const preview = this.editor.preview;
     if (!preview) return null;
     const links = preview.querySelectorAll(`a[data-mz-line="${lineIndex}"]`);
@@ -217,7 +244,7 @@ export class LinkTooltip {
     return match ? match[1] : null;
   }
 
-  show(linkInfo) {
+  show(linkInfo: LinkInfo) {
     if (!this.tooltip) return;
 
     this.currentLink = linkInfo;

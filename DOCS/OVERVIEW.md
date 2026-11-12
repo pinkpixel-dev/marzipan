@@ -3,7 +3,7 @@
 ## ✨ Project Snapshot
 
 - **Package:** `@pinkpixel/marzipan`
-- **Version:** 1.2.2 (Production Ready)
+- **Version:** 1.2.5
 - **Runtime dependencies:** **Zero** – Pure TypeScript with all markdown actions bundled internally
 - **Plugins:** First-party plugins published from `src/plugins` as tree-shakeable modules (`@pinkpixel/marzipan/plugins/*`)
 - **Demo:** `bakeshop-demo/` - Full-featured React playground demonstrating all capabilities
@@ -36,14 +36,16 @@ marzipan/
 │   ├── themes.ts             # Theme system (Solar, Cave)
 │   ├── styles.ts             # Style generation
 │   ├── link-tooltip.ts       # Link preview tooltips
+│   ├── types.ts              # Public option, theme and plugin types
 │   └── index.ts              # Package entry point
+├── tests/                    # Vitest suite (parser + editor, happy-dom)
 ├── dist/                     # Build output (ESM + .d.ts files, gitignored)
 ├── docs/                     # Comprehensive documentation
 │   ├── README.md             # Documentation orientation
 │   ├── quick-start.md        # Installation and setup guide
 │   ├── api.md                # Full API reference
 │   ├── plugins.md            # Plugin catalogue
-│   └── types.d.ts            # Generated TypeScript definitions
+│   └── types.md              # Exported TypeScript types
 ├── bakeshop-demo/            # Vite + React demonstration app
 │   ├── src/                  # Demo source code
 │   ├── README.md             # Demo guide
@@ -51,7 +53,8 @@ marzipan/
 ├── public/                   # Static assets (logo, favicon)
 ├── CHANGELOG.md              # Release notes and version history
 ├── CONTRIBUTING.md           # Development workflow and standards
-├── OVERVIEW.md               # This document - project architecture
+├── DOCS/
+│   └── OVERVIEW.md           # This document, project architecture
 ├── README.md                 # Project introduction and quick start
 ├── LICENSE                   # Apache 2.0 license
 └── [config files]            # package.json, tsconfig.json, vite.config.ts, etc.
@@ -73,7 +76,8 @@ Key pillars:
 ### Core Library (`src/`)
 
 - ES module output targeting modern browsers (ES2020).
-- Strict TypeScript configuration with declaration + source maps in `dist/`.
+- Every source file is type-checked under `strict`. Vite bundles to `dist/` (with source maps), then `tsc -p tsconfig.build.json` generates the `.d.ts` files straight from the source, so the published types can't drift from the code.
+- The editor instance type is the `Marzipan` class itself. `new Marzipan(target, options)` is typed as returning an array of editors, which matches what it does at runtime.
 - `actions/` folder contains all formatting helpers used by the toolbar and shortcuts; exported via the package entry so apps can call them directly.
 - `plugins/` folder provides tree-shakeable factories published to `@pinkpixel/marzipan/plugins/<name>`.
 - **Link Tooltip** (`link-tooltip.ts`): Context-aware floating URL preview automatically shown when the cursor moves inside a markdown link, powered by the CSS Anchor Positioning API.
@@ -86,10 +90,10 @@ Key pillars:
 
 ## 📚 Documentation Overview
 
-Updated to reflect v1.2.2 features including simplified table plugin API, header color option, and overlay alignment fix:
+Current as of v1.2.5:
 
 - `README.md` – top-level orientation, quick start, plugin summary.
-- `docs/` – quick start, API reference, plugin catalogue, and type definitions.
+- `docs/` – quick start, API reference, plugin catalogue, and the exported types.
 - `bakeshop-demo/README.md` – demo setup and panel walkthrough.
 - `CHANGELOG.md` – release notes including toolbar shorthands, theme aliases, and plugin improvements.
 - **Documentation Website:** https://marzipan.pinkpixel.dev - Comprehensive guides and interactive examples
@@ -179,7 +183,8 @@ new Marzipan("#editor", {
 
 ## 🛠️ Tooling & Scripts
 
-- **Build:** `npm run build` (TypeScript + Vite library mode)
+- **Build:** `npm run build` (Vite library mode, then `tsc` for declarations)
+- **Test:** `npm test` (Vitest + happy-dom)
 - **Watch:** `npm run dev`
 - **Quality:** `npm run lint`, `npm run typecheck`, `npm run prettier`
 - **Demo:** run the same commands inside `bakeshop-demo/`
@@ -191,7 +196,7 @@ The project targets **Node.js 20+** as defined in `package.json` and mirrored in
 1. Clone the repository and install dependencies: `npm install`
 2. Run `npm run dev` for watch mode or `npm run build` before testing the demo.
 3. Launch the Bakeshop from `bakeshop-demo/` (`npm run dev`) to exercise plugins and actions.
-4. Follow [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards and pull request expectations.
+4. Follow [CONTRIBUTING.md](../CONTRIBUTING.md) for coding standards and pull request expectations.
 
 ## 🔮 Roadmap & Future Enhancements
 
@@ -215,11 +220,10 @@ The project targets **Node.js 20+** as defined in `package.json` and mirrored in
   - Svelte: Marzipan action
 - Plugin marketplace ecosystem
 - Advanced formatting plugins (footnotes, abbreviations, etc.)
-- Mobile-first editing experience enhancements
 
 ## 📊 Project Status
 
-- ✅ **Production Ready** - v1.2.2 stable release
+- ✅ **Production Ready** - v1.2.5
 - ✅ **Zero Dependencies** - Complete self-contained solution
 - ✅ **Enhanced Developer Experience** - Toolbar shorthands and simplified configuration
 - ✅ **Flexible Theming** - Light/dark aliases with custom color support
@@ -255,4 +259,4 @@ The project targets **Node.js 20+** as defined in `package.json` and mirrored in
 
 ---
 
-_Last updated: February 2026 – Complete project analysis reflecting v1.2.2 release._
+_Last updated: November 11, 2026, reflecting v1.2.5._

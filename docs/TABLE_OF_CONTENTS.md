@@ -8,7 +8,7 @@
 ## Core Reference
 
 - [API Reference](./api.md)
-- [Type Definitions](./types.d.ts)
+- [Type Definitions](./types.md)
 
 ## Extensions
 
@@ -16,7 +16,7 @@
 
 ## Related Root Docs
 
-- [Project Overview](../OVERVIEW.md)
+- [Project Overview](../DOCS/OVERVIEW.md)
 - [Changelog](../CHANGELOG.md)
 - [Bakeshop Demo Guide](../bakeshop-demo/README.md)
 

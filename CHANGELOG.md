@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.5] - 2026-11-11
+
+### 🏷️ Types
+
+- The `.d.ts` files are generated from the real source now, instead of a hand-written `marzipan.d.ts` that could quietly drift from the code. `@ts-nocheck` is gone from every file, and the whole library is checked under `strict`.
+- `MarzipanInstance` is the editor class itself, so every public property and method is typed exactly as it behaves. `new Marzipan(target, options)` is still typed as returning an array of editors.
+- New exported types: `Options`, `MarzipanTarget`, `ToolbarButtonShortcut`, `ToolbarButtonOption`, `ListContext`, `Sanctuary`, `TableAlignment`, `LinkInfo`, `StyleOptions` and `MermaidPluginConfig`. `MarzipanOptions` still works as an alias for `Options`.
+- Built-in plugins take the real editor type instead of `any`.
+
+### 📦 Build
+
+- `dist/` is emptied on every build. Old builds were leaving stale plugin files and a second copy of every Mermaid chunk behind, which nearly doubled the package (28 MB down to 16 MB).
+- The build is now `vite build` followed by `tsc -p tsconfig.build.json`, which only emits declarations. `scripts/post-build.js` is gone.
+- The package `exports` list `types` first, so TypeScript resolves them reliably.
+
+### 🧹 Maintenance
+
+- `npm run lint` passes with zero errors. The root lint no longer reaches into `bakeshop-demo/` or `docs-site/`, which have their own setup.
+- Removed the preview's "Start typing..." fallback, which could never show (the textarea placeholder handles it).
+- Removed `content.txt` and `docs/types.d.ts`, and moved `OVERVIEW.md` to `DOCS/`.
+
+---
+
 ## [1.2.4] - 2026-11-11
 
 ### 🔒 Security

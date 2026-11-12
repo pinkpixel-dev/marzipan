@@ -2,8 +2,11 @@
 // A tiny, regex-based highlighter for common languages. Zero deps.
 // Not spec-perfect; tuned for readability and speed.
 
+import type { EditorHooks, MarzipanInstance } from '../types';
+
+/** Anything with Marzipan's hook options (kept for backwards compatibility) */
 export type MarzipanLike = {
-  options: { hooks?: { afterPreviewRender?: (root: HTMLElement, editor: any) => void } };
+  options: { hooks?: EditorHooks };
 };
 
 type Rule = { pattern: RegExp; cls: string };
@@ -132,7 +135,7 @@ export function tinyHighlightPlugin() {
   return (editor: MarzipanLike) => {
     const prev = editor.options.hooks?.afterPreviewRender;
     editor.options.hooks = editor.options.hooks || {};
-    editor.options.hooks.afterPreviewRender = (root: HTMLElement, e: any) => {
+    editor.options.hooks.afterPreviewRender = (root: HTMLElement, e: MarzipanInstance) => {
       prev?.(root, e);
 
       const blocks = root.querySelectorAll('pre code[class*="language-"]');

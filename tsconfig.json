@@ -7,17 +7,11 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false,
-    "jsx": "preserve",
+    "noEmit": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "dist"
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "marzipan-plugins/**/*", "examples/src/types/mermaid.d.ts"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["src", "tests"]
 }

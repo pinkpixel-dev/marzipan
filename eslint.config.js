@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'examples/legacy/**']),
+  globalIgnores(['dist', 'bakeshop-demo', 'docs-site', 'docs/.vitepress/cache', 'dev']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

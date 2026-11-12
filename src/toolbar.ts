@@ -10,7 +10,7 @@ interface ToolbarHost {
   showPreviewMode?: (enabled: boolean) => void;
 }
 
-type ToolbarButtonPreset =
+export type ToolbarButtonPreset =
   | 'bold'
   | 'italic'
   | 'code'
@@ -25,9 +25,9 @@ type ToolbarButtonPreset =
   | 'view'
   | 'plain';
 
-type ToolbarButtonEntry = ToolbarButtonConfig | ToolbarButtonPreset | '|' | 'separator' | 'divider';
+export type ToolbarButtonEntry = ToolbarButtonConfig | ToolbarButtonPreset | '|' | 'separator' | 'divider';
 
-interface ToolbarButtonConfig {
+export interface ToolbarButtonConfig {
   name?: keyof typeof icons | string;
   icon?: string;
   title?: string;

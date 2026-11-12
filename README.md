@@ -119,13 +119,13 @@ All guides live in `/docs`:
 - `docs/quick-start.md` – install, instantiate, and wire up actions/plugins.
 - `docs/api.md` – class API, action helpers, TypeScript signatures.
 - `docs/plugins.md` – plugin catalogue, configuration, and bundling tips.
-- `docs/types.d.ts` – generated type definitions.
+- `docs/types.md` – the exported TypeScript types. The `.d.ts` files ship with the package and are generated from the source on every build.
 
 The new [CHANGELOG](CHANGELOG.md) tracks releases and major documentation updates.
 
 ## 🗺️ Project Overview
 
-Read [OVERVIEW.md](OVERVIEW.md) for architecture, tooling, and roadmap context, including how `src/actions` and `src/plugins` integrate with the build.
+Read [DOCS/OVERVIEW.md](DOCS/OVERVIEW.md) for architecture, tooling, and roadmap context, including how `src/actions` and `src/plugins` integrate with the build.
 
 ## 🛠️ Scripts
 

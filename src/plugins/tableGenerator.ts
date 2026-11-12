@@ -2,19 +2,20 @@
 // Quick GFM table inserter.
 
 import { buildTableMarkdown, resolvePositiveInteger } from './utils/table';
+import type { MarzipanInstance } from '../types';
 
-function insertAtCursor(editor: any, text: string) {
-  const ta = editor.textarea as HTMLTextAreaElement;
+function insertAtCursor(editor: MarzipanInstance, text: string) {
+  const ta = editor.textarea;
   const s = ta.selectionStart ?? 0;
   const e = ta.selectionEnd ?? 0;
   ta.setRangeText(text, s, e, 'end');
-  editor.updatePreview?.();
+  editor.updatePreview();
   ta.focus();
 }
 
 export function tableGeneratorPlugin() {
-  return (editor: any) => {
-    const bar = editor.container?.querySelector?.('.marzipan-toolbar') as HTMLElement
+  return (editor: MarzipanInstance) => {
+    const bar = editor.container.querySelector<HTMLElement>('.marzipan-toolbar')
       ?? editor.container;
 
     const btn = document.createElement('button');

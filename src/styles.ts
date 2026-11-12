@@ -4,13 +4,23 @@
  */
 
 import { themeToCSSVars } from './themes';
+import type { MobileOptions, Theme } from './types';
+
+export interface StyleOptions {
+  fontSize?: string;
+  lineHeight?: string | number;
+  fontFamily?: string;
+  padding?: string;
+  theme?: Theme | null;
+  mobile?: MobileOptions;
+}
 
 /**
  * Generate the complete CSS for the editor
  * @param {Object} options - Configuration options
  * @returns {string} Complete CSS string
  */
-export function generateStyles(options: any = {}) {
+export function generateStyles(options: StyleOptions = {}): string {
   const {
     fontSize = '14px',
     lineHeight = 1.6,

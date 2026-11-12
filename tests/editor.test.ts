@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Marzipan } from '../src/marzipan';
+import type { Options } from '../src/types';
 
-type Editor = InstanceType<typeof Marzipan>;
+type Editor = Marzipan;
 
 function makeEditor(options: Record<string, unknown> = {}, inner = '') {
   const host = document.createElement('div');
   host.innerHTML = inner;
   document.body.appendChild(host);
-  const [editor] = new Marzipan(host, options) as unknown as Editor[];
+  const [editor] = new Marzipan(host, options as Options);
   return { host, editor };
 }
 

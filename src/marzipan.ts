@@ -1,6 +1,6 @@
 /**
  * Marzipan - A lightweight markdown editor and viewer
- * @version 1.2.4
+ * @version 1.2.5
  * @license Apache-2.0
  */
 
@@ -10,16 +10,85 @@ import { generateStyles } from './styles';
 import { getTheme, mergeTheme, solar } from './themes';
 import { Toolbar } from './toolbar';
 import { LinkTooltip } from './link-tooltip';
+import type { ListContext } from './parser';
+import type {
+  MarzipanPlugin,
+  MarzipanTarget,
+  Options,
+  RenderOptions,
+  Stats,
+  Theme,
+  ThemeColors,
+} from './types';
+
+/** The wrapper element keeps a back-reference to its editor */
+type MzWrapper = HTMLElement & { _instance?: MarzipanEditor };
+/** The mount element keeps a back-reference to its editor */
+type MzHost = HTMLElement & { MarzipanInstance?: MarzipanEditor | null };
+type Timer = ReturnType<typeof setTimeout>;
 
 /**
  * Marzipan Editor Class
  */
-class Marzipan {
+class MarzipanEditor {
     // Static properties
-    static instances = new WeakMap();
+    static instances = new WeakMap<Element, MarzipanEditor>();
     static stylesInjected = false;
     static globalListenersInitialized = false;
     static instanceCount = 0;
+    /** Theme used by instances that don't set their own */
+    static currentTheme: Theme = solar;
+    /** Built-in themes */
+    static themes = {
+      solar,
+      cave: getTheme('cave'),
+      light: getTheme('light'),
+      dark: getTheme('dark')
+    };
+    static getTheme = getTheme;
+    static MarkdownParser = MarkdownParser;
+    static ShortcutsManager = ShortcutsManager;
+
+    // Instances are built with Object.create + _init (the constructor returns an array),
+    // so fields are declared only and never initialized by the class body.
+    /** Original mount element */
+    declare element: MzHost;
+    /** Current configuration options */
+    declare options: Options;
+    /** Container element (toolbar, wrapper and stats bar) */
+    declare container: HTMLElement;
+    /** Wrapper element (textarea and preview) */
+    declare wrapper: MzWrapper;
+    /** The editable textarea */
+    declare textarea: HTMLTextAreaElement;
+    /** The rendered preview overlay */
+    declare preview: HTMLElement;
+    /** Statistics bar element (when showStats is on) */
+    declare statsBar?: HTMLElement | null;
+    /** Toolbar instance (when the toolbar is enabled) */
+    declare toolbar?: Toolbar;
+    /** Keyboard shortcuts manager */
+    declare shortcuts: ShortcutsManager;
+    /** Link tooltip manager */
+    declare linkTooltip: LinkTooltip | null;
+    /** Whether the editor is initialized */
+    declare initialized: boolean;
+    /** Unique instance identifier */
+    declare instanceId: number;
+    declare instanceTheme: string | Theme | null;
+    declare instanceColors: Partial<ThemeColors> | null;
+    private declare _appliedThemeColorKeys: Set<string>;
+    private declare _appliedPlugins: Set<MarzipanPlugin>;
+    private declare _autoResizeInputHandler: (() => void) | null;
+    private declare _autoResizeResizeHandler: (() => void) | null;
+    private declare _minAutoHeight: number | null;
+    private declare _maxAutoHeight: number | null;
+    private declare previousHeight: number | null;
+    private declare numberUpdateTimeout: Timer | null;
+    private declare _selectionTimeout: Timer | undefined;
+    private declare _tabReleased: boolean;
+    private declare _lastChangeValue: string;
+    private declare _lastActiveLine: number;
 
     /**
      * Constructor - Always returns an array of instances
@@ -27,20 +96,20 @@ class Marzipan {
      * @param {Object} options - Configuration options
      * @returns {Array} Array of Marzipan instances
      */
-    constructor(target, options = {}) {
+    constructor(target: MarzipanTarget, options: Options = {}) {
       // Convert target to array of elements
-      let elements;
+      let elements: Element[];
       
       if (typeof target === 'string') {
-        elements = document.querySelectorAll(target);
-        if (elements.length === 0) {
+        const found = document.querySelectorAll(target);
+        if (found.length === 0) {
           throw new Error(`No elements found for selector: ${target}`);
         }
-        elements = Array.from(elements);
+        elements = Array.from(found);
       } else if (target instanceof Element) {
         elements = [target];
       } else if (target instanceof NodeList) {
-        elements = Array.from(target);
+        elements = Array.from(target) as Element[];
       } else if (Array.isArray(target)) {
         elements = target;
       } else {
@@ -48,7 +117,7 @@ class Marzipan {
       }
 
       // Initialize all elements and return array
-      const instances = elements.map(element => {
+      const instances = (elements as MzHost[]).map(element => {
         // Check for existing instance
         if (element.MarzipanInstance) {
           // Re-init existing instance
@@ -57,21 +126,21 @@ class Marzipan {
         }
 
         // Create new instance
-        const instance = Object.create(Marzipan.prototype);
+        const instance: MarzipanEditor = Object.create(MarzipanEditor.prototype);
         instance._init(element, options);
         element.MarzipanInstance = instance;
-        Marzipan.instances.set(element, instance);
+        MarzipanEditor.instances.set(element, instance);
         return instance;
       });
 
-      return instances;
+      return instances as unknown as MarzipanEditor;
     }
 
     /**
      * Internal initialization
      * @private
      */
-    _init(element, options = {}) {
+    private _init(element: MzHost, options: Options = {}) {
       this.element = element;
       
       // Store the original theme option before merging
@@ -80,7 +149,7 @@ class Marzipan {
       this.instanceTheme = this.options.theme ?? null;
       this.instanceColors = this.options.colors ? { ...this.options.colors } : null;
       this._appliedThemeColorKeys = new Set();
-      this.instanceId = ++Marzipan.instanceCount;
+      this.instanceId = ++MarzipanEditor.instanceCount;
       this.initialized = false;
       this._autoResizeInputHandler = null;
       this._autoResizeResizeHandler = null;
@@ -88,14 +157,14 @@ class Marzipan {
       this._maxAutoHeight = null;
 
       // Inject styles if needed
-      Marzipan.injectStyles();
+      MarzipanEditor.injectStyles();
 
       // Initialize global listeners
-      Marzipan.initGlobalListeners();
+      MarzipanEditor.initGlobalListeners();
 
       // Check for existing Marzipan DOM structure
-      const container = element.querySelector('.marzipan-container');
-      const wrapper = element.querySelector('.marzipan-wrapper');
+      const container = element.querySelector<HTMLElement>('.marzipan-container');
+      const wrapper = element.querySelector<HTMLElement>('.marzipan-wrapper');
       if (container || wrapper) {
         this._recoverFromDOM(container, wrapper);
       } else {
@@ -110,7 +179,7 @@ class Marzipan {
 
       // Setup toolbar if enabled
       if (this.options.toolbar) {
-        const toolbarButtons = typeof this.options.toolbar === 'object' ? this.options.toolbar.buttons : null;
+        const toolbarButtons = typeof this.options.toolbar === 'object' ? this.options.toolbar.buttons ?? null : null;
         this.toolbar = new Toolbar(this, toolbarButtons);
         this.toolbar.create();
         
@@ -142,8 +211,8 @@ class Marzipan {
      * Merge user options with defaults
      * @private
      */
-    _mergeOptions(options = {}) {
-      const defaults = {
+    private _mergeOptions(options: Options = {}): Options {
+      const defaults: Options = {
         // Typography
         fontSize: '14px',
         lineHeight: 1.6,
@@ -170,14 +239,14 @@ class Marzipan {
         value: '',
         
         // Callbacks
-        onChange: null,
-        onKeydown: null,
+        onChange: undefined,
+        onKeydown: undefined,
         
         // Features
         showActiveLineRaw: false,
         showStats: false,
         toolbar: false,
-        statsFormatter: null,
+        statsFormatter: undefined,
         smartLists: true,  // Enable smart list continuation
 
         // Theme overrides
@@ -187,7 +256,7 @@ class Marzipan {
       
       const { hooks, plugins, ...cleanOptions } = options;
 
-      const merged = {
+      const merged: Options = {
         ...defaults,
         ...cleanOptions
       };
@@ -215,7 +284,7 @@ class Marzipan {
      * Apply plugins attached to this editor instance
      * @private
      */
-    _applyPlugins() {
+    private _applyPlugins() {
       if (!Array.isArray(this.options?.plugins) || !this.options.plugins.length) {
         return false;
       }
@@ -241,15 +310,15 @@ class Marzipan {
       return applied;
     }
 
-    _resolveTheme() {
-      let baseTheme = this.instanceTheme;
+    private _resolveTheme(): Theme {
+      let baseTheme: string | Theme | null = this.instanceTheme;
 
       if (typeof baseTheme === 'string') {
         baseTheme = getTheme(baseTheme);
       }
 
       if (!baseTheme) {
-        baseTheme = Marzipan.currentTheme || solar;
+        baseTheme = MarzipanEditor.currentTheme || solar;
       }
 
       if (typeof baseTheme === 'string') {
@@ -263,7 +332,7 @@ class Marzipan {
       return baseTheme;
     }
 
-    _applyTheme(target) {
+    private _applyTheme(target: HTMLElement) {
       if (!target) return;
 
       const themeConfig = this._resolveTheme();
@@ -299,18 +368,18 @@ class Marzipan {
      * Recover from existing DOM structure
      * @private
      */
-    _recoverFromDOM(container, wrapper) {
+    private _recoverFromDOM(container: HTMLElement | null, wrapper: HTMLElement | null) {
       // Handle old structure (wrapper only) or new structure (container + wrapper)
       if (container && container.classList.contains('marzipan-container')) {
         this.container = container;
-        this.wrapper = container.querySelector('.marzipan-wrapper');
+        this.wrapper = container.querySelector('.marzipan-wrapper') as MzWrapper;
       } else if (wrapper) {
         // Old structure - just wrapper, no container
         this.wrapper = wrapper;
         // Wrap it in a container for consistency
         this.container = document.createElement('div');
         this.container.className = 'marzipan-container';
-        wrapper.parentNode.insertBefore(this.container, wrapper);
+        wrapper.parentNode?.insertBefore(this.container, wrapper);
         this.container.appendChild(wrapper);
       }
 
@@ -327,8 +396,8 @@ class Marzipan {
         return;
       }
       
-      this.textarea = this.wrapper.querySelector('.marzipan-input');
-      this.preview = this.wrapper.querySelector('.marzipan-preview');
+      this.textarea = this.wrapper.querySelector('.marzipan-input') as HTMLTextAreaElement;
+      this.preview = this.wrapper.querySelector('.marzipan-preview') as HTMLElement;
 
       if (!this.textarea || !this.preview) {
         // Partial DOM - clear and rebuild
@@ -362,7 +431,7 @@ class Marzipan {
      * Build editor from scratch
      * @private
      */
-    _buildFromScratch() {
+    private _buildFromScratch() {
       // Extract any existing content
       const content = this._extractContent();
 
@@ -386,9 +455,9 @@ class Marzipan {
      * Extract content from element
      * @private
      */
-    _extractContent() {
+    private _extractContent() {
       // Look for existing Marzipan textarea
-      const textarea = this.element.querySelector('.marzipan-input');
+      const textarea = this.element.querySelector<HTMLTextAreaElement>('.marzipan-input');
       if (textarea) return textarea.value;
 
       // Use element's text content as fallback
@@ -399,7 +468,7 @@ class Marzipan {
      * Create DOM structure
      * @private
      */
-    _createDOM() {
+    private _createDOM() {
       // Create container that will hold toolbar and editor
       this.container = document.createElement('div');
       this.container.className = 'marzipan-container';
@@ -428,7 +497,7 @@ class Marzipan {
       // Create textarea
       this.textarea = document.createElement('textarea');
       this.textarea.className = 'marzipan-input';
-      this.textarea.placeholder = this.options.placeholder;
+      this.textarea.placeholder = this.options.placeholder ?? '';
       this._configureTextarea();
       
       // Apply any native textarea properties
@@ -437,9 +506,9 @@ class Marzipan {
           if (key === 'className' || key === 'class') {
             this.textarea.className += ' ' + value;
           } else if (key === 'style' && typeof value === 'object') {
-            Object.assign(this.textarea.style, value);
+            Object.assign(this.textarea.style, value as Partial<CSSStyleDeclaration>);
           } else {
-            this.textarea.setAttribute(key, value);
+            this.textarea.setAttribute(key, String(value));
           }
         });
       }
@@ -482,7 +551,7 @@ class Marzipan {
      * Configure textarea attributes
      * @private
      */
-    _configureTextarea() {
+    private _configureTextarea() {
       this.textarea.setAttribute('autocomplete', 'off');
       this.textarea.setAttribute('autocorrect', 'off');
       this.textarea.setAttribute('autocapitalize', 'off');
@@ -496,7 +565,7 @@ class Marzipan {
      * Apply options to the editor
      * @private
      */
-    _applyOptions() {
+    private _applyOptions() {
       // Apply autofocus
       if (this.options.autofocus) {
         this.textarea.focus();
@@ -524,7 +593,7 @@ class Marzipan {
       
       // Parse markdown
       const html = MarkdownParser.parse(text, activeLine, this.options.showActiveLineRaw);
-      this.preview.innerHTML = html || '<span style="color: #808080;">Start typing...</span>';
+      this.preview.innerHTML = html;
       
       if (this.options?.hooks?.afterPreviewRender) {
         try {
@@ -558,7 +627,7 @@ class Marzipan {
      * execCommand fires its own input event; the fallback dispatches one.
      * @private
      */
-    _replaceRange(start, end, text) {
+    private _replaceRange(start: number, end: number, text: string) {
       const textarea = this.textarea;
       textarea.focus();
       textarea.setSelectionRange(start, end);
@@ -579,9 +648,9 @@ class Marzipan {
      * Apply background styling to code blocks
      * @private
      */
-    _applyCodeBlockBackgrounds() {
+    private _applyCodeBlockBackgrounds() {
       // Find all code fence elements
-      const codeFences = this.preview.querySelectorAll('.code-fence');
+      const codeFences = this.preview.querySelectorAll<HTMLElement>('.code-fence');
       
       // Process pairs of code fences
       for (let i = 0; i < codeFences.length - 1; i += 2) {
@@ -612,7 +681,7 @@ class Marzipan {
      * Get current line number from cursor position
      * @private
      */
-    _getCurrentLine(text, cursorPos) {
+    private _getCurrentLine(text: string, cursorPos: number): number {
       const lines = text.substring(0, cursorPos).split('\n');
       return lines.length - 1;
     }
@@ -629,7 +698,7 @@ class Marzipan {
      * Handle keydown events
      * @private
      */
-    handleKeydown(event) {
+    handleKeydown(event: KeyboardEvent) {
       // Escape releases the next Tab so keyboard users can leave the editor
       if (event.key === 'Escape') {
         this._tabReleased = true;
@@ -672,7 +741,7 @@ class Marzipan {
      * A selection indents or outdents every line it touches, from the line start.
      * @private
      */
-    _handleTab(outdent) {
+    private _handleTab(outdent: boolean) {
       const textarea = this.textarea;
       const value = textarea.value;
       const start = textarea.selectionStart;
@@ -690,7 +759,7 @@ class Marzipan {
       const blockEnd = nextBreak === -1 ? value.length : nextBreak;
       const lines = value.slice(blockStart, blockEnd).split('\n');
 
-      const removed = [];
+      const removed: number[] = [];
       const changed = lines.map(line => {
         if (!outdent) return '  ' + line;
         const strip = line.match(/^ {1,2}/)?.[0].length ?? 0;
@@ -751,7 +820,7 @@ class Marzipan {
      * Delete list marker and exit list
      * @private
      */
-    deleteListMarker(context) {
+    deleteListMarker(context: ListContext) {
       this._replaceRange(context.lineStart, context.markerEndPos, '');
     }
     
@@ -759,7 +828,7 @@ class Marzipan {
      * Insert new list item
      * @private
      */
-    insertNewListItem(context) {
+    insertNewListItem(context: ListContext) {
       const newItem = MarkdownParser.createNewListItem(context);
       const pos = this.textarea.selectionStart;
       this._replaceRange(pos, this.textarea.selectionEnd, '\n' + newItem);
@@ -769,7 +838,7 @@ class Marzipan {
      * Split list item at cursor position
      * @private
      */
-    splitListItem(context, cursorPos) {
+    splitListItem(context: ListContext, cursorPos: number) {
       // Get text after cursor
       const textAfterCursor = context.content.substring(cursorPos - context.markerEndPos);
       
@@ -807,8 +876,8 @@ class Marzipan {
       const cursorPos = this.textarea.selectionStart;
       const lines = value.split('\n');
       const cursorLine = value.slice(0, cursorPos).split('\n').length - 1;
-      const isNumbered = line => MarkdownParser.LIST_PATTERNS.numbered.test(line);
-      const inBlock = line => isNumbered(line) || (/^\s+\S/.test(line));
+      const isNumbered = (line: string) => MarkdownParser.LIST_PATTERNS.numbered.test(line);
+      const inBlock = (line: string) => isNumbered(line) || (/^\s+\S/.test(line));
 
       if (!isNumbered(lines[cursorLine] ?? '')) return;
 
@@ -818,7 +887,7 @@ class Marzipan {
       let last = cursorLine;
       while (last < lines.length - 1 && inBlock(lines[last + 1])) last++;
 
-      const blockStart = lines.slice(0, first).reduce((n, l) => n + l.length + 1, 0);
+      const blockStart = lines.slice(0, first).reduce((n: number, l: string) => n + l.length + 1, 0);
       const block = lines.slice(first, last + 1).join('\n');
       const renumbered = MarkdownParser.renumberLists(block);
       if (renumbered === block) return;
@@ -830,7 +899,7 @@ class Marzipan {
       for (let i = 0; i < cursorLine - first; i++) {
         offset += newLines[i].length - oldLines[i].length;
       }
-      const lineStartOld = blockStart + oldLines.slice(0, cursorLine - first).reduce((n, l) => n + l.length + 1, 0);
+      const lineStartOld = blockStart + oldLines.slice(0, cursorLine - first).reduce((n: number, l: string) => n + l.length + 1, 0);
       const markerDiff = newLines[cursorLine - first].length - oldLines[cursorLine - first].length;
       if (cursorPos > lineStartOld) offset += markerDiff;
 
@@ -861,7 +930,7 @@ class Marzipan {
      * Set editor content
      * @param {string} value - Markdown content to set
      */
-    setValue(value) {
+    setValue(value: string) {
       this.textarea.value = value;
       this.updatePreview();
       
@@ -875,7 +944,7 @@ class Marzipan {
      * Get calculated editor statistics
      * @returns {object} Stats object
      */
-    getStats() {
+    getStats(): Stats {
       return this._computeStats();
     }
 
@@ -894,7 +963,7 @@ class Marzipan {
      * @param {boolean} options.cleanHTML - If true, removes syntax markers and Marzipan-specific classes
      * @returns {string} Rendered HTML
      */
-    getRenderedHTML(options = {}) {
+    getRenderedHTML(options: RenderOptions = {}): string {
       const markdown = this.getValue();
       let html = MarkdownParser.parse(markdown);
       
@@ -958,7 +1027,7 @@ class Marzipan {
      * Re-initialize with new options
      * @param {Object} options - New options to apply
      */
-    reinit(options = {}) {
+    reinit(options: Partial<Options> = {}) {
       this.options = this._mergeOptions({ ...this.options, ...options });
       this.instanceTheme = this.options.theme ?? null;
       this.instanceColors = this.options.colors ? { ...this.options.colors } : null;
@@ -972,7 +1041,7 @@ class Marzipan {
      * Update stats bar
      * @private
      */
-    _computeStats() {
+    private _computeStats() {
       if (!this.textarea) {
         return {
           chars: 0,
@@ -986,7 +1055,7 @@ class Marzipan {
       const value = this.textarea.value;
       const lines = value.split('\n');
       const chars = value.length;
-      const words = value.split(/\s+/).filter(w => w.length > 0).length;
+      const words = value.split(/\s+/).filter((w: string) => w.length > 0).length;
 
       const selectionStart = this.textarea.selectionStart;
       const beforeCursor = value.substring(0, selectionStart);
@@ -1003,7 +1072,7 @@ class Marzipan {
       };
     }
 
-    _updateStats() {
+    private _updateStats() {
       if (!this.statsBar) return;
 
       const stats = this._computeStats();
@@ -1025,7 +1094,7 @@ class Marzipan {
      * Setup auto-resize functionality
      * @private
      */
-    _setupAutoResize() {
+    private _setupAutoResize() {
       if (!this.container || !this.textarea || !this.preview || !this.wrapper) {
         return;
       }
@@ -1049,7 +1118,7 @@ class Marzipan {
       this._updateAutoHeight();
     }
 
-    _teardownAutoResize() {
+    private _teardownAutoResize() {
       if (this.container) {
         this.container.classList.remove('marzipan-auto-resize');
       }
@@ -1085,7 +1154,7 @@ class Marzipan {
      * Update height based on scrollHeight
      * @private
      */
-    _updateAutoHeight() {
+    private _updateAutoHeight() {
       if (!this.options.autoResize) return;
       
       const textarea = this.textarea;
@@ -1134,12 +1203,12 @@ class Marzipan {
       }
     }
 
-    _refreshAutoResizeConstraints() {
+    private _refreshAutoResizeConstraints() {
       this._minAutoHeight = this._resolveSizeToPixels(this.options.minHeight);
       this._maxAutoHeight = this._resolveSizeToPixels(this.options.maxHeight);
     }
 
-    _resolveSizeToPixels(value) {
+    private _resolveSizeToPixels(value: string | number | null | undefined): number | null {
       if (value == null || value === '') {
         return null;
       }
@@ -1182,7 +1251,7 @@ class Marzipan {
      * Show or hide stats bar
      * @param {boolean} show - Whether to show stats
      */
-    showStats(show) {
+    showStats(show: boolean) {
       this.options.showStats = show;
       
       if (show && !this.statsBar) {
@@ -1203,7 +1272,7 @@ class Marzipan {
      * @param {boolean} show - true to show plain textarea (hide overlay), false to show overlay
      * @returns {boolean} Current plain textarea state
      */
-    showPlainTextarea(show) {
+    showPlainTextarea(show?: boolean): boolean {
       if (typeof show === 'undefined') {
         return this.container.classList.contains('plain-mode');
       }
@@ -1218,7 +1287,7 @@ class Marzipan {
       
       // Update toolbar button if exists
       if (this.toolbar) {
-        const toggleBtn = this.container.querySelector('[data-action="toggle-plain"]');
+        const toggleBtn = this.container.querySelector<HTMLElement>('[data-action="toggle-plain"]');
         if (toggleBtn) {
           // Button is active when showing overlay (not plain mode)
           toggleBtn.classList.toggle('active', !show);
@@ -1234,7 +1303,7 @@ class Marzipan {
      * @param {boolean} show - Show preview mode if true, edit mode if false
      * @returns {boolean} Current preview mode state
      */
-    showPreviewMode(show) {
+    showPreviewMode(show: boolean): boolean {
       if (show) {
         // Show preview mode (hide textarea, make preview interactive)
         this.container.classList.add('preview-mode');
@@ -1252,7 +1321,7 @@ class Marzipan {
     destroy() {
       // Remove instance reference
       this.element.MarzipanInstance = null;
-      Marzipan.instances.delete(this.element);
+      MarzipanEditor.instances.delete(this.element);
 
       if (this.numberUpdateTimeout) {
         clearTimeout(this.numberUpdateTimeout);
@@ -1268,7 +1337,7 @@ class Marzipan {
 
       if (this.toolbar) {
         this.toolbar.destroy();
-        this.toolbar = null;
+        this.toolbar = undefined;
       }
 
       // Cleanup shortcuts
@@ -1307,8 +1376,8 @@ class Marzipan {
      * @param {Object} options - Configuration options
      * @returns {Array} Array of Marzipan instances
      */
-    static init(target, options = {}) {
-      return new Marzipan(target, options);
+    static init(target: MarzipanTarget, options: Options = {}): MarzipanEditor[] {
+      return new MarzipanEditor(target, options) as unknown as MarzipanEditor[];
     }
 
     /**
@@ -1316,15 +1385,15 @@ class Marzipan {
      * @param {Element} element - DOM element
      * @returns {Marzipan|null} Marzipan instance or null
      */
-    static getInstance(element) {
-      return element.MarzipanInstance || Marzipan.instances.get(element) || null;
+    static getInstance(element: Element): MarzipanEditor | null {
+      return (element as MzHost).MarzipanInstance || MarzipanEditor.instances.get(element) || null;
     }
 
     /**
      * Destroy all instances
      */
     static destroyAll() {
-      document.querySelectorAll('.marzipan-wrapper').forEach(wrapper => {
+      document.querySelectorAll<MzWrapper>('.marzipan-wrapper').forEach(wrapper => {
         wrapper._instance?.destroy();
       });
     }
@@ -1334,7 +1403,7 @@ class Marzipan {
      * @param {boolean} force - Force re-injection
      */
     static injectStyles(force = false) {
-      if (Marzipan.stylesInjected && !force) return;
+      if (MarzipanEditor.stylesInjected && !force) return;
 
       // Remove any existing Marzipan styles
       const existing = document.querySelector('style.marzipan-styles');
@@ -1343,14 +1412,14 @@ class Marzipan {
       }
 
       // Generate and inject new styles with current theme
-      const theme = Marzipan.currentTheme || solar;
+      const theme = MarzipanEditor.currentTheme || solar;
       const styles = generateStyles({ theme });
       const styleEl = document.createElement('style');
       styleEl.className = 'marzipan-styles';
       styleEl.textContent = styles;
       document.head.appendChild(styleEl);
 
-      Marzipan.stylesInjected = true;
+      MarzipanEditor.stylesInjected = true;
     }
     
     /**
@@ -1358,7 +1427,7 @@ class Marzipan {
      * @param {string|Object} theme - Theme name or custom theme object
      * @param {Object} customColors - Optional color overrides
      */
-    static setTheme(theme, customColors = null) {
+    static setTheme(theme: string | Theme, customColors: Partial<ThemeColors> | null = null) {
       // Process theme
       let themeObj = typeof theme === 'string' ? getTheme(theme) : theme;
       
@@ -1368,15 +1437,15 @@ class Marzipan {
       }
       
       // Store as current theme
-      Marzipan.currentTheme = themeObj;
+      MarzipanEditor.currentTheme = themeObj;
       
       // Re-inject styles with new theme
-      Marzipan.injectStyles(true);
+      MarzipanEditor.injectStyles(true);
       const themeName = typeof theme === 'string' ? theme : themeObj?.name;
       
       // Update all existing instances - update container theme attribute
-      document.querySelectorAll('.marzipan-container').forEach(container => {
-        const wrapper = container.querySelector('.marzipan-wrapper');
+      document.querySelectorAll<HTMLElement>('.marzipan-container').forEach(container => {
+        const wrapper = container.querySelector<MzWrapper>('.marzipan-wrapper');
         const instance = wrapper?._instance;
         if (instance) {
           instance._applyTheme(container);
@@ -1387,7 +1456,7 @@ class Marzipan {
       });
       
       // Also handle any old-style wrappers without containers
-      document.querySelectorAll('.marzipan-wrapper').forEach(wrapper => {
+      document.querySelectorAll<MzWrapper>('.marzipan-wrapper').forEach(wrapper => {
         if (!wrapper.closest('.marzipan-container')) {
           const instance = wrapper._instance;
           if (instance) {
@@ -1404,40 +1473,31 @@ class Marzipan {
      * Initialize global event listeners
      */
     static initGlobalListeners() {
-      if (Marzipan.globalListenersInitialized) return;
+      if (MarzipanEditor.globalListenersInitialized) return;
 
-      // Input event
+      // Find the editor that owns an event target, if it's a Marzipan textarea
+      const instanceFor = (target: EventTarget | null) => {
+        if (!(target instanceof HTMLTextAreaElement) || !target.classList.contains('marzipan-input')) return undefined;
+        return target.closest<MzWrapper>('.marzipan-wrapper')?._instance;
+      };
+
       document.addEventListener('input', (e) => {
-        if (e.target && e.target.classList && e.target.classList.contains('marzipan-input')) {
-          const wrapper = e.target.closest('.marzipan-wrapper');
-          const instance = wrapper?._instance;
-          if (instance) instance.handleInput(e);
-        }
+        instanceFor(e.target)?.handleInput();
       });
 
-      // Keydown event
       document.addEventListener('keydown', (e) => {
-        if (e.target && e.target.classList && e.target.classList.contains('marzipan-input')) {
-          const wrapper = e.target.closest('.marzipan-wrapper');
-          const instance = wrapper?._instance;
-          if (instance) instance.handleKeydown(e);
-        }
+        instanceFor(e.target)?.handleKeydown(e);
       });
 
-      // Scroll event
       document.addEventListener('scroll', (e) => {
-        if (e.target && e.target.classList && e.target.classList.contains('marzipan-input')) {
-          const wrapper = e.target.closest('.marzipan-wrapper');
-          const instance = wrapper?._instance;
-          if (instance) instance.handleScroll(e);
-        }
+        instanceFor(e.target)?.handleScroll();
       }, true);
 
       // Selection change event
       document.addEventListener('selectionchange', () => {
         const activeElement = document.activeElement;
         if (activeElement && activeElement.classList.contains('marzipan-input')) {
-          const wrapper = activeElement.closest('.marzipan-wrapper');
+          const wrapper = activeElement.closest<MzWrapper>('.marzipan-wrapper');
           const instance = wrapper?._instance;
           if (instance) {
             // Update stats bar for cursor position
@@ -1459,25 +1519,18 @@ class Marzipan {
         }
       });
 
-      Marzipan.globalListenersInitialized = true;
+      MarzipanEditor.globalListenersInitialized = true;
     }
 }
 
-// Export classes for advanced usage
-Marzipan.MarkdownParser = MarkdownParser;
-Marzipan.ShortcutsManager = ShortcutsManager;
-
-// Export theme utilities
-Marzipan.themes = {
-  solar,
-  cave: getTheme('cave'),
-  light: getTheme('light'),
-  dark: getTheme('dark')
+/** The Marzipan constructor: `new Marzipan(target, options)` returns one editor per element */
+export type MarzipanConstructor = Omit<typeof MarzipanEditor, 'prototype'> & {
+  new (target: MarzipanTarget, options?: Options): MarzipanEditor[];
+  prototype: MarzipanEditor;
 };
-Marzipan.getTheme = getTheme;
 
-// Set default theme
-Marzipan.currentTheme = solar;
+const Marzipan = MarzipanEditor as unknown as MarzipanConstructor;
+type Marzipan = MarzipanEditor;
 
 // Export for module systems
 export default Marzipan;

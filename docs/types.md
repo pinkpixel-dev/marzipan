@@ -147,4 +147,4 @@ const options: ImagePickerOptions = {
 
 ## Raw Type Declarations
 
-The full TypeScript declarations are available in [`types.d.ts`](./types.d.ts) within this docs folder, and in `dist/index.d.ts` after building the package.
+The full TypeScript declarations ship with the package in `dist/` (start at `dist/index.d.ts`). They are generated from the source on every build, so they always match the code.

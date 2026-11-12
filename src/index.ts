@@ -1,4 +1,4 @@
-// @pinkpixel/marzipan-core - Pure TypeScript markdown editor library
+// @pinkpixel/marzipan - Pure TypeScript markdown editor library
 import Marzipan from './marzipan'
 
 // Export the main class
@@ -45,20 +45,28 @@ export * as plugins from './plugins'
 
 // Export all types
 export type { MarkdownActions } from './actions'
-export type { 
-  Options as MarzipanOptions, 
-  MarzipanInstance, 
-  MarzipanConstructor, 
+export type { MarzipanConstructor } from './marzipan'
+export type {
+  Options as MarzipanOptions,
+  Options,
+  MarzipanInstance,
   MarzipanPlugin,
+  MarzipanTarget,
   Theme,
   ThemeColors,
   Stats,
   MobileOptions,
   ToolbarButtonConfig,
+  ToolbarButtonShortcut,
+  ToolbarButtonOption,
   ToolbarConfig,
   EditorHooks,
   RenderOptions
-} from './marzipan.d'
+} from './types'
+export type { ListContext, Sanctuary, TableAlignment } from './parser'
+export type { LinkInfo } from './link-tooltip'
+export type { StyleOptions } from './styles'
+export type { MermaidPluginConfig } from './plugins/mermaidPlugin'
 
 export type {
   FormatStyleOptions,

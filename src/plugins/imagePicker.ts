@@ -2,6 +2,8 @@
 // Adds a toolbar button to insert images. Supports URL or file -> blob URL.
 // Optional uploader(file) => Promise<string> to persist and return a real URL.
 
+import type { MarzipanInstance } from '../types';
+
 export type ImagePickerOptions = {
   uploader?: (file: File) => Promise<string>;
   label?: string; // button label or emoji
@@ -10,11 +12,11 @@ export type ImagePickerOptions = {
   promptMessage?: string; // custom prompt message
 };
 
-function insertAtCursor(editor: any, text: string) {
-  const ta = editor.textarea as HTMLTextAreaElement;
+function insertAtCursor(editor: MarzipanInstance, text: string) {
+  const ta = editor.textarea;
   const s = ta.selectionStart ?? 0, e = ta.selectionEnd ?? 0;
   ta.setRangeText(text, s, e, 'end');
-  editor.updatePreview?.();
+  editor.updatePreview();
   ta.focus();
 }
 
@@ -22,9 +24,9 @@ export function imagePickerPlugin(opts: ImagePickerOptions = {}) {
   const label = opts.label ?? '🖼️';
   const title = opts.title ?? 'Insert image';
 
-  return (editor: any) => {
+  return (editor: MarzipanInstance) => {
     // Find or create a toolbar container
-    const bar = editor.container?.querySelector?.('.marzipan-toolbar') as HTMLElement
+    const bar = editor.container.querySelector<HTMLElement>('.marzipan-toolbar')
       ?? editor.container;
 
     const btn = document.createElement('button');
