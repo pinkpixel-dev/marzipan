@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Marzipan, tinyHighlightPlugin, mermaidPlugin, tableGridPlugin } from '@pinkpixel/marzipan'
+import { Marzipan, tinyHighlightPlugin, mermaidPlugin, tableGridPlugin, imageManagerPlugin, imagePickerPlugin } from '@pinkpixel/marzipan'
 import type { MarzipanInstance } from '@pinkpixel/marzipan'
 
 const MERMAID_CONTENT = `# 🔀 Mermaid Plugin — Diagram Showcase
@@ -196,6 +196,8 @@ export default function MermaidDemo({ onBack }: { onBack: () => void }) {
         tinyHighlightPlugin(),
         mermaidPlugin({ theme: 'dark' }),
         tableGridPlugin({ maxRows: 8, maxColumns: 8 }),
+        imageManagerPlugin(),
+        imagePickerPlugin(),
       ],
     })
 

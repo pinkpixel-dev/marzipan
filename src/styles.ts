@@ -262,6 +262,17 @@ export function generateStyles(options: any = {}) {
       font-weight: bold !important;
     }
 
+    /* Mermaid diagrams: source stays for edit-mode alignment, diagram shows in preview */
+    .marzipan-wrapper .marzipan-preview .marzipan-mermaid {
+      display: none !important;
+    }
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview .marzipan-mermaid {
+      display: block !important;
+    }
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview pre.mz-mermaid-source {
+      display: none !important;
+    }
+
     /* Header colors */
     .marzipan-wrapper .marzipan-preview .h1 { 
       color: var(--h1, #f95738) !important; 
@@ -276,7 +287,10 @@ export function generateStyles(options: any = {}) {
     /* Semantic headers - flatten in edit mode */
     .marzipan-wrapper .marzipan-preview h1,
     .marzipan-wrapper .marzipan-preview h2,
-    .marzipan-wrapper .marzipan-preview h3 {
+    .marzipan-wrapper .marzipan-preview h3,
+    .marzipan-wrapper .marzipan-preview h4,
+    .marzipan-wrapper .marzipan-preview h5,
+    .marzipan-wrapper .marzipan-preview h6 {
       font-size: inherit !important;
       font-weight: bold !important;
       margin: 0 !important;
@@ -292,7 +306,10 @@ export function generateStyles(options: any = {}) {
     .marzipan-wrapper .marzipan-preview h2 { 
       color: var(--h2, #ee964b) !important; 
     }
-    .marzipan-wrapper .marzipan-preview h3 { 
+    .marzipan-wrapper .marzipan-preview h3,
+    .marzipan-wrapper .marzipan-preview h4,
+    .marzipan-wrapper .marzipan-preview h5,
+    .marzipan-wrapper .marzipan-preview h6 { 
       color: var(--h3, #3d8a51) !important; 
     }
 
@@ -678,7 +695,10 @@ export function generateStyles(options: any = {}) {
     /* Headers - restore proper sizing in preview mode */
     .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h1, 
     .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h2, 
-    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h3 {
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h3,
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h4,
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h5,
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h6 {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
       font-weight: 600 !important;
       margin: 0 !important;
@@ -697,6 +717,18 @@ export function generateStyles(options: any = {}) {
     
     .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h3 { 
       font-size: 1.17em !important; 
+    }
+
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h4 { 
+      font-size: 1em !important; 
+    }
+
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h5 { 
+      font-size: 0.9em !important; 
+    }
+
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview h6 { 
+      font-size: 0.85em !important; 
     }
 
     /* Lists - restore list styling in preview mode */
@@ -889,18 +921,25 @@ export function generateStyles(options: any = {}) {
     .marzipan-preview .marzipan-table.mz-header-green   th { background: rgba(16,185,129,0.22)  !important; }
     .marzipan-preview .marzipan-table.mz-header-amber   th { background: rgba(245,158,11,0.22)  !important; }
     
-    /* Images - responsive and styled */
-    .marzipan-preview .marzipan-image {
+    /* Images - overlay mode: show syntax text, hide rendered image */
+    .marzipan-preview .mz-img-wrap .marzipan-image {
+      display: none;
+    }
+
+    .marzipan-preview .mz-img-syntax {
+      color: var(--link, #1a73e8);
+    }
+
+    /* Images - preview mode: hide syntax text, show rendered image */
+    .marzipan-container.preview-mode .marzipan-preview .mz-img-syntax {
+      display: none !important;
+    }
+
+    .marzipan-container.preview-mode .marzipan-preview .mz-img-wrap .marzipan-image {
+      display: block;
       max-width: 100%;
       height: auto;
-      display: inline-block;
       border-radius: 4px;
-      margin: 0.5em 0;
-    }
-    
-    /* In preview mode - make images fully visible */
-    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview .marzipan-image {
-      display: block;
       margin: 1em auto;
     }
 

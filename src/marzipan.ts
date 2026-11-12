@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
  * Marzipan - A lightweight markdown editor and viewer
- * @version 1.1.2
+ * @version 1.2.4
  * @license Apache-2.0
  */
 
@@ -134,8 +134,9 @@ class Marzipan {
       this.initialized = true;
 
       // Call onChange if provided
+      this._lastChangeValue = this.getValue();
       if (this.options.onChange) {
-        this.options.onChange(this.getValue(), this);
+        this.options.onChange(this._lastChangeValue, this);
       }
     }
 
@@ -373,9 +374,10 @@ class Marzipan {
       // Create DOM structure
       this._createDOM();
 
-      // Set initial content
-      if (content || this.options.value) {
-        this.setValue(content || this.options.value);
+      // Set initial content (whitespace-only element text doesn't count as content)
+      const initialValue = content.trim() ? content : this.options.value;
+      if (initialValue) {
+        this.setValue(initialValue);
       }
 
       // Apply options
@@ -520,6 +522,7 @@ class Marzipan {
       const text = this.textarea.value;
       const cursorPos = this.textarea.selectionStart;
       const activeLine = this._getCurrentLine(text, cursorPos);
+      this._lastActiveLine = activeLine;
       
       // Parse markdown
       const html = MarkdownParser.parse(text, activeLine, this.options.showActiveLineRaw);
@@ -543,9 +546,34 @@ class Marzipan {
         this._updateStats();
       }
       
-      // Trigger onChange callback
-      if (this.options.onChange && this.initialized) {
-        this.options.onChange(text, this);
+      // Trigger onChange callback only when the content actually changed
+      if (text !== this._lastChangeValue) {
+        this._lastChangeValue = text;
+        if (this.options.onChange && this.initialized) {
+          this.options.onChange(text, this);
+        }
+      }
+    }
+
+    /**
+     * Replace a range of the textarea, keeping native undo history when possible.
+     * execCommand fires its own input event; the fallback dispatches one.
+     * @private
+     */
+    _replaceRange(start, end, text) {
+      const textarea = this.textarea;
+      textarea.focus();
+      textarea.setSelectionRange(start, end);
+      let ok = false;
+      try {
+        ok = typeof document.execCommand === 'function' &&
+          (text === '' ? document.execCommand('delete') : document.execCommand('insertText', false, text));
+      } catch {
+        ok = false;
+      }
+      if (!ok) {
+        textarea.setRangeText(text, start, end, 'end');
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
       }
     }
 
@@ -604,72 +632,25 @@ class Marzipan {
      * @private
      */
     handleKeydown(event) {
-      // Handle Tab key to prevent focus loss and insert spaces
-      if (event.key === 'Tab') {
-        event.preventDefault();
-        
-        const start = this.textarea.selectionStart;
-        const end = this.textarea.selectionEnd;
-        const value = this.textarea.value;
-        
-        // If there's a selection, indent/outdent based on shift key
-        if (start !== end && event.shiftKey) {
-          // Outdent: remove 2 spaces from start of each selected line
-          const before = value.substring(0, start);
-          const selection = value.substring(start, end);
-          const after = value.substring(end);
-          
-          const lines = selection.split('\n');
-          const outdented = lines.map(line => line.replace(/^ {2}/, '')).join('\n');
-          
-          // Try to use execCommand first to preserve undo history
-          if (document.execCommand) {
-            // Select the text that needs to be replaced
-            this.textarea.setSelectionRange(start, end);
-            document.execCommand('insertText', false, outdented);
-          } else {
-            // Fallback to direct manipulation
-            this.textarea.value = before + outdented + after;
-            this.textarea.selectionStart = start;
-            this.textarea.selectionEnd = start + outdented.length;
-          }
-        } else if (start !== end) {
-          // Indent: add 2 spaces to start of each selected line
-          const before = value.substring(0, start);
-          const selection = value.substring(start, end);
-          const after = value.substring(end);
-          
-          const lines = selection.split('\n');
-          const indented = lines.map(line => '  ' + line).join('\n');
-          
-          // Try to use execCommand first to preserve undo history
-          if (document.execCommand) {
-            // Select the text that needs to be replaced
-            this.textarea.setSelectionRange(start, end);
-            document.execCommand('insertText', false, indented);
-          } else {
-            // Fallback to direct manipulation
-            this.textarea.value = before + indented + after;
-            this.textarea.selectionStart = start;
-            this.textarea.selectionEnd = start + indented.length;
-          }
-        } else {
-          // No selection: just insert 2 spaces
-          // Use execCommand to preserve undo history
-          if (document.execCommand) {
-            document.execCommand('insertText', false, '  ');
-          } else {
-            // Fallback to direct manipulation
-            this.textarea.value = value.substring(0, start) + '  ' + value.substring(end);
-            this.textarea.selectionStart = this.textarea.selectionEnd = start + 2;
-          }
-        }
-        
-        // Trigger input event to update preview
-        this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      // Escape releases the next Tab so keyboard users can leave the editor
+      if (event.key === 'Escape') {
+        this._tabReleased = true;
         return;
       }
-      
+      if (event.key === 'Tab' && this._tabReleased) {
+        this._tabReleased = false;
+        return;
+      }
+      if (event.key !== 'Shift') {
+        this._tabReleased = false;
+      }
+
+      if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        this._handleTab(event.shiftKey);
+        return;
+      }
+
       // Handle Enter key for smart list continuation
       if (event.key === 'Enter' && !event.shiftKey && !event.metaKey && !event.ctrlKey && this.options.smartLists) {
         if (this.handleSmartListContinuation()) {
@@ -684,6 +665,54 @@ class Marzipan {
       // Call user callback if provided
       if (!handled && this.options.onKeydown) {
         this.options.onKeydown(event, this);
+      }
+    }
+
+    /**
+     * Indent or outdent with Tab / Shift+Tab.
+     * A collapsed cursor inserts two spaces (Tab) or outdents its line (Shift+Tab).
+     * A selection indents or outdents every line it touches, from the line start.
+     * @private
+     */
+    _handleTab(outdent) {
+      const textarea = this.textarea;
+      const value = textarea.value;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      if (start === end && !outdent) {
+        this._replaceRange(start, end, '  ');
+        return;
+      }
+
+      const blockStart = value.lastIndexOf('\n', start - 1) + 1;
+      // A selection ending right after a newline shouldn't pull in the next line
+      const effectiveEnd = end > start && value[end - 1] === '\n' ? end - 1 : end;
+      const nextBreak = value.indexOf('\n', effectiveEnd);
+      const blockEnd = nextBreak === -1 ? value.length : nextBreak;
+      const lines = value.slice(blockStart, blockEnd).split('\n');
+
+      const removed = [];
+      const changed = lines.map(line => {
+        if (!outdent) return '  ' + line;
+        const strip = line.match(/^ {1,2}/)?.[0].length ?? 0;
+        removed.push(strip);
+        return line.slice(strip);
+      });
+      const replacement = changed.join('\n');
+      if (replacement === value.slice(blockStart, blockEnd)) return;
+
+      this._replaceRange(blockStart, blockEnd, replacement);
+
+      // Keep the selection on the same text
+      if (outdent) {
+        const firstShift = Math.min(removed[0], start - blockStart);
+        const total = removed.reduce((a, b) => a + b, 0);
+        const newStart = start - firstShift;
+        const newEnd = start === end ? newStart : Math.max(newStart, end - total);
+        textarea.setSelectionRange(newStart, newEnd);
+      } else {
+        textarea.setSelectionRange(start + 2, end + 2 * lines.length);
       }
     }
 
@@ -725,12 +754,7 @@ class Marzipan {
      * @private
      */
     deleteListMarker(context) {
-      // Select from line start to marker end
-      this.textarea.setSelectionRange(context.lineStart, context.markerEndPos);
-      document.execCommand('delete');
-      
-      // Trigger input event
-      this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      this._replaceRange(context.lineStart, context.markerEndPos, '');
     }
     
     /**
@@ -739,10 +763,8 @@ class Marzipan {
      */
     insertNewListItem(context) {
       const newItem = MarkdownParser.createNewListItem(context);
-      document.execCommand('insertText', false, '\n' + newItem);
-      
-      // Trigger input event
-      this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      const pos = this.textarea.selectionStart;
+      this._replaceRange(pos, this.textarea.selectionEnd, '\n' + newItem);
     }
     
     /**
@@ -753,20 +775,13 @@ class Marzipan {
       // Get text after cursor
       const textAfterCursor = context.content.substring(cursorPos - context.markerEndPos);
       
-      // Delete text after cursor
-      this.textarea.setSelectionRange(cursorPos, context.lineEnd);
-      document.execCommand('delete');
-      
-      // Insert new list item with remaining text
+      // Replace the rest of the line with a new item carrying the remaining text
       const newItem = MarkdownParser.createNewListItem(context);
-      document.execCommand('insertText', false, '\n' + newItem + textAfterCursor);
-      
+      this._replaceRange(cursorPos, context.lineEnd, '\n' + newItem + textAfterCursor);
+
       // Position cursor after new list marker
-      const newCursorPos = this.textarea.selectionStart - textAfterCursor.length;
+      const newCursorPos = cursorPos + 1 + newItem.length;
       this.textarea.setSelectionRange(newCursorPos, newCursorPos);
-      
-      // Trigger input event
-      this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
     }
     
     /**
@@ -786,40 +801,44 @@ class Marzipan {
     }
     
     /**
-     * Update/renumber all numbered lists
+     * Renumber the numbered list around the cursor (other lists are left alone)
      * @private
      */
     updateNumberedLists() {
       const value = this.textarea.value;
       const cursorPos = this.textarea.selectionStart;
-      
-      const newValue = MarkdownParser.renumberLists(value);
-      
-      if (newValue !== value) {
-        // Calculate cursor offset
-        let offset = 0;
-        const oldLines = value.split('\n');
-        const newLines = newValue.split('\n');
-        let charCount = 0;
-        
-        for (let i = 0; i < oldLines.length && charCount < cursorPos; i++) {
-          if (oldLines[i] !== newLines[i]) {
-            const diff = newLines[i].length - oldLines[i].length;
-            if (charCount + oldLines[i].length < cursorPos) {
-              offset += diff;
-            }
-          }
-          charCount += oldLines[i].length + 1; // +1 for newline
-        }
-        
-        // Update textarea
-        this.textarea.value = newValue;
-        const newCursorPos = cursorPos + offset;
-        this.textarea.setSelectionRange(newCursorPos, newCursorPos);
-        
-        // Trigger update
-        this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      const lines = value.split('\n');
+      const cursorLine = value.slice(0, cursorPos).split('\n').length - 1;
+      const isNumbered = line => MarkdownParser.LIST_PATTERNS.numbered.test(line);
+      const inBlock = line => isNumbered(line) || (/^\s+\S/.test(line));
+
+      if (!isNumbered(lines[cursorLine] ?? '')) return;
+
+      let first = cursorLine;
+      while (first > 0 && inBlock(lines[first - 1])) first--;
+      while (first < cursorLine && !isNumbered(lines[first])) first++;
+      let last = cursorLine;
+      while (last < lines.length - 1 && inBlock(lines[last + 1])) last++;
+
+      const blockStart = lines.slice(0, first).reduce((n, l) => n + l.length + 1, 0);
+      const block = lines.slice(first, last + 1).join('\n');
+      const renumbered = MarkdownParser.renumberLists(block);
+      if (renumbered === block) return;
+
+      // Shift the cursor by however much the lines before it grew or shrank
+      const oldLines = block.split('\n');
+      const newLines = renumbered.split('\n');
+      let offset = 0;
+      for (let i = 0; i < cursorLine - first; i++) {
+        offset += newLines[i].length - oldLines[i].length;
       }
+      const lineStartOld = blockStart + oldLines.slice(0, cursorLine - first).reduce((n, l) => n + l.length + 1, 0);
+      const markerDiff = newLines[cursorLine - first].length - oldLines[cursorLine - first].length;
+      if (cursorPos > lineStartOld) offset += markerDiff;
+
+      this._replaceRange(blockStart, blockStart + block.length, renumbered);
+      const newCursorPos = cursorPos + offset;
+      this.textarea.setSelectionRange(newCursorPos, newCursorPos);
     }
 
     /**
@@ -882,10 +901,14 @@ class Marzipan {
       let html = MarkdownParser.parse(markdown);
       
       if (options.cleanHTML) {
+        // Drop the overlay-only image syntax (the real <img> follows it)
+        html = html.replace(/<span class="mz-img-syntax">.*?<\/span><\/span>(?=<img )/g, '');
         // Remove all syntax marker spans for clean HTML export
         html = html.replace(/<span class="syntax-marker[^"]*">.*?<\/span>/g, '');
         // Remove Marzipan-specific classes
         html = html.replace(/\sclass="(bullet-list|ordered-list|code-fence|hr-marker|blockquote|url-part)"/g, '');
+        // Remove editor-only link metadata
+        html = html.replace(/\sdata-mz-line="\d+"/g, '');
         // Clean up empty class attributes
         html = html.replace(/\sclass=""/g, '');
       }
@@ -1303,12 +1326,8 @@ class Marzipan {
      * Destroy all instances
      */
     static destroyAll() {
-      const elements = document.querySelectorAll('[data-marzipan-instance]');
-      elements.forEach(element => {
-        const instance = Marzipan.getInstance(element);
-        if (instance) {
-          instance.destroy();
-        }
+      document.querySelectorAll('.marzipan-wrapper').forEach(wrapper => {
+        wrapper._instance?.destroy();
       });
     }
 
@@ -1427,11 +1446,17 @@ class Marzipan {
             if (instance.options.showStats && instance.statsBar) {
               instance._updateStats();
             }
-            // Debounce updates
-            clearTimeout(instance._selectionTimeout);
-            instance._selectionTimeout = setTimeout(() => {
-              instance.updatePreview();
-            }, 50);
+            // Only re-render when the raw active line moved
+            if (instance.options.showActiveLineRaw) {
+              clearTimeout(instance._selectionTimeout);
+              instance._selectionTimeout = setTimeout(() => {
+                const line = instance._getCurrentLine(instance.textarea.value, instance.textarea.selectionStart);
+                if (line !== instance._lastActiveLine) {
+                  instance._lastActiveLine = line;
+                  instance.updatePreview();
+                }
+              }, 50);
+            }
           }
         }
       });

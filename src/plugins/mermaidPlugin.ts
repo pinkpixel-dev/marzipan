@@ -1,7 +1,12 @@
 // mermaidPlugin.ts
+// Renders ```mermaid fences with the bundled-on-demand `mermaid` package.
+// The source <pre> stays in place so the edit-mode overlay keeps its alignment;
+// the diagram sits next to it and only shows in preview mode.
 export function mermaidPlugin(config?: any) {
   let mermaid: any;
   let id = 0;
+  let lastTheme: string | null = null;
+  const cache = new Map<string, string>();
 
   return (editor: any) => {
     const render = async (root: HTMLElement) => {
@@ -10,19 +15,32 @@ export function mermaidPlugin(config?: any) {
 
       const mod = await import('mermaid');
       mermaid ??= mod.default;
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
-        ...config
-      });
+      const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'default';
+      if (theme !== lastTheme) {
+        mermaid.initialize({ startOnLoad: false, theme, ...config });
+        lastTheme = theme;
+        cache.clear();
+      }
 
       await Promise.all(Array.from(nodes).map(async (codeEl) => {
-        const parentPre = codeEl.closest('pre') as HTMLElement;
-        const { svg } = await mermaid.render(`m-${id++}`, codeEl.textContent || '');
-        const wrapper = document.createElement('div');
-        wrapper.className = 'marzipan-mermaid';
-        wrapper.innerHTML = svg; // SVG from mermaid is safe-by-design
-        parentPre.replaceWith(wrapper);
+        const parentPre = codeEl.closest('pre') as HTMLElement | null;
+        const code = (codeEl.textContent || '').trim();
+        if (!parentPre || !code) return;
+        try {
+          let svg = cache.get(code);
+          if (!svg) {
+            ({ svg } = await mermaid.render(`m-${id++}`, code));
+            cache.set(code, svg!);
+          }
+          if (!parentPre.isConnected) return; // preview re-rendered meanwhile
+          const wrapper = document.createElement('div');
+          wrapper.className = 'marzipan-mermaid';
+          wrapper.innerHTML = svg!; // SVG from mermaid is safe-by-design
+          parentPre.classList.add('mz-mermaid-source');
+          parentPre.after(wrapper);
+        } catch (err) {
+          console.error('[Marzipan] Mermaid render error:', err);
+        }
       }));
     };
 

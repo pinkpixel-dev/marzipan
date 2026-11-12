@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Marzipan, tinyHighlightPlugin, tableGridPlugin } from '@pinkpixel/marzipan'
+import { Marzipan, tinyHighlightPlugin, tableGridPlugin, imageManagerPlugin, imagePickerPlugin } from '@pinkpixel/marzipan'
 import type { MarzipanInstance } from '@pinkpixel/marzipan'
 
 const TABLE_GRID_CONTENT = `# ▦ Table Grid Plugin — Full Table Showcase
@@ -138,6 +138,8 @@ export default function TableGridDemo({ onBack }: { onBack: () => void }) {
       plugins: [
         tinyHighlightPlugin(),
         tableGridPlugin({ maxRows: 8, maxColumns: 8 }),
+        imageManagerPlugin(),
+        imagePickerPlugin(),
       ],
     })
 

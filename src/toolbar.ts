@@ -81,6 +81,7 @@ export class Toolbar {
   private buttons: Record<string, HTMLButtonElement> = {};
   private viewModeButton?: HTMLButtonElement;
   private handleDocumentClick?: (event: MouseEvent) => void;
+  private activeDropdown: HTMLDivElement | null = null;
   private readonly actions: MarkdownActions = markdownActions;
 
   constructor(editor: ToolbarHost, buttonConfig: ToolbarButtonEntry[] | null = null) {
@@ -160,6 +161,8 @@ export class Toolbar {
 
     if (config.hasDropdown) {
       button.classList.add('has-dropdown');
+      button.setAttribute('aria-haspopup', 'menu');
+      button.setAttribute('aria-expanded', 'false');
       if (config.name === 'viewMode') {
         this.viewModeButton = button;
       }
@@ -187,6 +190,11 @@ export class Toolbar {
     }
 
     textarea.focus();
+
+    // Actions fire their own input event when they edit text; only re-render if none did
+    let inputFired = false;
+    const markFired = () => { inputFired = true; };
+    textarea.addEventListener('input', markFired);
 
     switch (action) {
       case 'toggleBold':
@@ -230,7 +238,8 @@ export class Toolbar {
         break;
     }
 
-    if (action !== 'toggle-view-menu') {
+    textarea.removeEventListener('input', markFired);
+    if (!inputFired) {
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }
@@ -292,12 +301,25 @@ export class Toolbar {
     });
   }
 
+  private closeViewDropdown(restoreFocus = false): void {
+    if (this.activeDropdown) {
+      this.activeDropdown.remove();
+      this.activeDropdown = null;
+    }
+    if (this.handleDocumentClick) {
+      document.removeEventListener('click', this.handleDocumentClick);
+      this.handleDocumentClick = undefined;
+    }
+    if (this.viewModeButton) {
+      this.viewModeButton.classList.remove('dropdown-active');
+      this.viewModeButton.setAttribute('aria-expanded', 'false');
+      if (restoreFocus) this.viewModeButton.focus();
+    }
+  }
+
   private toggleViewDropdown(button: HTMLButtonElement): void {
-    const existingDropdown = document.querySelector('.marzipan-dropdown-menu');
-    if (existingDropdown instanceof HTMLElement) {
-      existingDropdown.remove();
-      button.classList.remove('dropdown-active');
-      document.removeEventListener('click', this.handleDocumentClick!);
+    if (this.activeDropdown) {
+      this.closeViewDropdown();
       return;
     }
 
@@ -308,24 +330,45 @@ export class Toolbar {
     dropdown.style.left = `${rect.left}px`;
 
     document.body.appendChild(dropdown);
+    this.activeDropdown = dropdown;
     button.classList.add('dropdown-active');
+    button.setAttribute('aria-expanded', 'true');
 
     this.handleDocumentClick = (event: MouseEvent) => {
       if (!button.contains(event.target as Node) && !dropdown.contains(event.target as Node)) {
-        dropdown.remove();
-        button.classList.remove('dropdown-active');
-        document.removeEventListener('click', this.handleDocumentClick!);
+        this.closeViewDropdown();
       }
     };
 
     setTimeout(() => {
-      document.addEventListener('click', this.handleDocumentClick!);
+      if (this.handleDocumentClick) {
+        document.addEventListener('click', this.handleDocumentClick);
+      }
     }, 0);
+
+    const items = Array.from(dropdown.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]'));
+    dropdown.addEventListener('keydown', (event) => {
+      const index = items.indexOf(document.activeElement as HTMLButtonElement);
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+        items[(index + step + items.length) % items.length]?.focus();
+      } else if (event.key === 'Home' || event.key === 'End') {
+        event.preventDefault();
+        items[event.key === 'Home' ? 0 : items.length - 1]?.focus();
+      } else if (event.key === 'Escape' || event.key === 'Tab') {
+        event.preventDefault();
+        this.closeViewDropdown(true);
+      }
+    });
+    (items.find((item) => item.classList.contains('active')) ?? items[0])?.focus();
   }
 
   private createViewDropdown(): HTMLDivElement {
     const dropdown = document.createElement('div');
     dropdown.className = 'marzipan-dropdown-menu';
+    dropdown.setAttribute('role', 'menu');
+    dropdown.setAttribute('aria-label', 'View mode');
 
     const isPlain = this.editor.container.classList.contains('plain-mode');
     const isPreview = this.editor.container.classList.contains('preview-mode');
@@ -341,6 +384,8 @@ export class Toolbar {
       const item = document.createElement('button');
       item.className = 'marzipan-dropdown-item';
       item.type = 'button';
+      item.setAttribute('role', 'menuitemradio');
+      item.setAttribute('aria-checked', String(currentMode === mode.id));
 
       const check = document.createElement('span');
       check.className = 'marzipan-dropdown-check';
@@ -359,11 +404,7 @@ export class Toolbar {
       item.addEventListener('click', (event) => {
         event.stopPropagation();
         this.setViewMode(mode.id);
-        dropdown.remove();
-        this.viewModeButton?.classList.remove('dropdown-active');
-        if (this.handleDocumentClick) {
-          document.removeEventListener('click', this.handleDocumentClick);
-        }
+        this.closeViewDropdown(true);
       });
 
       dropdown.appendChild(item);
@@ -394,9 +435,7 @@ export class Toolbar {
 
   destroy(): void {
     if (this.container) {
-      if (this.handleDocumentClick) {
-        document.removeEventListener('click', this.handleDocumentClick);
-      }
+      this.closeViewDropdown();
       this.container.remove();
       this.container = null;
       this.buttons = {};

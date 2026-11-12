@@ -9,6 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.4] - 2026-11-11
+
+### 🔒 Security
+
+- Table cells no longer render raw HTML. Something like `| <img src=x onerror=alert(1)> |` used to come out as a live element, even in edit mode where the table is only hidden with CSS. Cells are escaped now, just like every other line.
+- The link tooltip runs the URL through `sanitizeUrl()` before opening it, and opens it with `noopener,noreferrer`.
+- `data:image/` URLs are only allowed as image sources now, not as link targets.
+
+### 🐛 Fixes
+
+- Inline code, link URLs, and image alt text were being escaped twice, so `a < b` or `?a=1&b=2` showed up as `&lt;` and `&amp;` in the overlay and pushed the cursor out of line.
+- `* item with *emphasis*` renders correctly. The bullet's `*` used to pair up with the italic marker.
+- `####` through `######` headings and `+` bullets render now.
+- `Marzipan.destroyAll()` actually destroys instances. It was looking them up on the wrong element.
+- `onChange` only fires when the content changes. It used to fire on every cursor move, and moving the cursor re-rendered the whole preview (mermaid included). Now it only re-renders on cursor moves when `showActiveLineRaw` is on.
+- Tab and Shift+Tab indent or outdent whole lines from the line start. Shift+Tab with no selection outdents the current line instead of inserting spaces. Press Escape and then Tab to move focus out of the editor.
+- Smart list renumbering only touches the list you're in, keeps the number the list starts at, and goes through the undo stack instead of overwriting the textarea.
+- Checkbox items accept `[X]` and any bullet marker, and handle extra spaces after the marker.
+- The link tooltip anchors to the right link when the line has images or links inside inline code.
+- `getCleanHTML()` no longer leaves image alt text sitting next to the `<img>`.
+- `options.value` is used when the host element only contains whitespace.
+- The server-side (no DOM) post-processing path groups lists and code blocks again.
+- Toolbar and shortcut actions don't render the preview twice anymore.
+- Ctrl+` (Cmd+` on Mac) toggles inline code, like the toolbar tooltip always said it did.
+- The view-mode dropdown belongs to its own toolbar, so it works with more than one editor on the page. It also supports the arrow keys, Escape, and `aria-expanded` now.
+- Mermaid diagrams no longer throw off the edit-mode overlay. The source code block stays in place and the diagram only shows in preview mode. Rendered diagrams are cached, so they don't redraw on every keystroke.
+- `imageManagerPlugin`: scrolling the thumbnail grid doesn't close the panel anymore, session-only `blob:` URLs aren't saved to localStorage, filenames can't break the `![alt](url)` syntax, and a new `storageKey` option lets each editor keep its own recents.
+
+### 🧪 Tests
+
+- Added a vitest + happy-dom suite (`npm test`) covering the parser and the editor fixes above.
+
+---
+
+## [1.2.3] - 2026-03-01
+
+### Fixed
+
+- **Image `blob:` and `data:` URL Support**: `sanitizeUrl()` now allows `blob:` URLs (created by `URL.createObjectURL()`) and `data:image/` URLs (created by `FileReader.readAsDataURL()`). Previously these were blocked as unsafe protocols, causing image uploads via `imagePickerPlugin` and `imageManagerPlugin` to render as broken images showing only alt text.
+- **Image Rendering in Overlay Mode**: Images no longer replace the full `![alt](url)` markdown syntax with a bare `<img>` tag in the overlay, which broke character-by-character alignment. The parser now renders both the visible markdown syntax (for overlay alignment) and a hidden `<img>` tag. In preview mode, the syntax text is hidden and the rendered image is shown instead.
+
+---
+
 ## [1.2.2] - 2026-02-28
 
 ### Changed

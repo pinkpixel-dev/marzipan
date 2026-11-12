@@ -5,6 +5,8 @@
  * Uses CSS anchor positioning with dynamically selected anchor
  */
 
+import { MarkdownParser } from './parser';
+
 let tooltipStylesInjected = false;
 
 function ensureTooltipStyles() {
@@ -128,7 +130,10 @@ export class LinkTooltip {
       e.preventDefault();
       e.stopPropagation();
       if (this.currentLink) {
-        window.open(this.currentLink.url, '_blank');
+        const safeUrl = MarkdownParser.sanitizeUrl(this.currentLink.url);
+        if (safeUrl !== '#') {
+          window.open(safeUrl, '_blank', 'noopener,noreferrer');
+        }
         this.hide();
       }
     });
@@ -166,27 +171,51 @@ export class LinkTooltip {
   }
 
   findLinkAtPosition(text, position) {
+    // Only look at the cursor's line, then match it to the link the parser rendered
+    const lineIndex = text.slice(0, position).split('\n').length - 1;
+    const lineStart = text.lastIndexOf('\n', position - 1) + 1;
+    const lineEndIdx = text.indexOf('\n', position);
+    const line = text.slice(lineStart, lineEndIdx === -1 ? text.length : lineEndIdx);
+
+    // Blank out inline code so links inside it don't count (lengths stay the same)
+    const masked = line.replace(/(?<!`)(`+)(?!`)((?:(?!\1).)+?)(\1)(?!`)/g, m => ' '.repeat(m.length));
+
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
     let match;
-    let linkIndex = 0;
+    let nthOnLine = 0;
 
-    while ((match = linkRegex.exec(text)) !== null) {
-      const start = match.index;
-      const end = match.index + match[0].length;
+    while ((match = linkRegex.exec(masked)) !== null) {
+      // Images look like links with a leading '!'; the parser doesn't anchor them
+      if (match.index > 0 && masked[match.index - 1] === '!') continue;
+
+      const start = lineStart + match.index;
+      const end = start + match[0].length;
 
       if (position >= start && position <= end) {
+        const anchor = this.findRenderedAnchor(lineIndex, nthOnLine);
+        if (!anchor) return null;
         return {
-          text: match[1],
-          url: match[2],
-          index: linkIndex,
+          text: line.substr(match.index + 1, match[1].length),
+          url: line.substr(match.index + match[0].length - match[2].length - 1, match[2].length),
+          index: anchor,
           start,
           end,
         };
       }
-      linkIndex++;
+      nthOnLine++;
     }
 
     return null;
+  }
+
+  findRenderedAnchor(lineIndex, nth) {
+    const preview = this.editor.preview;
+    if (!preview) return null;
+    const links = preview.querySelectorAll(`a[data-mz-line="${lineIndex}"]`);
+    const link = links[nth];
+    if (!link) return null;
+    const match = (link.getAttribute('style') || '').match(/anchor-name:\s*(--link-\d+)/);
+    return match ? match[1] : null;
   }
 
   show(linkInfo) {
@@ -200,7 +229,7 @@ export class LinkTooltip {
       urlSpan.textContent = linkInfo.url;
     }
 
-    this.tooltip.style.setProperty('--target-anchor', `--link-${linkInfo.index}`);
+    this.tooltip.style.setProperty('--target-anchor', linkInfo.index);
     this.tooltip.classList.add('visible');
   }
 

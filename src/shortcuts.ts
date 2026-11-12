@@ -10,6 +10,7 @@ const keyActionMap: Record<string, string> = {
   b: 'toggleBold',
   i: 'toggleItalic',
   k: 'insertLink',
+  '`': 'toggleCode',
 };
 
 const codeActionMap: Record<string, string> = {
@@ -27,7 +28,8 @@ export class ShortcutsManager {
   }
 
   handleKeydown(event: KeyboardEvent): boolean {
-    const platform = navigator.platform.toLowerCase();
+    const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+    const platform = (nav.userAgentData?.platform || nav.platform || '').toLowerCase();
     const isMac = platform.includes('mac');
     const modKey = isMac ? event.metaKey : event.ctrlKey;
 
@@ -43,7 +45,7 @@ export class ShortcutsManager {
       return false;
     }
 
-    if (!codeAction && (key === 'b' || key === 'i' || key === 'k') && event.shiftKey) {
+    if (!codeAction && event.shiftKey) {
       return false;
     }
 
@@ -64,12 +66,20 @@ export class ShortcutsManager {
 
     textarea.focus();
 
+    // Actions fire their own input event when they edit text; only re-render if none did
+    let inputFired = false;
+    const markFired = () => { inputFired = true; };
+    textarea.addEventListener('input', markFired);
+
     switch (action) {
       case 'toggleBold':
         markdownActions.toggleBold(textarea);
         break;
       case 'toggleItalic':
         markdownActions.toggleItalic(textarea);
+        break;
+      case 'toggleCode':
+        markdownActions.toggleCode(textarea);
         break;
       case 'insertLink':
         markdownActions.insertLink(textarea);
@@ -90,7 +100,10 @@ export class ShortcutsManager {
         break;
     }
 
-    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    textarea.removeEventListener('input', markFired);
+    if (!inputFired) {
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   }
 
   destroy(): void {

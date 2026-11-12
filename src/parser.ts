@@ -15,6 +15,9 @@ export class MarkdownParser {
   // Track block index for unique IDs
   static blockIndex = 0;
 
+  // Source line currently being parsed, stamped on links so the tooltip can find them
+  static currentLineIndex = null;
+
   /**
    * Reset link index (call before parsing a new document)
    */
@@ -66,12 +69,12 @@ export class MarkdownParser {
   }
 
   /**
-   * Parse headers (h1-h3 only)
+   * Parse headers (h1-h6)
    * @param {string} html - HTML line to parse
    * @returns {string} Parsed HTML with header styling
    */
   static parseHeader(html) {
-    return html.replace(/^(#{1,3})\s(.+)$/, (match, hashes, content) => {
+    return html.replace(/^(#{1,6})\s(.+)$/, (match, hashes, content) => {
       const level = hashes.length;
       return `<h${level}><span class="syntax-marker">${hashes} </span>${content}</h${level}>`;
     });
@@ -106,8 +109,10 @@ export class MarkdownParser {
    * @returns {string} Parsed bullet list item
    */
   static parseBulletList(html) {
-    return html.replace(/^((?:&nbsp;)*)([-*])\s(.+)$/, (match, indent, marker, content) => {
-      return `${indent}<li class="bullet-list"><span class="syntax-marker">${marker} </span>${content}</li>`;
+    return html.replace(/^((?:&nbsp;)*)([-*+])\s(.+)$/, (match, indent, marker, content) => {
+      // '*' is written as an entity so the italic parser can't pair it with an emphasis marker
+      const safeMarker = marker === '*' ? '&#42;' : marker;
+      return `${indent}<li class="bullet-list"><span class="syntax-marker">${safeMarker} </span>${content}</li>`;
     });
   }
 
@@ -265,7 +270,8 @@ export class MarkdownParser {
       const safeUrl = this.sanitizeUrl(url);
       const safeAlt = this.escapeHtml(alt || '');
       const titleAttr = title ? ` title="${this.escapeHtml(title)}"` : '';
-      return `<img src="${safeUrl}" alt="${safeAlt}"${titleAttr} class="marzipan-image" />`;
+      const escapedUrl = this.escapeHtml(url);
+      return `<span class="mz-img-wrap"><span class="mz-img-syntax"><span class="syntax-marker">!</span><span class="syntax-marker">[</span>${safeAlt}<span class="syntax-marker url-part">](${escapedUrl})</span></span><img src="${safeUrl}" alt="${safeAlt}"${titleAttr} class="marzipan-image" /></span>`;
     });
   }
 
@@ -274,7 +280,7 @@ export class MarkdownParser {
    * @param {string} url - URL to sanitize
    * @returns {string} Safe URL or '#' if dangerous
    */
-  static sanitizeUrl(url) {
+  static sanitizeUrl(url, kind = 'link') {
     // Trim whitespace and convert to lowercase for protocol check
     const trimmed = url.trim();
     const lower = trimmed.toLowerCase();
@@ -285,11 +291,15 @@ export class MarkdownParser {
       'https://',
       'mailto:',
       'ftp://',
-      'ftps://'
+      'ftps://',
+      'blob:'
     ];
 
     // Check if URL starts with a safe protocol
     const hasSafeProtocol = safeProtocols.some(protocol => lower.startsWith(protocol));
+
+    // Allow data:image/ URLs only as <img> sources (used by image plugins)
+    const isSafeDataUrl = kind === 'image' && lower.startsWith('data:image/');
 
     // Allow relative URLs (starting with / or # or no protocol)
     const isRelative = trimmed.startsWith('/') ||
@@ -298,12 +308,12 @@ export class MarkdownParser {
                       trimmed.startsWith('.') ||
                       (!trimmed.includes(':') && !trimmed.includes('//'));
 
-    // If safe protocol or relative URL, return as-is
-    if (hasSafeProtocol || isRelative) {
+    // If safe protocol, safe data URL, or relative URL, return as-is
+    if (hasSafeProtocol || isSafeDataUrl || isRelative) {
       return url;
     }
 
-    // Block dangerous protocols (javascript:, data:, vbscript:, etc.)
+    // Block dangerous protocols (javascript:, data:text/html, vbscript:, etc.)
     return '#';
   }
 
@@ -437,13 +447,16 @@ export class MarkdownParser {
       
       if (sanctuary.type === 'code') {
         // Transform code sanctuary to HTML
-        replacement = `<code><span class="syntax-marker">${sanctuary.openTicks}</span>${this.escapeHtml(sanctuary.content)}<span class="syntax-marker">${sanctuary.closeTicks}</span></code>`;
+        replacement = `<code><span class="syntax-marker">${sanctuary.openTicks}</span>${sanctuary.content}<span class="syntax-marker">${sanctuary.closeTicks}</span></code>`;
       } else if (sanctuary.type === 'image') {
         // Transform image sanctuary to HTML
-        const safeUrl = this.sanitizeUrl(sanctuary.url);
-        const safeAlt = this.escapeHtml(sanctuary.alt || '');
-        const titleAttr = sanctuary.title ? ` title="${this.escapeHtml(sanctuary.title)}"` : '';
-        replacement = `<img src="${safeUrl}" alt="${safeAlt}"${titleAttr} class="marzipan-image" />`;
+        // Render both syntax text (for overlay alignment) and img tag (for preview mode).
+        // Input is already HTML-escaped by parseLine, so it's safe in text and attributes as-is.
+        const safeUrl = this.sanitizeUrl(sanctuary.url, 'image');
+        const safeAlt = sanctuary.alt || '';
+        const titleAttr = sanctuary.title ? ` title="${sanctuary.title}"` : '';
+        const escapedUrl = sanctuary.url;
+        replacement = `<span class="mz-img-wrap"><span class="mz-img-syntax"><span class="syntax-marker">!</span><span class="syntax-marker">[</span>${safeAlt}<span class="syntax-marker url-part">](${escapedUrl})</span></span><img src="${safeUrl}" alt="${safeAlt}"${titleAttr} class="marzipan-image" /></span>`;
       } else if (sanctuary.type === 'link') {
         // For links, we need to process the link text for markdown
         let processedLinkText = sanctuary.linkText;
@@ -453,7 +466,7 @@ export class MarkdownParser {
         sanctuaries.forEach((innerSanctuary, innerPlaceholder) => {
           if (processedLinkText.includes(innerPlaceholder)) {
             if (innerSanctuary.type === 'code') {
-              const codeHtml = `<code><span class="syntax-marker">${innerSanctuary.openTicks}</span>${this.escapeHtml(innerSanctuary.content)}<span class="syntax-marker">${innerSanctuary.closeTicks}</span></code>`;
+              const codeHtml = `<code><span class="syntax-marker">${innerSanctuary.openTicks}</span>${innerSanctuary.content}<span class="syntax-marker">${innerSanctuary.closeTicks}</span></code>`;
               processedLinkText = processedLinkText.replace(innerPlaceholder, codeHtml);
             }
           }
@@ -468,7 +481,8 @@ export class MarkdownParser {
         // URL should NOT be processed for markdown - use it as-is
         const anchorName = `--link-${this.linkIndex++}`;
         const safeUrl = this.sanitizeUrl(sanctuary.url);
-        replacement = `<a href="${safeUrl}" style="anchor-name: ${anchorName}"><span class="syntax-marker">[</span>${processedLinkText}<span class="syntax-marker url-part">](${this.escapeHtml(sanctuary.url)})</span></a>`;
+        const lineAttr = this.currentLineIndex !== null ? ` data-mz-line="${this.currentLineIndex}"` : '';
+        replacement = `<a href="${safeUrl}"${lineAttr} style="anchor-name: ${anchorName}"><span class="syntax-marker">[</span>${processedLinkText}<span class="syntax-marker url-part">](${sanctuary.url})</span></a>`;
       }
       
       html = html.replace(placeholder, replacement);
@@ -479,6 +493,7 @@ export class MarkdownParser {
   
   /**
    * Parse all inline elements in correct order
+   * Expects HTML-escaped input (see parseLine / escapeHtml).
    * @param {string} text - Text with potential inline markdown
    * @returns {string} HTML with all inline styling
    */
@@ -505,6 +520,7 @@ export class MarkdownParser {
    * @returns {string} Parsed HTML line
    */
   static parseLine(line, lineIndex = 0) {
+    this.currentLineIndex = lineIndex;
     let html = this.escapeHtml(line);
 
     // Preserve indentation
@@ -634,7 +650,9 @@ export class MarkdownParser {
     const html = parsedLines.join('');
 
     // Apply post-processing for list consolidation
-    return this.postProcessHTML(html);
+    const result = this.postProcessHTML(html);
+    this.currentLineIndex = null;
+    return result;
   }
 
   /**
@@ -718,8 +736,10 @@ export class MarkdownParser {
           tableAlignments = [];
         }
         
-        // Parse the row
-        const rowHtml = child.textContent;
+        // Parse the row. textContent decodes entities, so escape again before parsing
+        // inline markdown, otherwise raw HTML in a cell would become live markup.
+        const rowHtml = this.escapeHtml(child.textContent);
+        this.currentLineIndex = Number(child.getAttribute('data-line-start'));
         const tag = isTableHeader ? 'th' : 'td';
         const parsedRow = this.parseTableRow(rowHtml, tag, isTableHeader ? [] : tableAlignments);
         
@@ -868,12 +888,12 @@ export class MarkdownParser {
     let processed = html;
 
     // Process unordered lists
-    processed = processed.replace(/((?:<div>(?:&nbsp;)*<li class="bullet-list">.*?<\/li><\/div>\s*)+)/gs, (match) => {
-      const divs = match.match(/<div>(?:&nbsp;)*<li class="bullet-list">.*?<\/li><\/div>/gs) || [];
+    processed = processed.replace(/((?:<div[^>]*>(?:&nbsp;)*<li class="bullet-list">.*?<\/li><\/div>\s*)+)/gs, (match) => {
+      const divs = match.match(/<div[^>]*>(?:&nbsp;)*<li class="bullet-list">.*?<\/li><\/div>/gs) || [];
       if (divs.length > 0) {
         const items = divs.map(div => {
           // Extract indentation and list item
-          const indentMatch = div.match(/<div>((?:&nbsp;)*)<li/);
+          const indentMatch = div.match(/<div[^>]*>((?:&nbsp;)*)<li/);
           const listItemMatch = div.match(/<li class="bullet-list">.*?<\/li>/);
 
           if (indentMatch && listItemMatch) {
@@ -891,12 +911,12 @@ export class MarkdownParser {
     });
 
     // Process ordered lists
-    processed = processed.replace(/((?:<div>(?:&nbsp;)*<li class="ordered-list">.*?<\/li><\/div>\s*)+)/gs, (match) => {
-      const divs = match.match(/<div>(?:&nbsp;)*<li class="ordered-list">.*?<\/li><\/div>/gs) || [];
+    processed = processed.replace(/((?:<div[^>]*>(?:&nbsp;)*<li class="ordered-list">.*?<\/li><\/div>\s*)+)/gs, (match) => {
+      const divs = match.match(/<div[^>]*>(?:&nbsp;)*<li class="ordered-list">.*?<\/li><\/div>/gs) || [];
       if (divs.length > 0) {
         const items = divs.map(div => {
           // Extract indentation and list item
-          const indentMatch = div.match(/<div>((?:&nbsp;)*)<li/);
+          const indentMatch = div.match(/<div[^>]*>((?:&nbsp;)*)<li/);
           const listItemMatch = div.match(/<li class="ordered-list">.*?<\/li>/);
 
           if (indentMatch && listItemMatch) {
@@ -914,13 +934,13 @@ export class MarkdownParser {
     });
 
     // Process code blocks - KEEP the fence markers for alignment AND use semantic pre/code
-    const codeBlockRegex = /<div><span class="code-fence">(```[^<]*)<\/span><\/div>(.*?)<div><span class="code-fence">(```)<\/span><\/div>/gs;
-    processed = processed.replace(codeBlockRegex, (match, openFence, content, closeFence) => {
+    const codeBlockRegex = /(<div[^>]*>)<span class="code-fence">(```[^<]*)<\/span><\/div>(.*?)(<div[^>]*>)<span class="code-fence">(```)<\/span><\/div>/gs;
+    processed = processed.replace(codeBlockRegex, (match, openDiv, openFence, content, closeDiv, closeFence) => {
       // Extract the content between fences
-      const lines = content.match(/<div>(.*?)<\/div>/gs) || [];
+      const lines = content.match(/<div[^>]*>(.*?)<\/div>/gs) || [];
       const codeContent = lines.map(line => {
         // Extract text from each div - content is already escaped
-        const text = line.replace(/<div>(.*?)<\/div>/s, '$1')
+        const text = line.replace(/<div[^>]*>(.*?)<\/div>/s, '$1')
           .replace(/&nbsp;/g, ' ');
         return text;
       }).join('\n');
@@ -930,10 +950,10 @@ export class MarkdownParser {
       const langClass = lang ? ` class="language-${lang}"` : '';
 
       // Keep fence markers visible as separate divs, with pre/code block between them
-      let result = `<div><span class="code-fence">${openFence}</span></div>`;
+      let result = `${openDiv}<span class="code-fence">${openFence}</span></div>`;
       // Content is already escaped, don't double-escape
       result += `<pre class="code-block"><code${langClass}>${codeContent}</code></pre>`;
-      result += `<div><span class="code-fence">${closeFence}</span></div>`;
+      result += `${closeDiv}<span class="code-fence">${closeFence}</span></div>`;
 
       return result;
     });
@@ -947,7 +967,7 @@ export class MarkdownParser {
   static LIST_PATTERNS = {
     bullet: /^(\s*)([-*+])\s+(.*)$/,
     numbered: /^(\s*)(\d+)\.\s+(.*)$/,
-    checkbox: /^(\s*)-\s+\[([ x])\]\s+(.*)$/
+    checkbox: /^(\s*)([-*+])\s+\[([ xX])\]\s+(.*)$/
   };
 
   /**
@@ -983,12 +1003,12 @@ export class MarkdownParser {
         inList: true,
         listType: 'checkbox',
         indent: checkboxMatch[1],
-        marker: '-',
-        checked: checkboxMatch[2] === 'x',
-        content: checkboxMatch[3],
+        marker: checkboxMatch[2],
+        checked: checkboxMatch[3].toLowerCase() === 'x',
+        content: checkboxMatch[4],
         lineStart,
         lineEnd,
-        markerEndPos: lineStart + checkboxMatch[1].length + checkboxMatch[2].length + 5 // indent + "- [ ] "
+        markerEndPos: lineStart + checkboxMatch[0].length - checkboxMatch[4].length
       };
     }
 
@@ -1003,7 +1023,7 @@ export class MarkdownParser {
         content: bulletMatch[3],
         lineStart,
         lineEnd,
-        markerEndPos: lineStart + bulletMatch[1].length + bulletMatch[2].length + 1 // indent + marker + space
+        markerEndPos: lineStart + bulletMatch[0].length - bulletMatch[3].length
       };
     }
 
@@ -1018,7 +1038,7 @@ export class MarkdownParser {
         content: numberedMatch[3],
         lineStart,
         lineEnd,
-        markerEndPos: lineStart + numberedMatch[1].length + numberedMatch[2].length + 2 // indent + number + ". "
+        markerEndPos: lineStart + numberedMatch[0].length - numberedMatch[3].length
       };
     }
 
@@ -1047,7 +1067,7 @@ export class MarkdownParser {
       case 'numbered':
         return `${context.indent}${context.marker + 1}. `;
       case 'checkbox':
-        return `${context.indent}- [ ] `;
+        return `${context.indent}${context.marker} [ ] `;
       default:
         return '';
     }
@@ -1076,8 +1096,10 @@ export class MarkdownParser {
           numbersByIndent.clear();
         }
 
-        // Get the next number for this indent level
-        const currentNumber = (numbersByIndent.get(indentLevel) || 0) + 1;
+        // Continue the count at this level, or keep the number the list starts at
+        const currentNumber = numbersByIndent.has(indentLevel)
+          ? numbersByIndent.get(indentLevel) + 1
+          : parseInt(match[2], 10);
         numbersByIndent.set(indentLevel, currentNumber);
 
         // Clear deeper indent levels

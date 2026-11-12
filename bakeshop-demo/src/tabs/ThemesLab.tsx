@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Marzipan, tinyHighlightPlugin, tableGridPlugin } from '@pinkpixel/marzipan'
+import { Marzipan, tinyHighlightPlugin, tableGridPlugin, imageManagerPlugin, imagePickerPlugin } from '@pinkpixel/marzipan'
 
 const getSampleText = (themeName: string) => `# Theme Preview: ${themeName}
 
@@ -148,7 +148,7 @@ export default function ThemesLab() {
       toolbar: true,
       theme: 'solar',
       showStats: true,
-      plugins: [tinyHighlightPlugin(), tableGridPlugin({ maxRows: 8, maxColumns: 8 })],
+      plugins: [tinyHighlightPlugin(), tableGridPlugin({ maxRows: 8, maxColumns: 8 }), imageManagerPlugin(), imagePickerPlugin()],
     })
 
     const [caveInstance] = new Marzipan(caveRef.current, {
@@ -156,7 +156,7 @@ export default function ThemesLab() {
       toolbar: true,
       theme: 'cave',
       showStats: true,
-      plugins: [tinyHighlightPlugin(), tableGridPlugin({ maxRows: 8, maxColumns: 8 })],
+      plugins: [tinyHighlightPlugin(), tableGridPlugin({ maxRows: 8, maxColumns: 8 }), imageManagerPlugin(), imagePickerPlugin()],
     })
 
     return () => {
@@ -173,7 +173,7 @@ export default function ThemesLab() {
       value: CUSTOM_THEME_SAMPLE,
       toolbar: true,
       theme: theme as any,
-      plugins: [tinyHighlightPlugin(), tableGridPlugin({ maxRows: 8, maxColumns: 8 })],
+      plugins: [tinyHighlightPlugin(), tableGridPlugin({ maxRows: 8, maxColumns: 8 }), imageManagerPlugin(), imagePickerPlugin()],
     })
 
     return () => {

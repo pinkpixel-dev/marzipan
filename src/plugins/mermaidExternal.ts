@@ -4,6 +4,8 @@
 
 export function mermaidExternalPlugin(init?: Parameters<any["initialize"]>[0]) {
   let id = 0;
+  let lastTheme: string | null = null;
+  const cache = new Map<string, string>();
 
   function getMermaid(): any | null {
     return (window as any).mermaid || null;
@@ -13,9 +15,13 @@ export function mermaidExternalPlugin(init?: Parameters<any["initialize"]>[0]) {
     const m = getMermaid();
     if (!m) return null;
     // Mermaid v10+: initialize({ startOnLoad: false, theme })
-    try {
-      m.initialize?.({ startOnLoad: false, theme, ...config });
-    } catch { /* ignore */ }
+    if (theme !== lastTheme) {
+      try {
+        m.initialize?.({ startOnLoad: false, theme, ...config });
+      } catch { /* ignore */ }
+      lastTheme = theme;
+      cache.clear();
+    }
     return m;
   }
 
@@ -44,15 +50,24 @@ export function mermaidExternalPlugin(init?: Parameters<any["initialize"]>[0]) {
         const parentPre = (codeEl as HTMLElement).closest('pre') as HTMLElement;
         const code = (codeEl.textContent || '').trim();
         if (!code) { continue; }
-        const domId = `mz-mermaid-${id++}`;
         try {
           // Mermaid v10: render(id, code) -> { svg, bindFunctions }
-          const res = await m.render(domId, code);
+          let svg = cache.get(code);
+          let bind: ((el: Element) => void) | undefined;
+          if (!svg) {
+            const res = await m.render(`mz-mermaid-${id++}`, code);
+            svg = res?.svg || '';
+            bind = res?.bindFunctions;
+            cache.set(code, svg!);
+          }
+          if (!parentPre.isConnected) continue; // preview re-rendered meanwhile
+          // Keep the source <pre> for edit-mode alignment; the diagram shows in preview mode
           const wrapper = document.createElement('div');
           wrapper.className = 'marzipan-mermaid';
-          wrapper.innerHTML = res?.svg || '';
-          parentPre.replaceWith(wrapper);
-          res?.bindFunctions?.(wrapper);
+          wrapper.innerHTML = svg!;
+          parentPre.classList.add('mz-mermaid-source');
+          parentPre.after(wrapper);
+          bind?.(wrapper);
         } catch (err) {
           console.error('Mermaid render error:', err);
         }

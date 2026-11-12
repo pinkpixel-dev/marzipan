@@ -181,8 +181,11 @@ export interface TableGridPluginOptions {
 }
 
 export interface ImagePickerOptions {
-  accept?: string;
-  multiple?: boolean;
+  uploader?: (file: File) => Promise<string>;
+  label?: string;
+  title?: string;
+  placeholder?: string;
+  promptMessage?: string;
 }
 
 export type MarzipanLike = {
@@ -199,6 +202,7 @@ export declare function mermaidExternalPlugin(config?: Record<string, any>): Mar
 export declare function tinyHighlightPlugin(): MarzipanPlugin;
 export declare const tinyHighlightStyles: string;
 export declare function imageManagerPlugin(opts?: Record<string, any>): MarzipanPlugin;
+export declare const imageManagerStyles: string;
 export declare function imagePickerPlugin(opts?: ImagePickerOptions): MarzipanPlugin;
 `;
 

@@ -2,8 +2,9 @@ import { useState } from 'react'
 import TinyHighlightDemo from './plugins/TinyHighlightDemo'
 import MermaidDemo from './plugins/MermaidDemo'
 import TableGridDemo from './plugins/TableGridDemo'
+import ImagePluginsDemo from './plugins/ImagePluginsDemo'
 
-type PluginView = 'gallery' | 'tinyHighlight' | 'mermaid' | 'tableGrid'
+type PluginView = 'gallery' | 'tinyHighlight' | 'mermaid' | 'tableGrid' | 'imagePlugins'
 
 const PLUGIN_CARDS = [
   {
@@ -30,6 +31,14 @@ const PLUGIN_CARDS = [
     color: 'pink',
     code: 'tableGridPlugin()',
   },
+  {
+    id: 'imagePlugins' as PluginView,
+    icon: '🖼️',
+    title: 'Image Plugins',
+    description: 'Image Manager with drag & drop, paste, gallery UI, and Image Picker for quick URL/upload insertion. Both add toolbar buttons.',
+    color: 'amber',
+    code: 'imageManagerPlugin() + imagePickerPlugin()',
+  },
 ]
 
 const colorMap: Record<string, { border: string; text: string; hover: string; badge: string }> = {
@@ -51,6 +60,12 @@ const colorMap: Record<string, { border: string; text: string; hover: string; ba
     hover: 'hover:border-pink-400/60 hover:shadow-pink-500/10',
     badge: 'bg-pink-500/10 text-pink-200 border-pink-500/30',
   },
+  amber: {
+    border: 'border-amber-500/30',
+    text: 'text-amber-300',
+    hover: 'hover:border-amber-400/60 hover:shadow-amber-500/10',
+    badge: 'bg-amber-500/10 text-amber-200 border-amber-500/30',
+  },
 }
 
 export default function PluginsGallery() {
@@ -59,6 +74,7 @@ export default function PluginsGallery() {
   if (view === 'tinyHighlight') return <TinyHighlightDemo onBack={() => setView('gallery')} />
   if (view === 'mermaid') return <MermaidDemo onBack={() => setView('gallery')} />
   if (view === 'tableGrid') return <TableGridDemo onBack={() => setView('gallery')} />
+  if (view === 'imagePlugins') return <ImagePluginsDemo onBack={() => setView('gallery')} />
 
   return (
     <div className="space-y-6">
@@ -72,7 +88,7 @@ export default function PluginsGallery() {
       </div>
 
       {/* Plugin cards */}
-      <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {PLUGIN_CARDS.map((plugin) => {
           const colors = colorMap[plugin.color]
           return (

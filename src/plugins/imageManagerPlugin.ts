@@ -23,12 +23,19 @@ function insertAtCursor(editor: MzEditor, text: string) {
   ta.focus();
 }
 
-function loadRecents(): RecentImage[] {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+function loadRecents(key: string): RecentImage[] {
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); }
   catch { return []; }
 }
-function saveRecents(list: RecentImage[]) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 50))); } catch { /* localStorage not available */ }
+function saveRecents(key: string, list: RecentImage[]) {
+  // blob: URLs die with the page, so only persistent entries are stored
+  const persistent = list.filter(r => r.persistent).slice(0, 50);
+  try { localStorage.setItem(key, JSON.stringify(persistent)); } catch { /* localStorage not available or full */ }
+}
+
+/** Keep a file name from breaking the ![alt](url) syntax */
+function safeAlt(name: string): string {
+  return name.replace(/[[\]\\\n\r]/g, '').trim() || 'image';
 }
 
 async function fileToDataURL(file: File): Promise<string> {
@@ -47,11 +54,13 @@ export function imageManagerPlugin(opts?: {
   persistThresholdBytes?: number; // default 1 MiB
   uploader?: (file: File) => Promise<string>; // optional remote upload
   onInsert?: (url: string) => string; // transform URL before insert
+  storageKey?: string;       // localStorage key for recents (default 'marzipan.images')
 }) {
   const label = opts?.label ?? '🗂️';
   const title = opts?.title ?? 'Images';
   const maxRecent = Math.max(1, opts?.maxRecent ?? 24);
   const threshold = opts?.persistThresholdBytes ?? (1 * 1024 * 1024);
+  const storageKey = opts?.storageKey ?? LS_KEY;
 
   return (editor: MzEditor) => {
     const bar = editor.container.querySelector('.marzipan-toolbar') as HTMLElement ?? editor.container;
@@ -63,13 +72,18 @@ export function imageManagerPlugin(opts?: {
     btn.textContent = label;
 
     let panel: HTMLElement | null = null;
-    let recents: RecentImage[] = loadRecents();
+    let recents: RecentImage[] = loadRecents(storageKey);
 
     function closePanel() {
       panel?.remove(); panel = null;
       document.removeEventListener('click', outsideClose, true);
       window.removeEventListener('resize', closePanel);
-      window.removeEventListener('scroll', closePanel, true);
+      window.removeEventListener('scroll', onScroll, true);
+    }
+    function onScroll(e: Event) {
+      // Scrolling the thumbnail grid shouldn't close the panel
+      if (panel && e.target instanceof Node && panel.contains(e.target)) return;
+      closePanel();
     }
     function outsideClose(e: MouseEvent) {
       if (!panel) return;
@@ -98,7 +112,7 @@ export function imageManagerPlugin(opts?: {
         insertBtn.textContent = 'Insert';
         insertBtn.onclick = () => {
           const url = opts?.onInsert ? opts.onInsert(img.url) : img.url;
-          insertAtCursor(editor, `![${img.name}](${url})`);
+          insertAtCursor(editor, `![${safeAlt(img.name)}](${url})`);
           closePanel();
         };
 
@@ -108,7 +122,7 @@ export function imageManagerPlugin(opts?: {
         delBtn.title = 'Remove from recents';
         delBtn.onclick = () => {
           recents.splice(idx, 1);
-          saveRecents(recents);
+          saveRecents(storageKey, recents);
           renderGrid(root);
         };
 
@@ -130,10 +144,10 @@ export function imageManagerPlugin(opts?: {
         }
         const item: RecentImage = { url, name: file.name, createdAt: Date.now(), persistent: !url.startsWith('blob:') };
         recents = [item, ...recents.filter(r => r.url !== url)];
-        saveRecents(recents);
+        saveRecents(storageKey, recents);
         if (panel) renderGrid(panel);
         const finalUrl = opts?.onInsert ? opts.onInsert(url) : url;
-        insertAtCursor(editor, `![${file.name}](${finalUrl})`);
+        insertAtCursor(editor, `![${safeAlt(file.name)}](${finalUrl})`);
       } catch (e) {
         console.error('Image add failed:', e);
         alert('Could not add image.');
@@ -143,10 +157,10 @@ export function imageManagerPlugin(opts?: {
     async function addFromUrl(url: string, name = 'image') {
       const item: RecentImage = { url, name, createdAt: Date.now(), persistent: true };
       recents = [item, ...recents.filter(r => r.url !== url)];
-      saveRecents(recents);
+      saveRecents(storageKey, recents);
       if (panel) renderGrid(panel);
       const finalUrl = opts?.onInsert ? opts.onInsert(url) : url;
-      insertAtCursor(editor, `![${name}](${finalUrl})`);
+      insertAtCursor(editor, `![${safeAlt(name)}](${finalUrl})`);
     }
 
     function openPanel() {
@@ -193,7 +207,7 @@ export function imageManagerPlugin(opts?: {
       clrBtn.onclick = () => {
         if (confirm('Clear recent images?')) {
           recents = [];
-          saveRecents(recents);
+          saveRecents(storageKey, recents);
           renderGrid(panel!);
         }
       };
@@ -218,7 +232,7 @@ export function imageManagerPlugin(opts?: {
       setTimeout(() => {
         document.addEventListener('click', outsideClose, true);
         window.addEventListener('resize', closePanel);
-        window.addEventListener('scroll', closePanel, true);
+        window.addEventListener('scroll', onScroll, true);
       }, 0);
     }
 

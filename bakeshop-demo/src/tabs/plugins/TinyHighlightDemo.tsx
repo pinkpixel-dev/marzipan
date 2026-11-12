@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Marzipan, tinyHighlightPlugin, tableGridPlugin } from '@pinkpixel/marzipan'
+import { Marzipan, tinyHighlightPlugin, tableGridPlugin, imageManagerPlugin, imagePickerPlugin } from '@pinkpixel/marzipan'
 import type { MarzipanInstance } from '@pinkpixel/marzipan'
 
 const TINY_HIGHLIGHT_CONTENT = `# ✨ Tiny Highlight Plugin — Full Language Demo
@@ -446,6 +446,8 @@ export default function TinyHighlightDemo({ onBack }: { onBack: () => void }) {
       plugins: [
         tinyHighlightPlugin(),
         tableGridPlugin({ maxRows: 8, maxColumns: 8 }),
+        imageManagerPlugin(),
+        imagePickerPlugin(),
       ],
     })
 
