@@ -51,12 +51,7 @@ export function mermaidPlugin(config?: MermaidPluginConfig) {
       }));
     };
 
-    const prev = editor.options.hooks?.afterPreviewRender;
-    editor.options.hooks = editor.options.hooks || {};
-    editor.options.hooks.afterPreviewRender = (root: HTMLElement, e: MarzipanInstance) => {
-      prev?.(root, e);
-      render(root);
-    };
+    editor.addHook('afterPreviewRender', render);
   };
 }
 

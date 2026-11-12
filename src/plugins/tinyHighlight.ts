@@ -132,12 +132,8 @@ function langToRules(langClass: string): Rule[] {
 }
 
 export function tinyHighlightPlugin() {
-  return (editor: MarzipanLike) => {
-    const prev = editor.options.hooks?.afterPreviewRender;
-    editor.options.hooks = editor.options.hooks || {};
-    editor.options.hooks.afterPreviewRender = (root: HTMLElement, e: MarzipanInstance) => {
-      prev?.(root, e);
-
+  return (editor: MarzipanInstance) => {
+    editor.addHook('afterPreviewRender', (root: HTMLElement) => {
       const blocks = root.querySelectorAll('pre code[class*="language-"]');
       blocks.forEach((codeEl) => {
         const el = codeEl as HTMLElement;
@@ -151,7 +147,7 @@ export function tinyHighlightPlugin() {
         (el.closest('pre') as HTMLElement)?.classList.add('marzipan-highlight');
         el.dataset.hl = '1';
       });
-    };
+    });
   };
 }
 

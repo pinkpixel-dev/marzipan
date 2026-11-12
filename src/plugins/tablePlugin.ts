@@ -1,22 +1,20 @@
 // tablePlugin.ts
+// Toolbar button that opens a small form (rows + columns) and inserts a GFM table.
+// tableGeneratorPlugin is an alias for this plugin.
 
 import { buildTableMarkdown, resolvePositiveInteger } from './utils/table';
+import { createButton, createField, togglePopover } from './utils/popover';
 import type { MarzipanInstance } from '../types';
 
 export interface TablePluginOptions {
+  /** Body rows filled in when the form opens (default 2) */
   defaultRows?: number;
+  /** Columns filled in when the form opens (default 2) */
   defaultColumns?: number;
+  /** Button label (default ▦) */
   label?: string;
+  /** Button tooltip (default "Insert table") */
   title?: string;
-}
-
-function insertAtCursor(editor: MarzipanInstance, text: string) {
-  const ta = editor.textarea;
-  const s = ta.selectionStart ?? 0;
-  const e = ta.selectionEnd ?? 0;
-  ta.setRangeText(text, s, e, 'end');
-  editor.updatePreview();
-  ta.focus();
 }
 
 export function tablePlugin(options: TablePluginOptions = {}) {
@@ -26,26 +24,39 @@ export function tablePlugin(options: TablePluginOptions = {}) {
   const title = options.title ?? 'Insert table';
 
   return (editor: MarzipanInstance) => {
-    const bar = editor.container.querySelector('.marzipan-toolbar') as HTMLElement;
-    if (!bar) return;
+    editor.addToolbarButton({
+      title,
+      label,
+      className: 'mz-btn-table',
+      onClick: (button) => {
+        togglePopover(button, { label: title, className: 'mz-table-pop' }, (pop) => {
+          const form = document.createElement('form');
+          form.className = 'mz-form';
 
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.title = title;
-    btn.textContent = label;
-    btn.onclick = () => {
-      const rowsInput = prompt('Rows (excluding header)?', String(fallbackRows));
-      const rows = resolvePositiveInteger(rowsInput, fallbackRows);
-      if (rows === null) return;
+          const rows = createField('Rows', { type: 'number', value: String(fallbackRows), min: 1 });
+          const cols = createField('Columns', { type: 'number', value: String(fallbackCols), min: 1 });
+          const sizeRow = document.createElement('div');
+          sizeRow.className = 'mz-field-row';
+          sizeRow.append(rows.field, cols.field);
 
-      const colsInput = prompt('Columns?', String(fallbackCols));
-      const cols = resolvePositiveInteger(colsInput, fallbackCols);
-      if (cols === null) return;
+          const actions = document.createElement('div');
+          actions.className = 'mz-actions';
+          const cancel = createButton('Cancel');
+          cancel.addEventListener('click', () => pop.close());
+          actions.append(cancel, createButton('Insert', 'primary'));
 
-      const md = buildTableMarkdown(rows, cols);
-      insertAtCursor(editor, `\n${md}\n`);
-    };
+          form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const rowCount = resolvePositiveInteger(rows.input.value, fallbackRows) ?? fallbackRows;
+            const colCount = resolvePositiveInteger(cols.input.value, fallbackCols) ?? fallbackCols;
+            pop.close();
+            editor.insertText(`\n${buildTableMarkdown(rowCount, colCount)}\n`);
+          });
 
-    bar.appendChild(btn);
+          form.append(sizeRow, actions);
+          pop.el.appendChild(form);
+        });
+      },
+    });
   };
 }

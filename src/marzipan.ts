@@ -1,6 +1,6 @@
 /**
  * Marzipan - A lightweight markdown editor and viewer
- * @version 1.2.5
+ * @version 1.3.0
  * @license Apache-2.0
  */
 
@@ -12,7 +12,10 @@ import { Toolbar } from './toolbar';
 import { LinkTooltip } from './link-tooltip';
 import type { ListContext } from './parser';
 import type {
+  HookName,
   MarzipanPlugin,
+  PluginButtonOptions,
+  PreviewHook,
   MarzipanTarget,
   Options,
   RenderOptions,
@@ -79,6 +82,7 @@ class MarzipanEditor {
     declare instanceColors: Partial<ThemeColors> | null;
     private declare _appliedThemeColorKeys: Set<string>;
     private declare _appliedPlugins: Set<MarzipanPlugin>;
+    private declare _previewHooks: Set<PreviewHook>;
     private declare _autoResizeInputHandler: (() => void) | null;
     private declare _autoResizeResizeHandler: (() => void) | null;
     private declare _minAutoHeight: number | null;
@@ -142,6 +146,7 @@ class MarzipanEditor {
      */
     private _init(element: MzHost, options: Options = {}) {
       this.element = element;
+      this._previewHooks = new Set();
       
       // Store the original theme option before merging
       this.options = this._mergeOptions(options);
@@ -595,13 +600,7 @@ class MarzipanEditor {
       const html = MarkdownParser.parse(text, activeLine, this.options.showActiveLineRaw);
       this.preview.innerHTML = html;
       
-      if (this.options?.hooks?.afterPreviewRender) {
-        try {
-          this.options.hooks.afterPreviewRender(this.preview, this);
-        } catch (error) {
-          console.error('[Marzipan] afterPreviewRender hook error:', error);
-        }
-      }
+      this._runPreviewHooks();
       
       // Apply code block backgrounds
       this._applyCodeBlockBackgrounds();
@@ -620,6 +619,81 @@ class MarzipanEditor {
           this.options.onChange(text, this);
         }
       }
+    }
+
+    /**
+     * Run the options hook, then every hook registered with addHook()
+     * @private
+     */
+    private _runPreviewHooks() {
+      const report = (error: unknown) => console.error('[Marzipan] afterPreviewRender hook error:', error);
+      const hooks = [this.options.hooks?.afterPreviewRender, ...(this._previewHooks ?? [])];
+      for (const hook of hooks) {
+        if (!hook) continue;
+        try {
+          const result = hook(this.preview, this);
+          if (result instanceof Promise) result.catch(report);
+        } catch (error) {
+          report(error);
+        }
+      }
+    }
+
+    /**
+     * Register a hook. Unlike `options.hooks`, registered hooks survive `reinit()`.
+     * @returns A function that removes the hook
+     */
+    addHook(name: HookName, hook: PreviewHook): () => void {
+      if (name !== 'afterPreviewRender') {
+        throw new Error(`[Marzipan] Unknown hook: ${String(name)}`);
+      }
+      this._previewHooks.add(hook);
+      return () => {
+        this._previewHooks.delete(hook);
+      };
+    }
+
+    /**
+     * Replace the current selection with text (or insert it at the cursor).
+     * Keeps the browser's undo history and re-renders the preview.
+     */
+    insertText(text: string): void {
+      this._replaceRange(this.textarea.selectionStart, this.textarea.selectionEnd, text);
+    }
+
+    /**
+     * Add a button to the toolbar. When the built-in toolbar is off, a plugin-only
+     * toolbar is created above the editor so the button still has a home.
+     */
+    addToolbarButton(options: PluginButtonOptions): HTMLButtonElement {
+      let bar = this.container.querySelector<HTMLElement>('.marzipan-toolbar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.className = 'marzipan-toolbar';
+        bar.setAttribute('role', 'toolbar');
+        bar.setAttribute('aria-label', 'Editor tools');
+        this.container.insertBefore(bar, this.wrapper);
+      }
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = options.className
+        ? `marzipan-toolbar-button marzipan-plugin-button ${options.className}`
+        : 'marzipan-toolbar-button marzipan-plugin-button';
+      button.title = options.title;
+      button.setAttribute('aria-label', options.title);
+      if (options.icon) {
+        button.innerHTML = options.icon;
+      } else {
+        button.textContent = options.label ?? '';
+      }
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        options.onClick(button, this);
+      });
+
+      bar.appendChild(button);
+      return button;
     }
 
     /**
@@ -1329,6 +1403,7 @@ class MarzipanEditor {
       }
 
       this._teardownAutoResize();
+      this._previewHooks?.clear();
 
       if (this.linkTooltip) {
         this.linkTooltip.destroy();

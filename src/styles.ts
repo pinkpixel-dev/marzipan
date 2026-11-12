@@ -674,6 +674,70 @@ export function generateStyles(options: StyleOptions = {}): string {
       color: var(--h1, #007bff);
     }
 
+    /* Plugin toolbar buttons (text or emoji labels) */
+    .marzipan-plugin-button {
+      font-size: 16px !important;
+      line-height: 1 !important;
+    }
+
+    /* Plugin popovers. They live on <body>, outside the container reset,
+       and copy the editor's theme variables when they open. */
+    .mz-pop {
+      position: fixed;
+      z-index: 10000;
+      box-sizing: border-box;
+      min-width: 240px;
+      max-width: calc(100vw - 16px);
+      padding: 12px;
+      background: var(--toolbar-bg, var(--bg-secondary, #ffffff));
+      color: var(--text, #1f2328);
+      border: 1px solid var(--toolbar-border, var(--border, rgba(0, 0, 0, 0.12)));
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .mz-pop *, .mz-pop *::before, .mz-pop *::after { box-sizing: border-box; }
+    .mz-form { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+    .mz-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .mz-field > span { font-size: 11px; font-weight: 600; opacity: 0.7; }
+    .mz-field-row { display: flex; gap: 8px; }
+    .mz-field-row > .mz-field { flex: 1; }
+    .mz-input {
+      width: 100%;
+      padding: 6px 8px;
+      font: inherit;
+      color: inherit;
+      background: var(--bg-primary, #ffffff);
+      border: 1px solid var(--border, rgba(0, 0, 0, 0.15));
+      border-radius: 6px;
+    }
+    .mz-input:focus-visible,
+    .mz-button:focus-visible,
+    .mz-pop button:focus-visible {
+      outline: 2px solid var(--h1, #3b82f6);
+      outline-offset: 1px;
+    }
+    .mz-actions { display: flex; gap: 6px; justify-content: flex-end; }
+    .mz-button {
+      padding: 6px 12px;
+      font: inherit;
+      color: inherit;
+      background: transparent;
+      border: 1px solid var(--border, rgba(0, 0, 0, 0.15));
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .mz-button:hover { background: var(--toolbar-hover, rgba(0, 0, 0, 0.05)); }
+    .mz-button-primary {
+      color: var(--toolbar-bg, var(--bg-secondary, #ffffff));
+      background: var(--text, #1f2328);
+      border-color: transparent;
+    }
+    .mz-button-primary:hover { background: var(--text, #1f2328); opacity: 0.88; }
+    .mz-status:empty { display: none; }
+    .mz-status { font-size: 12px; opacity: 0.8; }
+    .mz-status.mz-status-error { color: #e5484d; opacity: 1; }
+
     /* Preview mode styles */
     .marzipan-container.preview-mode .marzipan-input {
       display: none !important;

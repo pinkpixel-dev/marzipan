@@ -5,23 +5,13 @@
 // Drag files onto the editor, or paste images from clipboard—instant preview and insert.
 // Tiny panel with thumbnails; click to insert; remove/clear as needed.
 
-type MzEditor = {
-  container: HTMLElement;
-  textarea: HTMLTextAreaElement;
-  updatePreview: () => void;
-};
+import { createStatus, safeAlt, togglePopover } from './utils/popover';
+import type { Popover } from './utils/popover';
+import type { MarzipanInstance } from '../types';
 
 type RecentImage = { url: string; name: string; createdAt: number; persistent: boolean };
 
 const LS_KEY = 'marzipan.images';
-
-function insertAtCursor(editor: MzEditor, text: string) {
-  const ta = editor.textarea;
-  const s = ta.selectionStart ?? 0, e = ta.selectionEnd ?? 0;
-  ta.setRangeText(text, s, e, 'end');
-  editor.updatePreview();
-  ta.focus();
-}
 
 function loadRecents(key: string): RecentImage[] {
   try { return JSON.parse(localStorage.getItem(key) || '[]'); }
@@ -31,11 +21,6 @@ function saveRecents(key: string, list: RecentImage[]) {
   // blob: URLs die with the page, so only persistent entries are stored
   const persistent = list.filter(r => r.persistent).slice(0, 50);
   try { localStorage.setItem(key, JSON.stringify(persistent)); } catch { /* localStorage not available or full */ }
-}
-
-/** Keep a file name from breaking the ![alt](url) syntax */
-function safeAlt(name: string): string {
-  return name.replace(/[[\]\\\n\r]/g, '').trim() || 'image';
 }
 
 async function fileToDataURL(file: File): Promise<string> {
@@ -62,37 +47,25 @@ export function imageManagerPlugin(opts?: {
   const threshold = opts?.persistThresholdBytes ?? (1 * 1024 * 1024);
   const storageKey = opts?.storageKey ?? LS_KEY;
 
-  return (editor: MzEditor) => {
-    const bar = editor.container.querySelector('.marzipan-toolbar') as HTMLElement ?? editor.container;
-
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'mz-btn mz-btn-imagemgr';
-    btn.title = title;
-    btn.textContent = label;
-
-    let panel: HTMLElement | null = null;
+  return (editor: MarzipanInstance) => {
+    let panel: Popover | null = null;
     let recents: RecentImage[] = loadRecents(storageKey);
 
-    function closePanel() {
-      panel?.remove(); panel = null;
-      document.removeEventListener('click', outsideClose, true);
-      window.removeEventListener('resize', closePanel);
-      window.removeEventListener('scroll', onScroll, true);
-    }
-    function onScroll(e: Event) {
-      // Scrolling the thumbnail grid shouldn't close the panel
-      if (panel && e.target instanceof Node && panel.contains(e.target)) return;
-      closePanel();
-    }
-    function outsideClose(e: MouseEvent) {
-      if (!panel) return;
-      if (e.target instanceof Node && (panel.contains(e.target) || btn.contains(e.target))) return;
-      closePanel();
+    const insertImage = (url: string, name: string) => {
+      const finalUrl = opts?.onInsert ? opts.onInsert(url) : url;
+      editor.insertText(`![${safeAlt(name)}](${finalUrl})`);
+    };
+
+    function showError(message: string) {
+      const status = panel?.el.querySelector<HTMLElement>('.mz-status');
+      if (!status) return;
+      status.classList.add('mz-status-error');
+      status.textContent = message;
     }
 
-    function renderGrid(root: HTMLElement) {
-      const grid = root.querySelector('.mz-im-grid') as HTMLElement;
+    function renderGrid() {
+      const grid = panel?.el.querySelector<HTMLElement>('.mz-im-grid');
+      if (!grid) return;
       grid.innerHTML = '';
       recents.slice(0, maxRecent).forEach((img, idx) => {
         const card = document.createElement('div');
@@ -110,20 +83,21 @@ export function imageManagerPlugin(opts?: {
         const insertBtn = document.createElement('button');
         insertBtn.type = 'button';
         insertBtn.textContent = 'Insert';
+        insertBtn.setAttribute('aria-label', `Insert ${img.name}`);
         insertBtn.onclick = () => {
-          const url = opts?.onInsert ? opts.onInsert(img.url) : img.url;
-          insertAtCursor(editor, `![${safeAlt(img.name)}](${url})`);
-          closePanel();
+          panel?.close();
+          insertImage(img.url, img.name);
         };
 
         const delBtn = document.createElement('button');
         delBtn.type = 'button';
         delBtn.textContent = '✕';
         delBtn.title = 'Remove from recents';
+        delBtn.setAttribute('aria-label', `Remove ${img.name} from recents`);
         delBtn.onclick = () => {
           recents.splice(idx, 1);
           saveRecents(storageKey, recents);
-          renderGrid(root);
+          renderGrid();
         };
 
         row.append(insertBtn, delBtn);
@@ -145,95 +119,96 @@ export function imageManagerPlugin(opts?: {
         const item: RecentImage = { url, name: file.name, createdAt: Date.now(), persistent: !url.startsWith('blob:') };
         recents = [item, ...recents.filter(r => r.url !== url)];
         saveRecents(storageKey, recents);
-        if (panel) renderGrid(panel);
-        const finalUrl = opts?.onInsert ? opts.onInsert(url) : url;
-        insertAtCursor(editor, `![${safeAlt(file.name)}](${finalUrl})`);
+        renderGrid();
+        insertImage(url, file.name);
       } catch (e) {
-        console.error('Image add failed:', e);
-        alert('Could not add image.');
+        console.error('[Marzipan] Image add failed:', e);
+        showError(`Could not add ${file.name}.`);
       }
     }
 
-    async function addFromUrl(url: string, name = 'image') {
+    function addFromUrl(url: string, name = 'image') {
       const item: RecentImage = { url, name, createdAt: Date.now(), persistent: true };
       recents = [item, ...recents.filter(r => r.url !== url)];
       saveRecents(storageKey, recents);
-      if (panel) renderGrid(panel);
-      const finalUrl = opts?.onInsert ? opts.onInsert(url) : url;
-      insertAtCursor(editor, `![${safeAlt(name)}](${finalUrl})`);
+      renderGrid();
+      insertImage(url, name);
     }
 
-    function openPanel() {
-      if (panel) { closePanel(); return; }
+    function openPanel(button: HTMLButtonElement) {
+      togglePopover(button, { label: title, className: 'mz-im-panel', onClose: () => { panel = null; } }, (pop) => {
+        panel = pop;
+        pop.el.innerHTML = `
+          <div class="mz-im-row">
+            <input class="mz-im-url" type="url" placeholder="https://example.com/image.png" aria-label="Image URL" />
+            <button class="mz-im-addurl" type="button">Add URL</button>
+            <input class="mz-im-file" type="file" accept="image/*" hidden />
+            <button class="mz-im-upload" type="button">Upload</button>
+            <button class="mz-im-clear" type="button" title="Clear recents">Clear</button>
+          </div>
+          <div class="mz-im-drop">Drop images here, or paste into the editor.</div>
+          <div class="mz-im-grid"></div>
+        `;
+        pop.el.querySelector('.mz-im-drop')!.after(createStatus());
 
-      panel = document.createElement('div');
-      panel.className = 'mz-pop mz-im-panel';
-      panel.innerHTML = `
-        <div class="mz-im-row">
-          <input class="mz-im-url" type="url" placeholder="https://example.com/image.png" />
-          <button class="mz-im-addurl" type="button">Add URL</button>
-          <input class="mz-im-file" type="file" accept="image/*" hidden />
-          <button class="mz-im-upload" type="button">Upload</button>
-          <button class="mz-im-clear" type="button" title="Clear recents">Clear</button>
-        </div>
-        <div class="mz-im-drop">Drop images here, or paste into the editor.</div>
-        <div class="mz-im-grid"></div>
-      `;
-      document.body.appendChild(panel);
+        const urlIn  = pop.el.querySelector('.mz-im-url') as HTMLInputElement;
+        const addUrl = pop.el.querySelector('.mz-im-addurl') as HTMLButtonElement;
+        const fileIn = pop.el.querySelector('.mz-im-file') as HTMLInputElement;
+        const upBtn  = pop.el.querySelector('.mz-im-upload') as HTMLButtonElement;
+        const clrBtn = pop.el.querySelector('.mz-im-clear') as HTMLButtonElement;
+        const drop   = pop.el.querySelector('.mz-im-drop') as HTMLElement;
 
-      // position panel
-      const br = btn.getBoundingClientRect();
-      panel.style.left = `${Math.round(window.scrollX + br.left)}px`;
-      panel.style.top  = `${Math.round(window.scrollY + br.bottom + 6)}px`;
+        const submitUrl = () => {
+          const val = urlIn.value.trim();
+          if (!val) return;
+          urlIn.value = '';
+          pop.close();
+          addFromUrl(val);
+        };
+        addUrl.onclick = submitUrl;
+        urlIn.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); submitUrl(); }
+        });
 
-      // Wire buttons
-      const urlIn  = panel.querySelector('.mz-im-url') as HTMLInputElement;
-      const addUrl = panel.querySelector('.mz-im-addurl') as HTMLButtonElement;
-      const fileIn = panel.querySelector('.mz-im-file') as HTMLInputElement;
-      const upBtn  = panel.querySelector('.mz-im-upload') as HTMLButtonElement;
-      const clrBtn = panel.querySelector('.mz-im-clear') as HTMLButtonElement;
-      const drop   = panel.querySelector('.mz-im-drop') as HTMLElement;
+        upBtn.onclick = () => fileIn.click();
+        fileIn.onchange = () => { const f = fileIn.files?.[0]; if (f) addFromFile(f); };
 
-      addUrl.onclick = () => {
-        const val = urlIn.value.trim();
-        if (!val) return;
-        addFromUrl(val);
-        urlIn.value = '';
-      };
-
-      upBtn.onclick = () => fileIn.click();
-      fileIn.onchange = () => { const f = fileIn.files?.[0]; if (f) addFromFile(f); };
-
-      clrBtn.onclick = () => {
-        if (confirm('Clear recent images?')) {
+        // Clearing takes a second click to confirm, instead of a blocking confirm() dialog
+        let armed: ReturnType<typeof setTimeout> | null = null;
+        const disarm = () => {
+          if (armed) clearTimeout(armed);
+          armed = null;
+          clrBtn.textContent = 'Clear';
+          clrBtn.classList.remove('mz-armed');
+        };
+        clrBtn.onclick = () => {
+          if (!armed) {
+            clrBtn.textContent = 'Confirm';
+            clrBtn.classList.add('mz-armed');
+            armed = setTimeout(disarm, 3000);
+            return;
+          }
+          disarm();
           recents = [];
           saveRecents(storageKey, recents);
-          renderGrid(panel!);
-        }
-      };
+          renderGrid();
+        };
 
-      // Drag & drop
-      ;['dragenter','dragover'].forEach(ev =>
-        drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('on'); })
-      );
-      ;['dragleave','drop'].forEach(ev =>
-        drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('on'); })
-      );
-      drop.addEventListener('drop', (e: DragEvent) => {
-        const files = e.dataTransfer?.files;
-        if (!files || !files.length) return;
-        Array.from(files).forEach(addFromFile);
+        // Drag & drop
+        ;['dragenter','dragover'].forEach(ev =>
+          drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('on'); })
+        );
+        ;['dragleave','drop'].forEach(ev =>
+          drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('on'); })
+        );
+        drop.addEventListener('drop', (e: DragEvent) => {
+          const files = e.dataTransfer?.files;
+          if (!files || !files.length) return;
+          Array.from(files).forEach(addFromFile);
+        });
+
+        renderGrid();
       });
-
-      // Render
-      renderGrid(panel);
-
-      // Close management
-      setTimeout(() => {
-        document.addEventListener('click', outsideClose, true);
-        window.addEventListener('resize', closePanel);
-        window.addEventListener('scroll', onScroll, true);
-      }, 0);
     }
 
     // Paste support (into the editor textarea)
@@ -259,39 +234,39 @@ export function imageManagerPlugin(opts?: {
       Array.from(files).forEach(addFromFile);
     });
 
-    btn.onclick = openPanel;
-    bar.appendChild(btn);
+    editor.addToolbarButton({ title, label, className: 'mz-btn-imagemgr', onClick: openPanel });
   };
 }
 
 // Minimal styles (inject once in your app)
 export const imageManagerStyles = `
 .mz-im-panel { width: 440px; max-width: calc(100vw - 24px); }
+.mz-im-row .mz-armed { border-color: #e5484d; color: #e5484d; }
 .mz-im-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 6px; margin-bottom: 8px; }
 .mz-im-row input[type="url"] {
-  background: var(--mz-ip-bg, #0f1216); color: var(--mz-ip-fg, #e7e7e7);
-  border: 1px solid var(--mz-ip-bd, #2b2f36); border-radius: 8px; padding: 6px 8px;
+  background: var(--mz-ip-bg, var(--bg-primary, #0f1216)); color: var(--mz-ip-fg, inherit);
+  border: 1px solid var(--mz-ip-bd, var(--border, #2b2f36)); border-radius: 8px; padding: 6px 8px;
 }
 .mz-im-row button {
-  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--mz-bd, #2b2f36);
-  background: var(--mz-btn-bg, #1a1e24); color: var(--mz-btn-fg, #e7e7e7); cursor: pointer;
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--mz-bd, var(--border, #2b2f36));
+  background: var(--mz-btn-bg, transparent); color: var(--mz-btn-fg, inherit); cursor: pointer;
 }
 .mz-im-drop {
-  border: 1px dashed var(--mz-drop-bd, #3b4350); border-radius: 8px;
+  border: 1px dashed var(--mz-drop-bd, var(--border, #3b4350)); border-radius: 8px;
   padding: 10px; text-align: center; font-size: 12px; margin-bottom: 8px;
-  background: var(--mz-drop-bg, #0e1116);
+  background: var(--mz-drop-bg, var(--bg-primary, #0e1116));
 }
-.mz-im-drop.on { background: var(--mz-drop-on, #172033); }
+.mz-im-drop.on { background: var(--mz-drop-on, var(--toolbar-hover, #172033)); }
 .mz-im-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
   gap: 8px; max-height: 320px; overflow: auto; padding: 2px;
 }
-.mz-im-card { border: 1px solid var(--mz-card-bd, #2b2f36); border-radius: 8px; overflow: hidden;
-  background: var(--mz-card-bg, #12151a); display: flex; flex-direction: column; }
+.mz-im-card { border: 1px solid var(--mz-card-bd, var(--border, #2b2f36)); border-radius: 8px; overflow: hidden;
+  background: var(--mz-card-bg, var(--bg-primary, #12151a)); display: flex; flex-direction: column; }
 .mz-im-card img { width: 100%; height: 82px; object-fit: cover; display: block; }
 .mz-im-actions { display: flex; gap: 6px; padding: 6px; justify-content: space-between; }
 .mz-im-actions button {
-  flex: 1; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--mz-bd, #2b2f36);
-  background: var(--mz-btn2-bg, #1b2027); color: var(--mz-btn2-fg, #e7e7e7); cursor: pointer; font-size: 12px;
+  flex: 1; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--mz-bd, var(--border, #2b2f36));
+  background: var(--mz-btn2-bg, transparent); color: var(--mz-btn2-fg, inherit); cursor: pointer; font-size: 12px;
 }
 `;

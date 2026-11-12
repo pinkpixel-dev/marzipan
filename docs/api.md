@@ -7,6 +7,7 @@ A comprehensive guide to the core Marzipan class, bundled action toolkit, and fi
 - [Quick Start](#quick-start)
 - [Constructor](#constructor)
 - [Instance Methods](#instance-methods)
+- [Plugin API](#plugin-api)
 - [Static Methods](#static-methods)
 - [Actions API](#actions-api)
 - [Link Tooltip](#link-tooltip)
@@ -258,6 +259,52 @@ Destroy the editor instance and cleanup resources.
 
 ```javascript
 editor.destroy();
+```
+
+## Plugin API
+
+These are the methods plugins use. They're plain instance methods, so you can call them from your own code too.
+
+#### `insertText(text)`
+
+Replaces the current selection with `text`, or inserts it at the cursor. It keeps the browser's undo history, so Ctrl+Z works, and the preview re-renders.
+
+```javascript
+editor.insertText("**hello**");
+```
+
+#### `addToolbarButton(options)`
+
+Adds a button to the toolbar and returns it. If the built-in toolbar is turned off, a small plugin toolbar is created above the editor.
+
+**Options:**
+
+- `title` _(string)_ - Tooltip and accessible name (required)
+- `label` _(string)_ - Text or emoji on the button
+- `icon` _(string)_ - SVG markup, used instead of `label`
+- `className` _(string)_ - Extra class names
+- `onClick` _(function)_ - `(button, editor) => void`
+
+```javascript
+editor.addToolbarButton({
+  title: "Insert signature",
+  label: "✍️",
+  onClick: () => editor.insertText("Made with 💖 by Pink Pixel"),
+});
+```
+
+#### `addHook(name, hook)`
+
+Registers a hook and returns a function that removes it. The only hook right now is `'afterPreviewRender'`, which gets `(previewElement, editor)` after every render. It can be async, and errors are logged instead of breaking the render.
+
+Hooks added this way survive `reinit()`. Hooks passed through `options.hooks` still work, but `reinit({ hooks })` replaces them.
+
+```javascript
+const stop = editor.addHook("afterPreviewRender", (root) => {
+  console.log(root.querySelectorAll("h1").length, "headings");
+});
+
+stop(); // remove it later
 ```
 
 ## Static Methods

@@ -32,11 +32,7 @@ export function mermaidExternalPlugin(init?: Record<string, unknown>) {
   }
 
   return (editor: MarzipanInstance) => {
-    const prev = editor.options.hooks?.afterPreviewRender;
-    editor.options.hooks = editor.options.hooks || {};
-
-    editor.options.hooks.afterPreviewRender = async (root: HTMLElement, e: MarzipanInstance) => {
-      prev?.(root, e);
+    editor.addHook('afterPreviewRender', async (root: HTMLElement) => {
 
       const nodes = root.querySelectorAll('pre code.language-mermaid');
       if (!nodes.length) return;
@@ -78,6 +74,6 @@ export function mermaidExternalPlugin(init?: Record<string, unknown>) {
           console.error('Mermaid render error:', err);
         }
       }
-    };
+    });
   };
 }

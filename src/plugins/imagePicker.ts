@@ -1,71 +1,91 @@
 // plugins/imagePicker.ts
-// Adds a toolbar button to insert images. Supports URL or file -> blob URL.
-// Optional uploader(file) => Promise<string> to persist and return a real URL.
+// Toolbar button that opens a small form: paste an image URL, or upload a file.
+// Optional uploader(file) => Promise<string> stores the file and returns a real URL;
+// without one, uploads become session-only blob: URLs.
 
+import { createButton, createField, createStatus, safeAlt, togglePopover } from './utils/popover';
 import type { MarzipanInstance } from '../types';
 
 export type ImagePickerOptions = {
   uploader?: (file: File) => Promise<string>;
   label?: string; // button label or emoji
   title?: string; // tooltip
-  placeholder?: string; // default value for prompt
-  promptMessage?: string; // custom prompt message
+  placeholder?: string; // starting value for the URL field
+  promptMessage?: string; // label for the URL field
 };
-
-function insertAtCursor(editor: MarzipanInstance, text: string) {
-  const ta = editor.textarea;
-  const s = ta.selectionStart ?? 0, e = ta.selectionEnd ?? 0;
-  ta.setRangeText(text, s, e, 'end');
-  editor.updatePreview();
-  ta.focus();
-}
 
 export function imagePickerPlugin(opts: ImagePickerOptions = {}) {
   const label = opts.label ?? '🖼️';
   const title = opts.title ?? 'Insert image';
 
   return (editor: MarzipanInstance) => {
-    // Find or create a toolbar container
-    const bar = editor.container.querySelector<HTMLElement>('.marzipan-toolbar')
-      ?? editor.container;
+    editor.addToolbarButton({
+      title,
+      label,
+      className: 'mz-btn-image',
+      onClick: (button) => {
+        togglePopover(button, { label: title, className: 'mz-image-pop' }, (pop) => {
+          const form = document.createElement('form');
+          form.className = 'mz-form';
 
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.title = title;
-    btn.className = 'mz-btn mz-btn-image';
-    btn.textContent = label;
+          const url = createField(opts.promptMessage ?? 'Image URL', {
+            type: 'url',
+            value: opts.placeholder ?? '',
+            placeholder: 'https://example.com/image.png',
+          });
+          const alt = createField('Alt text', { placeholder: 'Describe the image' });
+          const status = createStatus();
 
-    btn.onclick = async () => {
-      const promptMessage = opts.promptMessage ?? 'Paste an image URL, or type "upload" to pick a file:';
-      const initialValue = opts.placeholder ?? '';
-      const mode = prompt(promptMessage, initialValue);
-      if (!mode) return;
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = 'image/*';
+          fileInput.hidden = true;
 
-      const normalized = mode.trim();
-      if (!normalized) return;
+          const upload = createButton('Upload file');
+          upload.addEventListener('click', () => fileInput.click());
 
-      if (normalized.toLowerCase() !== 'upload') {
-        insertAtCursor(editor, `![alt text](${normalized})`);
-        return;
-      }
+          fileInput.addEventListener('change', async () => {
+            const file = fileInput.files?.[0];
+            if (!file) return;
+            status.classList.remove('mz-status-error');
+            status.textContent = 'Uploading...';
+            pop.reposition();
+            try {
+              const src = opts.uploader ? await opts.uploader(file) : URL.createObjectURL(file);
+              const altText = alt.input.value.trim() || file.name;
+              pop.close();
+              editor.insertText(`![${safeAlt(altText)}](${src})`);
+            } catch (e) {
+              console.error('[Marzipan] Image upload failed:', e);
+              status.classList.add('mz-status-error');
+              status.textContent = 'Upload failed. Try again or paste a URL.';
+              pop.reposition();
+            }
+          });
 
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
-        try {
-          const url = opts.uploader ? await opts.uploader(file) : URL.createObjectURL(file);
-          insertAtCursor(editor, `![${file.name}](${url})`);
-        } catch (e) {
-          console.error('Image upload failed:', e);
-          alert('Image upload failed.');
-        }
-      };
-      input.click();
-    };
+          const actions = document.createElement('div');
+          actions.className = 'mz-actions';
+          actions.append(upload, createButton('Insert', 'primary'));
 
-    bar?.appendChild(btn);
+          form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const src = url.input.value.trim();
+            if (!src) {
+              status.classList.add('mz-status-error');
+              status.textContent = 'Paste an image URL first, or upload a file.';
+              url.input.focus();
+              pop.reposition();
+              return;
+            }
+            const altText = alt.input.value.trim() || 'alt text';
+            pop.close();
+            editor.insertText(`![${safeAlt(altText)}](${src})`);
+          });
+
+          form.append(url.field, alt.field, status, actions, fileInput);
+          pop.el.appendChild(form);
+        });
+      },
+    });
   };
 }

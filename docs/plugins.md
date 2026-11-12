@@ -48,12 +48,12 @@ Every factory returns an object that Marzipan consumes internally. You can mix a
 | Plugin                  | Import Path                                      | Description                                                                                       |
 | ----------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | `imageManagerPlugin`    | `@pinkpixel/marzipan/plugins/imageManagerPlugin` | Dropzone and gallery UI for inserting images and managing uploads.                                |
-| `imagePickerPlugin`     | `@pinkpixel/marzipan/plugins/imagePickerPlugin`  | Toolbar button for inserting images via URL or optional uploader callback.                        |
+| `imagePickerPlugin`     | `@pinkpixel/marzipan/plugins/imagePickerPlugin`  | Toolbar button that opens a small form: paste a URL or upload a file, plus optional alt text.     |
 | `mermaidPlugin`         | `@pinkpixel/marzipan/plugins/mermaidPlugin`      | Lazy-loads Mermaid from npm/ESM and renders diagrams inline.                                      |
 | `mermaidExternalPlugin` | `@pinkpixel/marzipan/plugins/mermaidExternal`    | Mermaid integration that targets a CDN script tag—perfect for sandboxed playgrounds.              |
-| `tablePlugin`           | `@pinkpixel/marzipan/plugins/tablePlugin`        | Toolbar-driven table generator with inline editing controls.                                      |
+| `tablePlugin`           | `@pinkpixel/marzipan/plugins/tablePlugin`        | Toolbar button that opens a rows + columns form and inserts a GFM table.                          |
 | `tableGridPlugin`       | `@pinkpixel/marzipan/plugins/tableGridPlugin`    | Grid popover with alignment and header color options (exports `tableGridStyles`).                 |
-| `tableGeneratorPlugin`  | `@pinkpixel/marzipan/plugins/tableGenerator`     | Quick GFM table inserter with prompt-driven sizing.                                               |
+| `tableGeneratorPlugin`  | `@pinkpixel/marzipan/plugins/tableGenerator`     | Deprecated alias for `tablePlugin()`. Old imports keep working.                                   |
 | `tinyHighlightPlugin`   | `@pinkpixel/marzipan/plugins/tinyHighlight`      | Zero-runtime syntax highlighting for fenced code blocks (`tinyHighlightStyles` helper available). |
 
 > 📝 The plugin names map 1:1 to files in `src/plugins`. Inspect those files for advanced configuration options.
@@ -130,10 +130,38 @@ const md = buildTableMarkdown({
 
 The original `(rows, cols)` signature remains supported for backward compatibility.
 
+## Writing your own plugin
+
+A plugin is just a function that gets the editor once, when it's applied. The editor gives plugins three helpers, so you don't have to poke at the DOM or chain hooks by hand:
+
+- `editor.addToolbarButton({ title, label, icon, className, onClick })` adds a button to the toolbar. If the built-in toolbar is off, Marzipan creates a small plugin toolbar above the editor, so your button always has somewhere to live.
+- `editor.insertText(text)` replaces the selection (or inserts at the cursor). It goes through the browser's editing commands, so **Ctrl+Z undoes it** like normal typing, and the preview re-renders on its own.
+- `editor.addHook('afterPreviewRender', fn)` runs `fn(previewElement, editor)` after every render. These hooks survive `reinit()`, unlike ones you set on `options.hooks`. It returns a function that removes the hook.
+
+```ts
+import type { MarzipanPlugin } from "@pinkpixel/marzipan";
+
+const datePlugin: MarzipanPlugin = (editor) => {
+  editor.addToolbarButton({
+    title: "Insert today's date",
+    label: "📅",
+    onClick: () => editor.insertText(new Date().toISOString().slice(0, 10)),
+  });
+
+  editor.addHook("afterPreviewRender", (root) => {
+    root.querySelectorAll("a[href^='http']").forEach((a) => a.setAttribute("rel", "noopener"));
+  });
+};
+
+new Marzipan("#editor", { toolbar: true, plugins: [datePlugin] });
+```
+
+None of the built-in plugins use `prompt()`, `alert()` or `confirm()` anymore. They open small popovers instead, which close on Escape or an outside click and hand focus back to the button.
+
 ## Configuration tips
 
 - **Tree shaking** – Import plugins individually; bundlers remove unused exports automatically.
-- **Styling** – Some plugins inject their own CSS. Bakeshop demonstrates how to mirror the styling in your app.
+- **Styling** – Plugin popovers are styled by Marzipan's own stylesheet and pick up the editor's theme colors, so they match Solar, Cave, or your custom theme. `tableGridStyles`, `imageManagerStyles` and `tinyHighlightStyles` still add the extra bits those plugins need (inject them once).
 - **Events** – Many plugins accept callbacks (e.g., image handlers). Pass your own upload or analytics hooks through the factory options.
 - **Server-side rendering** – When using SSR, guard plugin usage behind `typeof window !== 'undefined'` if they rely on browser-only APIs.
 

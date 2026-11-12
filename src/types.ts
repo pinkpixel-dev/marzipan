@@ -114,12 +114,34 @@ export interface ToolbarConfig {
   buttons?: ToolbarButtonOption[];
 }
 
+/** Runs after every preview render. May be async; errors are logged, not thrown. */
+export type PreviewHook = (root: HTMLElement, instance: MarzipanInstance) => void | Promise<void>;
+
+/** Names accepted by `editor.addHook()` */
+export type HookName = 'afterPreviewRender';
+
 /**
  * Editor hooks for lifecycle events
  */
 export interface EditorHooks {
   /** Called after preview is rendered */
-  afterPreviewRender?: (root: HTMLElement, instance: MarzipanInstance) => void;
+  afterPreviewRender?: PreviewHook;
+}
+
+/**
+ * A toolbar button added by a plugin through `editor.addToolbarButton()`
+ */
+export interface PluginButtonOptions {
+  /** Tooltip and accessible name */
+  title: string;
+  /** Text or emoji shown on the button (ignored when `icon` is set) */
+  label?: string;
+  /** SVG markup for the button, like the built-in toolbar icons */
+  icon?: string;
+  /** Extra class names */
+  className?: string;
+  /** Click handler. The button is passed in so popovers can anchor to it. */
+  onClick: (button: HTMLButtonElement, editor: MarzipanInstance) => void;
 }
 
 /** A plugin receives the editor instance once, when it is applied */

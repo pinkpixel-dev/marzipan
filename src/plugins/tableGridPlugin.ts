@@ -3,12 +3,9 @@
 
 import { buildTableMarkdown } from './utils/table';
 import type { ColumnAlignment } from './utils/table';
-
-type MzEditor = {
-  container: HTMLElement;
-  textarea: HTMLTextAreaElement;
-  updatePreview: () => void;
-};
+import { togglePopover } from './utils/popover';
+import type { Popover } from './utils/popover';
+import type { MarzipanInstance } from '../types';
 
 export interface TableGridPluginOptions {
   maxRows?: number;
@@ -41,49 +38,18 @@ function defaultPrefs(): TablePrefs {
   return { alignment: 'left', headerColor: 'default' };
 }
 
-function insertAtCursor(editor: MzEditor, text: string) {
-  const ta = editor.textarea;
-  const s = ta.selectionStart ?? 0;
-  const e = ta.selectionEnd ?? 0;
-  ta.setRangeText(text, s, e, 'end');
-  editor.updatePreview();
-  ta.focus();
-}
-
 export function tableGridPlugin(opts: TableGridPluginOptions = {}) {
   const resolvedMaxRows = Math.max(1, opts.maxRows ?? 10);
   const resolvedMaxCols = Math.max(1, opts.maxColumns ?? opts.maxCols ?? 10);
   const label = opts.label ?? '▦';
   const title = opts.title ?? 'Insert table';
 
-  return (editor: MzEditor) => {
-    const bar = editor.container.querySelector('.marzipan-toolbar') as HTMLElement ?? editor.container;
+  return (editor: MarzipanInstance) => {
     const prefs = loadPrefs();
 
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'marzipan-toolbar-button mz-btn-tablegrid';
-    btn.title = title;
-    btn.textContent = label;
-    btn.setAttribute('aria-label', title);
-
-    let pop: HTMLElement | null = null;
+    let pop: Popover | null = null;
     let selectedRows = 0;
     let selectedCols = 0;
-
-    function closePop() {
-      pop?.remove();
-      pop = null;
-      document.removeEventListener('click', outsideClose, true);
-      window.removeEventListener('resize', closePop);
-      window.removeEventListener('scroll', closePop, true);
-    }
-
-    function outsideClose(e: MouseEvent) {
-      if (!pop) return;
-      if (e.target instanceof Node && (pop.contains(e.target) || btn.contains(e.target))) return;
-      closePop();
-    }
 
     function doInsert() {
       if (selectedRows < 1 || selectedCols < 1) return;
@@ -94,15 +60,11 @@ export function tableGridPlugin(opts: TableGridPluginOptions = {}) {
         alignment: alignArr,
         headerColor: prefs.headerColor !== 'default' ? prefs.headerColor : undefined,
       });
-      insertAtCursor(editor, `\n${md}\n`);
-      closePop();
+      pop?.close();
+      editor.insertText(`\n${md}\n`);
     }
 
-    function openPop() {
-      if (pop) { closePop(); return; }
-
-      pop = document.createElement('div');
-      pop.className = 'mz-pop mz-tablegrid-pop';
+    function buildPop(el: HTMLElement) {
 
       // --- Grid section ---
       const grid = document.createElement('div');
@@ -134,8 +96,8 @@ export function tableGridPlugin(opts: TableGridPluginOptions = {}) {
         }
       }
 
-      pop.appendChild(grid);
-      pop.appendChild(status);
+      el.appendChild(grid);
+      el.appendChild(status);
 
       // --- Options section ---
       const optionsSection = document.createElement('div');
@@ -193,24 +155,21 @@ export function tableGridPlugin(opts: TableGridPluginOptions = {}) {
       });
       optionsSection.appendChild(colorRow.row);
 
-      pop.appendChild(optionsSection);
-
-      document.body.appendChild(pop);
-
-      // position under button
-      const br = btn.getBoundingClientRect();
-      pop.style.left = `${Math.round(window.scrollX + br.left)}px`;
-      pop.style.top  = `${Math.round(window.scrollY + br.bottom + 6)}px`;
-
-      setTimeout(() => {
-        document.addEventListener('click', outsideClose, true);
-        window.addEventListener('resize', closePop);
-        window.addEventListener('scroll', closePop, true);
-      }, 0);
+      el.appendChild(optionsSection);
     }
 
-    btn.onclick = openPop;
-    bar.appendChild(btn);
+    editor.addToolbarButton({
+      title,
+      label,
+      className: 'mz-btn-tablegrid',
+      onClick: (button) => {
+        togglePopover(
+          button,
+          { label: title, className: 'mz-tablegrid-pop', onClose: () => { pop = null; } },
+          (p) => { pop = p; buildPop(p.el); },
+        );
+      },
+    });
   };
 }
 
@@ -229,12 +188,7 @@ function makeOptionRow(label: string) {
 
 // Minimal styles (inject once in your app)
 export const tableGridStyles = `
-.mz-pop {
-  position: absolute; z-index: 9999; user-select: none;
-  background: var(--mz-pop-bg, #111); color: var(--mz-pop-fg, #eee);
-  border: 1px solid var(--mz-pop-bd, #333); border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.35); padding: 10px;
-}
+.mz-tablegrid-pop { user-select: none; }
 .mz-tablegrid {
   display: grid; grid-template-rows: repeat(var(--r), 16px);
   grid-template-columns: repeat(var(--c), 16px);
@@ -242,15 +196,15 @@ export const tableGridStyles = `
 }
 .mz-tablegrid .mz-cell {
   width: 16px; height: 16px; border-radius: 4px;
-  background: var(--mz-cell-bg, #1d1f23); border: 1px solid var(--mz-cell-bd, #2b2f36);
+  background: var(--mz-cell-bg, var(--bg-primary, #1d1f23)); border: 1px solid var(--mz-cell-bd, var(--border, #2b2f36));
 }
 .mz-tablegrid .mz-cell.sel {
-  background: var(--mz-cell-sel-bg, #2f6feb); border-color: var(--mz-cell-sel-bd, #3b82f6);
+  background: var(--mz-cell-sel-bg, var(--h1, #2f6feb)); border-color: var(--mz-cell-sel-bd, var(--h1, #3b82f6));
 }
 .mz-tablegrid-status { font-size: 12px; opacity: .8; padding: 6px 4px 2px; text-align: center; }
 .mz-btn { cursor: pointer; }
 .mz-table-options {
-  border-top: 1px solid var(--mz-pop-bd, #333);
+  border-top: 1px solid var(--mz-pop-bd, var(--border, #333));
   margin-top: 8px; padding-top: 8px;
   display: flex; flex-direction: column; gap: 6px;
 }
@@ -265,19 +219,19 @@ export const tableGridStyles = `
   display: flex; gap: 3px; flex-wrap: wrap;
 }
 .mz-opt-btn {
-  background: var(--mz-cell-bg, #1d1f23);
-  border: 1px solid var(--mz-cell-bd, #2b2f36);
-  color: var(--mz-pop-fg, #ccc);
+  background: var(--mz-cell-bg, var(--bg-primary, #1d1f23));
+  border: 1px solid var(--mz-cell-bd, var(--border, #2b2f36));
+  color: var(--mz-pop-fg, inherit);
   border-radius: 5px; padding: 2px 7px; font-size: 11px;
   cursor: pointer; transition: all 0.15s ease;
   font-family: inherit; line-height: 1.4;
 }
 .mz-opt-btn:hover {
-  border-color: #555; background: #252830;
+  border-color: var(--text, #555); background: var(--toolbar-hover, #252830);
 }
 .mz-opt-btn.active {
-  background: var(--accent, #2f6feb);
-  border-color: var(--accent, #3b82f6);
+  background: var(--accent, var(--h1, #2f6feb));
+  border-color: var(--accent, var(--h1, #3b82f6));
   color: #fff; font-weight: 600;
 }
 .mz-opt-color { font-size: 14px; padding: 2px 5px; min-width: 22px; }

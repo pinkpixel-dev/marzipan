@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-11-11
+
+### 🔌 Plugin API
+
+- `editor.insertText(text)` replaces the selection or inserts at the cursor. It goes through the browser's editing commands, so Ctrl+Z undoes it.
+- `editor.addToolbarButton({ title, label, icon, className, onClick })` adds a toolbar button. With the toolbar turned off, Marzipan creates a small plugin toolbar above the editor instead of dropping the button somewhere odd.
+- `editor.addHook('afterPreviewRender', fn)` registers a render hook and returns a function to remove it. Async hooks are fine, and one throwing hook no longer stops the rest.
+- New exported types: `PreviewHook`, `HookName` and `PluginButtonOptions`.
+
+### ✨ Plugins
+
+- No more `prompt()`, `alert()` or `confirm()`. Plugins open small popovers that match the editor theme, close on Escape or an outside click, and hand focus back to their button.
+- `tablePlugin` opens a rows + columns form. `tableGeneratorPlugin` is now an alias for it, so old imports still work.
+- `imagePickerPlugin` opens a form with an image URL, alt text, and an upload button. Upload errors show up inline instead of in an alert.
+- `imageManagerPlugin` asks for a second click before clearing recents, and shows errors inside the panel.
+- Every built-in plugin inserts text through `insertText()`, so plugin inserts are undoable now. They used to wipe the undo history.
+- `tableGridStyles` and `imageManagerStyles` fall back to the editor's theme colors instead of hard-coded dark ones, so they look right in Solar too.
+
+### 🐛 Fixes
+
+- `reinit({ hooks })` no longer drops the hooks that plugins like Mermaid and tinyHighlight rely on. Plugins register through `addHook()` now, which `reinit()` doesn't touch.
+
+### 🧪 Tests
+
+- Added `tests/plugins.test.ts` covering the plugin API, popover behavior, and the table and image plugins.
+
+---
+
 ## [1.2.5] - 2026-11-11
 
 ### 🏷️ Types
