@@ -11,8 +11,11 @@ const pluginEntries = Object.fromEntries(
 )
 
 export default defineConfig({
+  // public/ holds the README logo; it isn't part of the package
+  publicDir: false,
   build: {
-    emptyOutDir: true, // Declarations are emitted by tsc after the bundle
+    // Declarations are emitted by tsc into dist/ too, so watch mode (scripts/dev.mjs) must keep them
+    emptyOutDir: process.env.MARZIPAN_WATCH !== '1',
     lib: {
       entry: {
         index: path.resolve(__dirname, 'src/index.ts'),

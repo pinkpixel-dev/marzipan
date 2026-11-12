@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.1] - 2026-11-11
+
+### 🐛 Fixes
+
+- Mermaid click handlers (`click A callback`) work again after a re-render. Cached diagrams now re-attach `bindFunctions`, and `mermaidPlugin` binds them at all (it never did before).
+- The `fontFamily` option works now. It used to be ignored, so the editor always used the default monospace stack.
+- In preview mode, the Mermaid source block is hidden again and only the diagram shows. A later code-block rule was overriding the hide rule.
+- Mermaid diagrams no longer come out blank when two editors render at the same moment (React StrictMode does this). Render ids are unique across the page now, and an empty render is never cached.
+- `npm run dev` keeps the `.d.ts` files up to date. It does one clean build, then runs the Vite and `tsc` watchers side by side, and the watching build no longer empties `dist/`.
+
+### ♿ Accessibility
+
+- The `tableGridPlugin` size picker works from the keyboard. The grid gets focus when it opens, arrow keys change rows and columns, and Enter inserts.
+
+### 🧹 Maintenance
+
+- `mermaidPlugin` and `mermaidExternalPlugin` share one renderer (`src/plugins/utils/mermaid.ts`) instead of two copies of the same loop.
+- The npm package no longer ships `logo.png`, `favicon.png`, or the docs site's images and VitePress config (about 1.1 MB smaller).
+- `docs-site/` (VitePress build output) is no longer committed. Run `npm run docs:build` before deploying, like the README says. Removed the unused `.npmignore`.
+- Removed the old Bakeshop pages, `tailwind.config.js` and `SETUP.md` (covered by the new demo README).
+
+### 🧁 Bakeshop demo
+
+- Rebuilt as one full-screen workspace: samples on the left, a live editor in the middle, and an inspector with Setup, Code, Actions and API tabs on the right.
+- Every option, theme and plugin is a toggle, and the Code tab writes the matching `new Marzipan()` setup for you.
+- The API tab runs real instance methods and shows what they return. The Actions tab highlights the formats under the cursor.
+- New look: a charcoal base, a softer pink accent, Geist and Geist Mono, lucide icons, and no gradient text. Tailwind moved from a 4.0 alpha to 4.3.5.
+
+---
+
 ## [1.3.0] - 2026-11-11
 
 ### 🔌 Plugin API

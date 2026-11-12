@@ -65,16 +65,37 @@ export function tableGridPlugin(opts: TableGridPluginOptions = {}) {
     }
 
     function buildPop(el: HTMLElement) {
+      selectedRows = 0;
+      selectedCols = 0;
 
       // --- Grid section ---
+      // The grid is one focusable control: arrow keys grow or shrink the selection,
+      // Enter inserts. Hovering and clicking work as before.
       const grid = document.createElement('div');
       grid.className = 'mz-tablegrid';
+      grid.tabIndex = 0;
+      grid.dataset.autofocus = '';
+      grid.setAttribute('role', 'slider');
+      grid.setAttribute('aria-label', 'Table size. Arrow keys change rows and columns, Enter inserts.');
       grid.style.setProperty('--r', String(resolvedMaxRows));
       grid.style.setProperty('--c', String(resolvedMaxCols));
 
       const status = document.createElement('div');
       status.className = 'mz-tablegrid-status';
-      status.textContent = 'Hover to select size';
+      status.setAttribute('aria-hidden', 'true');
+      status.textContent = 'Hover or use arrow keys';
+
+      const select = (r: number, c: number) => {
+        selectedRows = Math.min(resolvedMaxRows, Math.max(1, r));
+        selectedCols = Math.min(resolvedMaxCols, Math.max(1, c));
+        const text = `${selectedRows} × ${selectedCols}`;
+        status.textContent = text;
+        grid.setAttribute('aria-valuetext', `${selectedRows} rows by ${selectedCols} columns`);
+        grid.querySelectorAll<HTMLElement>('.mz-cell').forEach(cell => {
+          const rr = Number(cell.dataset.r), cc = Number(cell.dataset.c);
+          cell.classList.toggle('sel', rr <= selectedRows && cc <= selectedCols);
+        });
+      };
 
       for (let r = 1; r <= resolvedMaxRows; r++) {
         for (let c = 1; c <= resolvedMaxCols; c++) {
@@ -82,19 +103,28 @@ export function tableGridPlugin(opts: TableGridPluginOptions = {}) {
           cell.className = 'mz-cell';
           cell.dataset.r = String(r);
           cell.dataset.c = String(c);
-          cell.onmouseenter = () => {
-            selectedRows = r;
-            selectedCols = c;
-            status.textContent = `${r} × ${c}`;
-            grid.querySelectorAll<HTMLElement>('.mz-cell').forEach(el => {
-              const rr = Number(el.dataset.r), cc = Number(el.dataset.c);
-              el.classList.toggle('sel', rr <= r && cc <= c);
-            });
-          };
+          cell.onmouseenter = () => select(r, c);
           cell.onclick = () => doInsert();
           grid.appendChild(cell);
         }
       }
+
+      grid.addEventListener('focus', () => {
+        if (!selectedRows) select(2, 2);
+      });
+      grid.addEventListener('keydown', (e) => {
+        const moves: Record<string, [number, number]> = {
+          ArrowDown: [1, 0], ArrowUp: [-1, 0], ArrowRight: [0, 1], ArrowLeft: [0, -1],
+        };
+        const move = moves[e.key];
+        if (move) {
+          e.preventDefault();
+          select((selectedRows || 1) + move[0], (selectedCols || 1) + move[1]);
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          doInsert();
+        }
+      });
 
       el.appendChild(grid);
       el.appendChild(status);
@@ -201,6 +231,7 @@ export const tableGridStyles = `
 .mz-tablegrid .mz-cell.sel {
   background: var(--mz-cell-sel-bg, var(--h1, #2f6feb)); border-color: var(--mz-cell-sel-bd, var(--h1, #3b82f6));
 }
+.mz-tablegrid:focus-visible { outline: 2px solid var(--h1, #3b82f6); outline-offset: 3px; border-radius: 6px; }
 .mz-tablegrid-status { font-size: 12px; opacity: .8; padding: 6px 4px 2px; text-align: center; }
 .mz-btn { cursor: pointer; }
 .mz-table-options {

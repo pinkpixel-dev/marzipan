@@ -1,6 +1,6 @@
 {
   "name": "@pinkpixel/marzipan-bakeshop-demo",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "private": true,
   "description": "Interactive demo showcasing all Marzipan editor features",
   "type": "module",
@@ -13,12 +13,13 @@
   },
   "dependencies": {
     "@pinkpixel/marzipan": "file:../",
+    "lucide-react": "^1.72.0",
+    "mermaid": "^11.4.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "mermaid": "^11.4.1"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.0.0-alpha.37",
+    "@tailwindcss/vite": "^4.3.5",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
@@ -27,7 +28,7 @@
     "eslint": "^9.37.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
-    "tailwindcss": "^4.0.0-alpha.37",
+    "tailwindcss": "^4.3.5",
     "typescript": "^5.9.3",
     "vite": "^7.1.9"
   },

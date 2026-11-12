@@ -102,3 +102,10 @@ describe('export', () => {
     expect(html).not.toContain('data-mz-line');
   });
 });
+
+describe('instance options', () => {
+  it('applies fontFamily to the editor', () => {
+    const { editor } = makeEditor({ fontFamily: '"Geist Mono", monospace' });
+    expect(editor.wrapper.style.getPropertyValue('--instance-font-family')).toBe('"Geist Mono", monospace');
+  });
+});

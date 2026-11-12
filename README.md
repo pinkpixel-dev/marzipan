@@ -133,7 +133,7 @@ Run these from the repository root:
 
 | Script              | Purpose                           |
 | ------------------- | --------------------------------- |
-| `npm run dev`       | Library build in watch mode       |
+| `npm run dev`       | Watch mode (bundle + types)       |
 | `npm run build`     | Type check then bundle to `dist/` |
 | `npm run typecheck` | Strict TypeScript validation      |
 | `npm run lint`      | ESLint flat config                |

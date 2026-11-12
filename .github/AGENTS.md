@@ -94,7 +94,7 @@ You are allowed to be proactive, but only when the user asks you to do something
 ```sh
 npm run build       # vite build && tsc -p tsconfig.build.json
 npm test            # vitest run
-npm run dev         # vite build --watch
+npm run dev         # scripts/dev.mjs: clean build, then Vite + tsc watchers (bundle and .d.ts)
 npm run typecheck   # tsc --noEmit
 npm run lint        # eslint .
 npm run prettier    # prettier --write .
@@ -129,7 +129,7 @@ npm run typecheck   # tsc --noEmit
 
 2. **Constructor returns an array** — `new Marzipan(selector, opts)` always returns an array of instances. Consumers destructure: `const [editor] = new Marzipan('#my-textarea', opts)`. This is intentional, so don't change it. Instances are built with `Object.create` + `_init`, which is why class fields use `declare` and are never initialized in the class body.
 
-3. **Build order.** `vite build` runs first and empties `dist/`, then `tsc -p tsconfig.build.json` emits only the `.d.ts` files next to the bundle. The root `tsconfig.json` is `noEmit` and also covers `tests/`.
+3. **Build order.** `vite build` runs first and empties `dist/`, then `tsc -p tsconfig.build.json` emits only the `.d.ts` files next to the bundle. The root `tsconfig.json` is `noEmit` and also covers `tests/`. In watch mode (`npm run dev`), `MARZIPAN_WATCH=1` turns off `emptyOutDir` so the Vite watcher doesn't wipe the `.d.ts` files `tsc --watch` writes.
 
 4. **Plugin entry points** — `vite.config.ts` auto-discovers all `.ts` files in `src/plugins/` and registers each as a separate entry. Adding a new plugin file automatically makes it available at `@pinkpixel/marzipan/plugins/<name>`.
 

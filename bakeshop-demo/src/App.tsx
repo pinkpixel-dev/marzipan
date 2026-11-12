@@ -1,132 +1,114 @@
-import { useState, useEffect } from 'react'
-import Playground from './tabs/Playground'
-import ActionsDemo from './tabs/ActionsDemo'
-import PluginsGallery from './tabs/PluginsGallery'
-import ThemesLab from './tabs/ThemesLab'
-import ApiExamples from './tabs/ApiExamples'
+import { useCallback, useState } from 'react'
+import { BookOpen, ExternalLink } from 'lucide-react'
+import type { MarzipanInstance } from '@pinkpixel/marzipan'
+import { version } from '../../package.json'
+import { DEFAULT_CONFIG } from './config'
+import type { DemoConfig } from './config'
+import { SAMPLES } from './samples'
+import { load, loadText, remove, save } from './storage'
+import { EditorPane } from './components/EditorPane'
+import { Sidebar } from './components/Sidebar'
+import { Inspector } from './components/Inspector'
+import type { InspectorTab } from './components/Inspector'
+import { SetupPanel } from './components/SetupPanel'
+import { CodePanel } from './components/CodePanel'
+import { ActionsPanel } from './components/ActionsPanel'
+import { ApiPanel } from './components/ApiPanel'
 
-type Tab = 'playground' | 'actions' | 'plugins' | 'themes' | 'api'
-
-const tabs = [
-  { id: 'playground' as Tab, label: '🎨 Playground', icon: '🎨' },
-  { id: 'actions' as Tab, label: '⚡ Actions', icon: '⚡' },
-  { id: 'plugins' as Tab, label: '🧩 Plugins', icon: '🧩' },
-  { id: 'themes' as Tab, label: '🎭 Themes', icon: '🎭' },
-  { id: 'api' as Tab, label: '💻 API', icon: '💻' },
-]
+const sampleById = (id: string) => SAMPLES.find((s) => s.id === id) ?? SAMPLES[0]
+const docKey = (id: string) => `doc:${id}`
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('playground')
+  const [config, setConfigState] = useState<DemoConfig>(() => load('config', DEFAULT_CONFIG))
+  const [sampleId, setSampleId] = useState(() => loadText('sample') ?? SAMPLES[0].id)
+  const [tab, setTab] = useState<InspectorTab>('setup')
+  const [editor, setEditor] = useState<MarzipanInstance | null>(null)
+  // Bumped on reset so the editor rebuilds from the original sample
+  const [docVersion, setDocVersion] = useState(0)
+  const [edited, setEdited] = useState(() => loadText(docKey(sampleId)) !== null)
 
-  // Handle URL hash navigation
-  useEffect(() => {
-    const hash = window.location.hash.slice(1) as Tab
-    if (tabs.some(t => t.id === hash)) {
-      setActiveTab(hash)
-    }
+  const sample = sampleById(sampleId)
+  const initialValue = loadText(docKey(sample.id)) ?? sample.content
 
-    const handleHashChange = () => {
-      const newHash = window.location.hash.slice(1) as Tab
-      if (tabs.some(t => t.id === newHash)) {
-        setActiveTab(newHash)
-      }
-    }
+  const setConfig = (next: DemoConfig) => {
+    setConfigState(next)
+    save('config', next)
+  }
 
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [])
+  const chooseSample = (id: string) => {
+    setSampleId(id)
+    save('sample', id)
+    setEdited(loadText(docKey(id)) !== null)
+  }
 
-  const handleTabChange = (tab: Tab) => {
-    setActiveTab(tab)
-    window.location.hash = tab
+  const onChange = useCallback(
+    (value: string) => {
+      if (value === sampleById(sampleId).content) return
+      save(docKey(sampleId), value)
+      setEdited(true)
+    },
+    [sampleId],
+  )
+
+  const reset = () => {
+    remove(docKey(sampleId))
+    setEdited(false)
+    setDocVersion((v) => v + 1)
   }
 
   return (
-    <div className="min-h-screen bg-[#1b1b1f] text-slate-100">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur bg-[#16161a]/90 border-b border-[#2f2f36] shadow-lg">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <img src="/logo.png" alt="Marzipan" className="w-16 h-16 animate-float" />
-              <div>
-                <h1 className="text-4xl font-bold gradient-text">
-                  Marzipan Bakeshop
-                </h1>
-                <p className="text-slate-300 text-sm mt-1">
-                  Interactive demo of the pure TypeScript markdown editor
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <a
-                href="https://marzipan.pinkpixel.dev"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 rounded-xl border border-pink-500/60 bg-[#27272f] text-pink-200 font-semibold shadow-sm hover:bg-pink-500/10 hover:border-pink-400 hover:shadow-xl transition-all duration-300"
-              >
-                📚 Documentation
-              </a>
-              <a
-                href="https://github.com/pinkpixel-dev/marzipan"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-pink-600 text-white font-semibold shadow-sm hover:shadow-xl hover:scale-105 transition-all duration-300"
-              >
-                ⭐ Star on GitHub
-              </a>
-            </div>
-          </div>
-
-          {/* Tab Navigation */}
-          <nav className="flex gap-2 overflow-x-auto pb-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`tab-button ${
-                  activeTab === tab.id ? 'tab-button-active' : 'tab-button-inactive'
-                }`}
-              >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+    <div className="grid h-full grid-rows-[48px_minmax(0,1fr)]">
+      <header className="flex items-center justify-between gap-4 border-b border-line bg-surface px-4">
+        <div className="flex items-center gap-2.5">
+          <img src="/logo.png" alt="" className="size-7" />
+          <span className="text-[15px] font-semibold tracking-tight text-fg">Marzipan</span>
+          <span className="rounded border border-line px-1.5 py-px font-mono text-[11px] text-faint">v{version}</span>
+          <span className="ml-1 hidden text-[13px] text-faint md:inline">Bakeshop</span>
         </div>
+        <nav aria-label="Project links" className="flex items-center gap-1">
+          <a
+            href="https://marzipan.pinkpixel.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] text-muted transition-colors duration-150 hover:bg-raised hover:text-fg"
+          >
+            <BookOpen size={14} aria-hidden="true" />
+            Docs
+          </a>
+          <a
+            href="https://github.com/pinkpixel-dev/marzipan"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] text-muted transition-colors duration-150 hover:bg-raised hover:text-fg"
+          >
+            GitHub
+            <ExternalLink size={13} aria-hidden="true" />
+          </a>
+        </nav>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="animate-fade-in">
-          {activeTab === 'playground' && <Playground />}
-          {activeTab === 'actions' && <ActionsDemo />}
-          {activeTab === 'plugins' && <PluginsGallery />}
-          {activeTab === 'themes' && <ThemesLab />}
-          {activeTab === 'api' && <ApiExamples />}
-        </div>
-      </main>
+      <div className="grid min-h-0 grid-cols-[176px_minmax(0,1fr)_296px] xl:grid-cols-[200px_minmax(0,1fr)_340px]">
+        <Sidebar sampleId={sampleId} onSample={chooseSample} edited={edited} onReset={reset} />
 
-      {/* Footer */}
-      <footer className="mt-20 py-8 border-t border-[#2f2f36] bg-[#16161a]">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-slate-300 mb-2">
-            Made with ❤️ by{' '}
-            <a
-              href="https://pinkpixel.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-pink-300 hover:text-pink-200 font-semibold"
-            >
-              Pink Pixel
-            </a>
-          </p>
-          <p className="text-slate-400 text-sm">
-            ✨ Dream it, Pixel it™
-          </p>
-        </div>
-      </footer>
+        <main className="dot-texture min-h-0 p-4" aria-label={`${sample.label} sample`}>
+          <div className="h-full min-h-0 overflow-hidden rounded-lg border border-line">
+            <EditorPane
+              key={`${sample.id}:${docVersion}`}
+              config={config}
+              initialValue={initialValue}
+              onChange={onChange}
+              onEditor={setEditor}
+            />
+          </div>
+        </main>
+
+        <Inspector tab={tab} onTab={setTab}>
+          {tab === 'setup' && <SetupPanel config={config} onChange={setConfig} />}
+          {tab === 'code' && <CodePanel config={config} />}
+          {tab === 'actions' && <ActionsPanel editor={editor} />}
+          {tab === 'api' && <ApiPanel key={editor?.instanceId ?? 0} editor={editor} />}
+        </Inspector>
+      </div>
     </div>
   )
 }

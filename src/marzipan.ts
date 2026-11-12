@@ -1,6 +1,6 @@
 /**
  * Marzipan - A lightweight markdown editor and viewer
- * @version 1.3.0
+ * @version 1.3.1
  * @license Apache-2.0
  */
 
@@ -421,6 +421,9 @@ class MarzipanEditor {
       if (this.options.lineHeight) {
         this.wrapper.style.setProperty('--instance-line-height', String(this.options.lineHeight));
       }
+      if (this.options.fontFamily) {
+        this.wrapper.style.setProperty('--instance-font-family', this.options.fontFamily);
+      }
       if (this.options.padding) {
         this.wrapper.style.setProperty('--instance-padding', this.options.padding);
       }
@@ -492,6 +495,9 @@ class MarzipanEditor {
       }
       if (this.options.lineHeight) {
         this.wrapper.style.setProperty('--instance-line-height', String(this.options.lineHeight));
+      }
+      if (this.options.fontFamily) {
+        this.wrapper.style.setProperty('--instance-font-family', this.options.fontFamily);
       }
       if (this.options.padding) {
         this.wrapper.style.setProperty('--instance-padding', this.options.padding);

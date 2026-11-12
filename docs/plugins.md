@@ -107,6 +107,7 @@ The comment is invisible to standard markdown renderers and is only parsed by Ma
 
 The grid popover includes an options panel below the size grid with:
 
+- **Size grid** – Hover and click, or use the keyboard: the grid gets focus when the popover opens, arrow keys change rows and columns, and Enter inserts.
 - **Align** – Left / Center / Right toggle buttons.
 - **Header color** – Six pastel color swatches plus a “none” dot.
 
@@ -167,7 +168,7 @@ None of the built-in plugins use `prompt()`, `alert()` or `confirm()` anymore. T
 
 ## Demo coverage
 
-The `bakeshop-demo` application renders every plugin in the “Plugin Gallery” panel. Launch it with:
+The `bakeshop-demo` app has every built-in plugin as a toggle in its **Setup** tab, and the **Code** tab shows the matching setup code. Build the library first (`npm run build` in the repository root), then launch it with:
 
 ```bash
 cd bakeshop-demo
@@ -175,6 +176,6 @@ npm install
 npm run dev
 ```
 
-Use the panel toggles to see plugin behaviour before integrating it into your own project.
+Flip plugins on and off to see how they behave before you add them to your own project.
 
 For change history and new additions, see the [CHANGELOG](../CHANGELOG.md).

@@ -1,205 +1,78 @@
-# 🧁 Marzipan Bakeshop Demo
+# 🧁 Marzipan Bakeshop
 
-An interactive, comprehensive demo application showcasing all features of the **Marzipan** markdown editor library.
+The Bakeshop is the playground for the [Marzipan](../README.md) markdown editor. It's one workspace instead of a stack of separate pages: pick a sample on the left, edit it in the middle, and change how the editor is set up on the right. Every change shows up in the editor right away.
 
-## ✨ What's Inside?
+## 🗺️ What's in the workspace
 
-This beautifully designed demo app provides:
+| Area | What it does |
+| --- | --- |
+| **Samples** (left) | Five sample documents: Welcome, Tables, Code highlighting, Mermaid diagrams, and Images. Your edits are saved in the browser, and **Reset this sample** puts the original back. |
+| **Editor** (middle) | A real Marzipan editor with whatever settings you picked. |
+| **Setup** tab | Theme (Cave, Solar, and three custom palettes), toolbar, stats bar, smart lists, the raw cursor line (shows the markdown under the cursor without rendering), font size, and every built-in plugin as a toggle. |
+| **Code** tab | The exact `new Marzipan()` setup for your current settings, ready to copy. |
+| **Actions** tab | Buttons for the actions API (`actions.toggleBold(textarea)` and friends). The ones that match the cursor position light up. There's also a list of the keyboard shortcuts. |
+| **API** tab | Runs real instance methods (`getValue`, `getStats`, `getCleanHTML`, `insertText`, the view modes) and shows the call next to what it returned. You can also download the document as clean HTML. |
 
-### 📑 Five Interactive Tabs
+The editor gets rebuilt when you change a setting, because plugins can't be removed from a live editor. Your text carries across, so you don't lose anything.
 
-1. **🎨 Playground** - Full-featured editor with all capabilities enabled
-   - Live markdown preview with overlay rendering
-   - Complete toolbar with formatting buttons
-   - Stats bar showing character/word/line counts
-   - Auto-save to localStorage
-   - HTML export functionality
-   - Sample content demonstrating all markdown features
+## 🚀 Running it
 
-2. **⚡ Actions Demo** - Interactive showcase of all formatting actions
-   - Visual button grid for each action
-   - Live demonstration of markdown transformations
-   - Keyboard shortcut hints
-   - Code examples for integration
-
-3. **🧩 Plugins Gallery** - Comprehensive plugin documentation
-   - All available plugins with descriptions
-   - Import paths and usage examples
-   - Configuration options
-
-4. **🎭 Themes Lab** - Theme comparison and customization
-   - Side-by-side Solar (light) and Cave (dark) themes
-   - Live theme switching
-   - Custom theme creation examples
-
-5. **💻 API Examples** - Complete integration guide
-   - Basic setup examples
-   - React integration patterns
-   - Event handling
-   - Multiple editor management
-   - Export functionality
-
-### 🎨 Modern Design
-
-- **Tailwind CSS 4.x** with custom gradient designs
-- **Responsive layout** that works beautifully on all devices
-- **Smooth animations** and transitions
-- **Pink Pixel branding** with warm, inviting colors
-- **Dark mode support** via Cave theme
-- **Custom scrollbars** and polished UI elements
-
-### 🚀 Developer-Friendly
-
-- **TypeScript** for type safety
-- **Vite** for lightning-fast development
-- **React 18** with modern hooks
-- **Copy-ready code examples** throughout
-- **URL hash navigation** for direct linking to sections
-
-## 🏃 Quick Start
-
-### Prerequisites
-
-- Node.js 20 or higher
-- npm or equivalent package manager
-
-### Installation
+The demo imports the library straight from `../dist`, so build Marzipan first.
 
 ```bash
-# From the bakeshop-demo directory
+# From the repository root
 npm install
+npm run build
 ```
 
-### Development
+Then start the demo:
 
 ```bash
-# Start the dev server
+cd bakeshop-demo
+npm install
 npm run dev
 ```
 
-Visit `http://localhost:5173` to explore the demo!
+It opens at `http://localhost:5173`. If you're changing the library at the same time, run `npm run dev` in the repository root too. That rebuilds `dist/` as you edit, and the demo picks up the changes on reload.
 
-### Building
-
-```bash
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-## 📁 Project Structure
+## 📁 How it's put together
 
 ```
-bakeshop-demo/
-├── src/
-│   ├── tabs/              # Individual tab components
-│   │   ├── Playground.tsx
-│   │   ├── ActionsDemo.tsx
-│   │   ├── PluginsGallery.tsx
-│   │   ├── ThemesLab.tsx
-│   │   └── ApiExamples.tsx
-│   ├── App.tsx            # Main app with navigation
-│   ├── main.tsx           # Entry point
-│   └── styles.css         # Tailwind + custom styles
-├── index.html             # HTML template
-├── package.json
-├── vite.config.ts
-├── tailwind.config.js
-└── tsconfig.json
+bakeshop-demo/src/
+├── App.tsx              # Workspace layout and state
+├── config.ts            # Settings model, plugin list, and the code generator
+├── samples.ts           # The sample documents
+├── themes.ts            # Theme choices, including the custom palettes
+├── storage.ts           # localStorage helpers (safe when storage is blocked)
+├── cx.ts                # Class name helper
+├── styles.css           # Tailwind 4 and the design tokens
+└── components/
+    ├── EditorPane.tsx   # Mounts Marzipan and rebuilds it on settings changes
+    ├── Sidebar.tsx      # Sample list
+    ├── Inspector.tsx    # Setup / Code / Actions / API tabs
+    ├── SetupPanel.tsx
+    ├── CodePanel.tsx
+    ├── ActionsPanel.tsx
+    ├── ApiPanel.tsx
+    └── ui.tsx           # Button, Switch, Section
 ```
 
-## 🎯 Features Demonstrated
+All colors and fonts come from the tokens at the top of `styles.css` (OKLCH colors on a charcoal base, with Geist and Geist Mono). If you want to restyle the demo, start there.
 
-### Core Editor Features
-- ✅ Overlay markdown preview
-- ✅ Toolbar with formatting buttons
-- ✅ Keyboard shortcuts
-- ✅ Smart list continuation
-- ✅ Stats bar (character/word/line counts)
-- ✅ View modes (Normal, Plain, Preview)
-- ✅ Auto-resize
-- ✅ Custom placeholders
+To add a sample, add it to `samples.ts` and give it an icon in `components/Sidebar.tsx`. To add a theme preset, add it to `themes.ts`.
 
-### Formatting Actions
-- Bold, Italic, Code, Strikethrough
-- Headings (H1, H2, H3)
-- Bullet lists, Numbered lists, Task lists
-- Blockquotes
-- Links
-- Horizontal rules
+## 🛠️ Scripts
 
-### Themes
-- Solar (light theme)
-- Cave (dark theme)
-- Custom theme creation
-
-### Integration Patterns
-- Single editor initialization
-- Multiple editor management
-- React component integration
-- Event handling (onChange, onKeydown)
-- Content get/set operations
-- HTML export
-
-### Advanced Features
-- Plugin system architecture
-- Custom stats formatting
-- Theme switching
-- Instance management
-- Auto-save implementation
-
-## 💡 Usage Tips
-
-1. **Navigation** - Use the tab buttons or URL hash (#playground, #actions, etc.)
-2. **Direct Links** - Share specific sections via URL hash
-3. **Mobile** - Fully responsive, works great on phones/tablets
-4. **Code Examples** - All code blocks are copy-ready
-5. **Persistence** - Playground content auto-saves to localStorage
-
-## 🛠️ Development Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `npm run dev` | Start development server with HMR |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | Run TypeScript checks |
-
-## 🎨 Customization
-
-The demo uses Tailwind CSS 4.x with custom configuration. Key customization points:
-
-- **Colors** - Defined in `tailwind.config.js`
-- **Animations** - Custom keyframes for gradients and floating
-- **Components** - Reusable Tailwind classes in `styles.css`
-- **Theme** - Marzipan theme integration
-
-## 📚 Learning Resources
-
-After exploring the demo:
-
-1. Check the [Marzipan API Documentation](../docs/api.md)
-2. Review [Plugin Documentation](../docs/plugins.md)
-3. Read the [Quick Start Guide](../docs/quick-start.md)
-4. Explore the [Main Repository](https://github.com/pinkpixel-dev/marzipan)
-
-## 🤝 Contributing
-
-Found a bug or want to improve the demo? Contributions are welcome!
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Dev server with hot reload |
+| `npm run build` | Type-check, then build for production |
+| `npm run preview` | Serve the production build |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript only |
 
 ## 📄 License
 
-This demo application is part of the Marzipan project and is licensed under Apache 2.0.
+Apache 2.0, same as Marzipan.
 
----
-
-**Made with ❤️ by [Pink Pixel](https://pinkpixel.dev)**  
-✨ *Dream it, Pixel it™*
+Made with 💖 by Pink Pixel

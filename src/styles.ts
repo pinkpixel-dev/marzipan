@@ -134,7 +134,7 @@ export function generateStyles(options: StyleOptions = {}): string {
       height: 100% !important;
       
       /* Font properties - any difference breaks alignment */
-      font-family: ${fontFamily} !important;
+      font-family: var(--instance-font-family, ${fontFamily}) !important;
       font-variant-ligatures: none !important; /* keep metrics stable for code */
       font-size: var(--instance-font-size, ${fontSize}) !important;
       line-height: var(--instance-line-height, ${lineHeight}) !important;
@@ -278,6 +278,8 @@ export function generateStyles(options: StyleOptions = {}): string {
     .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview .marzipan-mermaid {
       display: block !important;
     }
+    /* .code-block is repeated so this beats the preview-mode pre.code-block rule below */
+    .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview pre.code-block.mz-mermaid-source,
     .marzipan-container.preview-mode .marzipan-wrapper .marzipan-preview pre.mz-mermaid-source {
       display: none !important;
     }

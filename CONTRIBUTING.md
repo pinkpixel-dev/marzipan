@@ -24,7 +24,7 @@ npm install
 
 Run these from the repository root:
 
-- `npm run dev` – watch-mode build of the core library
+- `npm run dev` – one clean build, then rebuilds the bundle and the `.d.ts` files as you edit
 - `npm run build` – bundle to `dist/` with Vite, then generate the `.d.ts` files with `tsc`
 - `npm test` – run the Vitest suite (parser and editor behavior, in happy-dom)
 - `npm run lint` – ESLint flat config

@@ -6,6 +6,8 @@ import { tableGeneratorPlugin } from '../src/plugins/tableGenerator';
 import { imagePickerPlugin } from '../src/plugins/imagePicker';
 import { imageManagerPlugin } from '../src/plugins/imageManagerPlugin';
 import { tinyHighlightPlugin } from '../src/plugins/tinyHighlight';
+import { tableGridPlugin } from '../src/plugins/tableGridPlugin';
+import { mermaidExternalPlugin } from '../src/plugins/mermaidExternal';
 
 function makeEditor(options: Options = {}) {
   const host = document.createElement('div');
@@ -199,5 +201,44 @@ describe('image plugins', () => {
     document.querySelector<HTMLButtonElement>('.mz-im-actions button')!.click();
     expect(editor.getValue()).toBe('![b.png](https://example.com/b.png)');
     expect(document.querySelector('.mz-pop')).toBeNull();
+  });
+});
+
+describe('tableGridPlugin keyboard', () => {
+  it('arrow keys size the table and Enter inserts it', () => {
+    const editor = makeEditor({ toolbar: true, plugins: [tableGridPlugin()] });
+    pluginButton(editor, 'mz-btn-tablegrid').click();
+
+    const grid = document.querySelector<HTMLElement>('.mz-tablegrid')!;
+    expect(document.activeElement).toBe(grid);
+    // Focus starts at 2 x 2
+    const key = (k: string) => grid.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+    key('ArrowDown');
+    key('ArrowRight');
+    key('ArrowRight');
+    expect(grid.getAttribute('aria-valuetext')).toBe('3 rows by 4 columns');
+    expect(document.querySelectorAll('.mz-cell.sel')).toHaveLength(12);
+
+    key('Enter');
+    const lines = editor.getValue().trim().split('\n');
+    expect(lines[0].match(/Header \d/g)).toHaveLength(4);
+    expect(lines).toHaveLength(2 + 3);
+    expect(document.querySelector('.mz-pop')).toBeNull();
+  });
+});
+
+describe('mermaid click handlers', () => {
+  it('re-binds bindFunctions when a cached diagram is shown again', async () => {
+    const bindFunctions = vi.fn();
+    const render = vi.fn(async () => ({ svg: '<svg id="d"></svg>', bindFunctions }));
+    vi.stubGlobal('mermaid', { initialize: vi.fn(), render });
+
+    const editor = makeEditor({ value: '```mermaid\ngraph TD\nA-->B\n```', plugins: [mermaidExternalPlugin()] });
+    await vi.waitFor(() => expect(bindFunctions).toHaveBeenCalledTimes(1));
+
+    editor.setValue(editor.getValue() + '\n'); // re-render, same diagram source
+    await vi.waitFor(() => expect(bindFunctions).toHaveBeenCalledTimes(2));
+    expect(render).toHaveBeenCalledTimes(1); // second time came from the cache
+    expect(bindFunctions.mock.calls[1][0]).toBe(editor.preview.querySelector('.marzipan-mermaid'));
   });
 });
