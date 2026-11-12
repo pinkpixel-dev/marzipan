@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SVG icons for Marzipan toolbar (TypeScript)
  * Quill-style icons with inline styles

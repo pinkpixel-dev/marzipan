@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Marzipan - A lightweight markdown editor and viewer
  * @version 1.2.4
@@ -16,7 +15,6 @@ import { LinkTooltip } from './link-tooltip';
  * Marzipan Editor Class
  */
 class Marzipan {
-    [key: string]: any;
     // Static properties
     static instances = new WeakMap();
     static stylesInjected = false;

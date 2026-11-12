@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Built-in themes for Marzipan editor (TypeScript)
  * Each theme provides a complete color palette for the editor

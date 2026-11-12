@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Link Tooltip - CSS Anchor Positioning with index-based anchors
  * Shows a clickable tooltip when cursor is within a link

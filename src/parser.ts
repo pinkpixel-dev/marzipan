@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * MarkdownParser - Parses markdown into HTML while preserving character alignment
  * (Converted to TypeScript)
@@ -8,6 +7,25 @@
  * - No font-size changes, no padding/margin on inline elements
  * - Markdown tokens remain visible but styled
  */
+export type TableAlignment = 'left' | 'center' | 'right';
+
+export type Sanctuary =
+  | { type: 'code'; original: string; openTicks: string; content: string; closeTicks: string }
+  | { type: 'image'; original: string; alt: string; url: string; title?: string }
+  | { type: 'link'; original: string; linkText: string; url: string };
+
+export interface ListContext {
+  inList: boolean;
+  listType: 'bullet' | 'numbered' | 'checkbox' | null;
+  indent: string;
+  marker: string | number | null;
+  checked?: boolean;
+  content: string;
+  lineStart: number;
+  lineEnd: number;
+  markerEndPos: number;
+}
+
 export class MarkdownParser {
   // Track link index for anchor naming
   static linkIndex = 0;
@@ -16,7 +34,7 @@ export class MarkdownParser {
   static blockIndex = 0;
 
   // Source line currently being parsed, stamped on links so the tooltip can find them
-  static currentLineIndex = null;
+  static currentLineIndex: number | null = null;
 
   /**
    * Reset link index (call before parsing a new document)
@@ -45,8 +63,8 @@ export class MarkdownParser {
    * @param {string} text - Raw text to escape
    * @returns {string} Escaped HTML-safe text
    */
-  static escapeHtml(text) {
-    const map = {
+  static escapeHtml(text: string): string {
+    const map: Record<string, string> = {
       '&': '&amp;',
       '<': '&lt;',
       '>': '&gt;',
@@ -62,8 +80,8 @@ export class MarkdownParser {
    * @param {string} originalLine - Original line with spaces
    * @returns {string} HTML with preserved indentation
    */
-  static preserveIndentation(html, originalLine) {
-    const leadingSpaces = originalLine.match(/^(\s*)/)[1];
+  static preserveIndentation(html: string, originalLine: string): string {
+    const leadingSpaces = (originalLine.match(/^(\s*)/)?.[1] ?? '');
     const indentation = leadingSpaces.replace(/ /g, '&nbsp;');
     return html.replace(/^\s*/, indentation);
   }
@@ -73,8 +91,8 @@ export class MarkdownParser {
    * @param {string} html - HTML line to parse
    * @returns {string} Parsed HTML with header styling
    */
-  static parseHeader(html) {
-    return html.replace(/^(#{1,6})\s(.+)$/, (match, hashes, content) => {
+  static parseHeader(html: string) {
+    return html.replace(/^(#{1,6})\s(.+)$/, (_match, hashes, content) => {
       const level = hashes.length;
       return `<h${level}><span class="syntax-marker">${hashes} </span>${content}</h${level}>`;
     });
@@ -85,7 +103,7 @@ export class MarkdownParser {
    * @param {string} html - HTML line to parse
    * @returns {string|null} Parsed horizontal rule or null
    */
-  static parseHorizontalRule(html) {
+  static parseHorizontalRule(html: string) {
     if (html.match(/^(-{3,}|\*{3,}|_{3,})$/)) {
       return `<div><span class="hr-marker">${html}</span></div>`;
     }
@@ -97,8 +115,8 @@ export class MarkdownParser {
    * @param {string} html - HTML line to parse
    * @returns {string} Parsed blockquote
    */
-  static parseBlockquote(html) {
-    return html.replace(/^&gt; (.+)$/, (match, content) => {
+  static parseBlockquote(html: string) {
+    return html.replace(/^&gt; (.+)$/, (_match, content) => {
       return `<span class="blockquote"><span class="syntax-marker">&gt;</span> ${content}</span>`;
     });
   }
@@ -108,8 +126,8 @@ export class MarkdownParser {
    * @param {string} html - HTML line to parse
    * @returns {string} Parsed bullet list item
    */
-  static parseBulletList(html) {
-    return html.replace(/^((?:&nbsp;)*)([-*+])\s(.+)$/, (match, indent, marker, content) => {
+  static parseBulletList(html: string) {
+    return html.replace(/^((?:&nbsp;)*)([-*+])\s(.+)$/, (_match, indent, marker, content) => {
       // '*' is written as an entity so the italic parser can't pair it with an emphasis marker
       const safeMarker = marker === '*' ? '&#42;' : marker;
       return `${indent}<li class="bullet-list"><span class="syntax-marker">${safeMarker} </span>${content}</li>`;
@@ -121,8 +139,8 @@ export class MarkdownParser {
    * @param {string} html - HTML line to parse
    * @returns {string} Parsed numbered list item
    */
-  static parseNumberedList(html) {
-    return html.replace(/^((?:&nbsp;)*)(\d+\.)\s(.+)$/, (match, indent, marker, content) => {
+  static parseNumberedList(html: string) {
+    return html.replace(/^((?:&nbsp;)*)(\d+\.)\s(.+)$/, (_match, indent, marker, content) => {
       return `${indent}<li class="ordered-list"><span class="syntax-marker">${marker} </span>${content}</li>`;
     });
   }
@@ -132,7 +150,7 @@ export class MarkdownParser {
    * @param {string} html - HTML line to parse
    * @returns {string|null} Parsed code fence or null
    */
-  static parseCodeBlock(html) {
+  static parseCodeBlock(html: string) {
     // The line must start with three backticks and have no backticks after subsequent text
     const codeFenceRegex = /^`{3}[^`]*$/;
     if (codeFenceRegex.test(html)) {
@@ -146,7 +164,7 @@ export class MarkdownParser {
    * @param {string} html - HTML with potential bold markdown
    * @returns {string} HTML with bold styling
    */
-  static parseBold(html) {
+  static parseBold(html: string) {
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong><span class="syntax-marker">**</span>$1<span class="syntax-marker">**</span></strong>');
     html = html.replace(/__(.+?)__/g, '<strong><span class="syntax-marker">__</span>$1<span class="syntax-marker">__</span></strong>');
     return html;
@@ -158,7 +176,7 @@ export class MarkdownParser {
    * @param {string} html - HTML with potential italic markdown
    * @returns {string} HTML with italic styling
    */
-  static parseItalic(html) {
+  static parseItalic(html: string) {
     // Single asterisk - must not be adjacent to other asterisks
     html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em><span class="syntax-marker">*</span>$1<span class="syntax-marker">*</span></em>');
     
@@ -175,7 +193,7 @@ export class MarkdownParser {
    * @param {string} html - HTML with potential strikethrough markdown
    * @returns {string} HTML with strikethrough styling
    */
-  static parseStrikethrough(html) {
+  static parseStrikethrough(html: string) {
     // Double tilde strikethrough: ~~text~~ (but not if part of 3+ tildes)
     html = html.replace(/(?<!~)~~(?!~)(.+?)(?<!~)~~(?!~)/g, '<del><span class="syntax-marker">~~</span>$1<span class="syntax-marker">~~</span></del>');
     // Single tilde strikethrough: ~text~ (but not if part of 2+ tildes on either side)
@@ -188,7 +206,7 @@ export class MarkdownParser {
    * @param {string} html - HTML line to check
    * @returns {boolean} True if table row
    */
-  static isTableRow(html) {
+  static isTableRow(html: string) {
     // Must start and end with pipe, and have at least one pipe in the middle
     return /^\|.+\|$/.test(html);
   }
@@ -198,7 +216,7 @@ export class MarkdownParser {
    * @param {string} html - HTML line to check
    * @returns {boolean} True if table separator
    */
-  static isTableSeparator(html) {
+  static isTableSeparator(html: string) {
     // Must be pipes and dashes only: | --- | --- |
     return /^\|\s*[-:]+\s*(?:\|\s*[-:]+\s*)*\|$/.test(html);
   }
@@ -208,7 +226,7 @@ export class MarkdownParser {
    * @param {string} separatorText - Raw text of the separator row
    * @returns {string[]} Array of alignment values ('left', 'center', 'right')
    */
-  static parseTableAlignments(separatorText) {
+  static parseTableAlignments(separatorText: string): TableAlignment[] {
     const inner = separatorText.slice(1, -1); // strip outer pipes
     return inner.split(/(?<!\\)\|/).map(cell => {
       const trimmed = cell.trim();
@@ -227,7 +245,7 @@ export class MarkdownParser {
    * @param {string[]} alignments - Optional column alignment array
    * @returns {string} HTML table row
    */
-  static parseTableRow(html, tag = 'td', alignments = []) {
+  static parseTableRow(html: string, tag: 'td' | 'th' = 'td', alignments: TableAlignment[] = []): string {
     // Remove leading and trailing pipes
     const inner = html.slice(1, -1);
     // Split by pipes (but not escaped pipes)
@@ -247,7 +265,7 @@ export class MarkdownParser {
    * @param {string} html - HTML with potential code markdown
    * @returns {string} HTML with code styling
    */
-  static parseInlineCode(html) {
+  static parseInlineCode(html: string) {
     // Must have equal number of backticks before and after inline code
     //
     // Regex explainer:
@@ -264,9 +282,9 @@ export class MarkdownParser {
    * @param {string} html - HTML with potential image markdown
    * @returns {string} HTML with image tags
    */
-  static parseImages(html) {
+  static parseImages(html: string) {
     // Match ![alt text](url "optional title")
-    return html.replace(/!\[([^\]]*)\]\(([^\s)]+)(?:\s+"([^"]+)")?\)/g, (match, alt, url, title) => {
+    return html.replace(/!\[([^\]]*)\]\(([^\s)]+)(?:\s+"([^"]+)")?\)/g, (_match, alt, url, title) => {
       const safeUrl = this.sanitizeUrl(url);
       const safeAlt = this.escapeHtml(alt || '');
       const titleAttr = title ? ` title="${this.escapeHtml(title)}"` : '';
@@ -280,7 +298,7 @@ export class MarkdownParser {
    * @param {string} url - URL to sanitize
    * @returns {string} Safe URL or '#' if dangerous
    */
-  static sanitizeUrl(url, kind = 'link') {
+  static sanitizeUrl(url: string, kind: 'link' | 'image' = 'link'): string {
     // Trim whitespace and convert to lowercase for protocol check
     const trimmed = url.trim();
     const lower = trimmed.toLowerCase();
@@ -322,8 +340,8 @@ export class MarkdownParser {
    * @param {string} html - HTML with potential link markdown
    * @returns {string} HTML with link styling
    */
-  static parseLinks(html) {
-    return html.replace(/\[(.+?)\]\((.+?)\)/g, (match, text, url) => {
+  static parseLinks(html: string) {
+    return html.replace(/\[(.+?)\]\((.+?)\)/g, (_match, text, url) => {
       const anchorName = `--link-${this.linkIndex++}`;
       // Sanitize URL to prevent XSS attacks
       const safeUrl = this.sanitizeUrl(url);
@@ -337,13 +355,13 @@ export class MarkdownParser {
    * @param {string} text - Text with potential markdown
    * @returns {Object} Object with protected text and sanctuary map
    */
-  static identifyAndProtectSanctuaries(text) {
-    const sanctuaries = new Map();
+  static identifyAndProtectSanctuaries(text: string): { protectedText: string; sanctuaries: Map<string, Sanctuary> } {
+    const sanctuaries = new Map<string, Sanctuary>();
     let sanctuaryCounter = 0;
     let protectedText = text;
     
     // Create a map to track protected regions (URLs should not be processed)
-    const protectedRegions = [];
+    const protectedRegions: { start: number; end: number }[] = [];
     
     // First, find all links and mark their URL regions as protected
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
@@ -361,7 +379,7 @@ export class MarkdownParser {
     // Now protect inline code, but skip if it's inside a protected region (URL)
     const codeRegex = /(?<!`)(`+)(?!`)((?:(?!\1).)+?)(\1)(?!`)/g;
     let codeMatch;
-    const codeMatches = [];
+    const codeMatches: { match: string; index: number; openTicks: string; content: string; closeTicks: string }[] = [];
     
     while ((codeMatch = codeRegex.exec(text)) !== null) {
       const codeStart = codeMatch.index;
@@ -400,7 +418,7 @@ export class MarkdownParser {
     });
     
     // First protect images (before links, since they have similar syntax)
-    protectedText = protectedText.replace(/!\[([^\]]*)\]\(([^\s)]+)(?:\s+"([^"]+)")?\)/g, (match, alt, url, title) => {
+    protectedText = protectedText.replace(/!\[([^\]]*)\]\(([^\s)]+)(?:\s+"([^"]+)")?\)/g, (match: string, alt: string, url: string, title?: string) => {
       const placeholder = `\uE000${sanctuaryCounter++}\uE001`;
       sanctuaries.set(placeholder, {
         type: 'image',
@@ -413,7 +431,7 @@ export class MarkdownParser {
     });
     
     // Then protect links - they can contain sanctuary placeholders for code but not raw code
-    protectedText = protectedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+    protectedText = protectedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match: string, linkText: string, url: string) => {
       const placeholder = `\uE000${sanctuaryCounter++}\uE001`;
       sanctuaries.set(placeholder, {
         type: 'link',
@@ -433,7 +451,7 @@ export class MarkdownParser {
    * @param {Map} sanctuaries - Map of sanctuaries to restore
    * @returns {string} HTML with sanctuaries restored and transformed
    */
-  static restoreAndTransformSanctuaries(html, sanctuaries) {
+  static restoreAndTransformSanctuaries(html: string, sanctuaries: Map<string, Sanctuary>): string {
     // Sort sanctuary placeholders by position to restore in order
     const placeholders = Array.from(sanctuaries.keys()).sort((a, b) => {
       const indexA = html.indexOf(a);
@@ -443,7 +461,8 @@ export class MarkdownParser {
     
     placeholders.forEach(placeholder => {
       const sanctuary = sanctuaries.get(placeholder);
-      let replacement;
+      if (!sanctuary) return;
+      let replacement = '';
       
       if (sanctuary.type === 'code') {
         // Transform code sanctuary to HTML
@@ -497,7 +516,7 @@ export class MarkdownParser {
    * @param {string} text - Text with potential inline markdown
    * @returns {string} HTML with all inline styling
    */
-  static parseInlineElements(text) {
+  static parseInlineElements(text: string): string {
     // Step 1: Identify and protect sanctuaries (code and links)
     const { protectedText, sanctuaries } = this.identifyAndProtectSanctuaries(text);
     
@@ -519,7 +538,7 @@ export class MarkdownParser {
    * @param {number} lineIndex - Line index in the document
    * @returns {string} Parsed HTML line
    */
-  static parseLine(line, lineIndex = 0) {
+  static parseLine(line: string, lineIndex = 0): string {
     this.currentLineIndex = lineIndex;
     let html = this.escapeHtml(line);
 
@@ -589,7 +608,7 @@ export class MarkdownParser {
    * @param {boolean} showActiveLineRaw - Show raw markdown on active line
    * @returns {string} Parsed HTML
    */
-  static parse(text, activeLine = -1, showActiveLineRaw = false) {
+  static parse(text: string, activeLine = -1, showActiveLineRaw = false): string {
     // Reset link counter and block counter for each parse
     this.resetLinkIndex();
     this.resetBlockIndex();
@@ -660,7 +679,7 @@ export class MarkdownParser {
    * @param {string} html - HTML to post-process
    * @returns {string} Post-processed HTML with consolidated lists and code blocks
    */
-  static postProcessHTML(html) {
+  static postProcessHTML(html: string) {
     // Check if we're in a browser environment
     if (typeof document === 'undefined' || !document) {
       // In Node.js environment - do manual post-processing
@@ -677,7 +696,8 @@ export class MarkdownParser {
     let inCodeBlock = false;
     let currentTable = null;
     let isTableHeader = false;
-    let tableAlignments = [];
+    let tableAlignments: TableAlignment[] = [];
+    const codeElements = new WeakMap<HTMLElement, HTMLElement>();
     let pendingTableAnnotation = null;
 
     // Process all direct children - need to be careful with live NodeList
@@ -708,7 +728,7 @@ export class MarkdownParser {
           // Parse alignment markers from separator text
           tableAlignments = this.parseTableAlignments(child.textContent || '');
           // Re-apply alignment to existing header cells
-          const headerCells = currentTable.querySelectorAll('thead th');
+          const headerCells = currentTable.querySelectorAll<HTMLElement>('thead th');
           headerCells.forEach((th, idx) => {
             const align = tableAlignments[idx];
             if (align && align !== 'left') {
@@ -795,7 +815,7 @@ export class MarkdownParser {
             container.insertBefore(currentCodeBlock, child.nextSibling);
 
             // Store reference to the code element for adding content
-            currentCodeBlock._codeElement = codeElement;
+            codeElements.set(currentCodeBlock, codeElement);
             continue;
           } else {
             // End of code block - fence stays visible
@@ -808,7 +828,7 @@ export class MarkdownParser {
 
       // Check if we're in a code block - any div that's not a code fence
       if (inCodeBlock && currentCodeBlock && child.tagName === 'DIV' && !child.querySelector('.code-fence')) {
-        const codeElement = currentCodeBlock._codeElement || currentCodeBlock.querySelector('code');
+        const codeElement = codeElements.get(currentCodeBlock) || currentCodeBlock.querySelector('code')!;
         // Add the line content to the code block
         if (codeElement.textContent.length > 0) {
           codeElement.textContent += '\n';
@@ -851,7 +871,7 @@ export class MarkdownParser {
         // Extract and preserve indentation from the div before moving the list item
         const indentationNodes = [];
         for (const node of child.childNodes) {
-          if (node.nodeType === 3 && node.textContent.match(/^\u00A0+$/)) {
+          if (node.nodeType === 3 && node.textContent?.match(/^\u00A0+$/)) {
             // This is a text node containing only non-breaking spaces (indentation)
             indentationNodes.push(node.cloneNode(true));
           } else if (node === listItem) {
@@ -884,7 +904,7 @@ export class MarkdownParser {
    * @param {string} html - HTML to post-process
    * @returns {string} Post-processed HTML
    */
-  static postProcessHTMLManual(html) {
+  static postProcessHTMLManual(html: string) {
     let processed = html;
 
     // Process unordered lists
@@ -935,9 +955,9 @@ export class MarkdownParser {
 
     // Process code blocks - KEEP the fence markers for alignment AND use semantic pre/code
     const codeBlockRegex = /(<div[^>]*>)<span class="code-fence">(```[^<]*)<\/span><\/div>(.*?)(<div[^>]*>)<span class="code-fence">(```)<\/span><\/div>/gs;
-    processed = processed.replace(codeBlockRegex, (match, openDiv, openFence, content, closeDiv, closeFence) => {
+    processed = processed.replace(codeBlockRegex, (_match, openDiv, openFence, content, closeDiv, closeFence) => {
       // Extract the content between fences
-      const lines = content.match(/<div[^>]*>(.*?)<\/div>/gs) || [];
+      const lines: string[] = content.match(/<div[^>]*>(.*?)<\/div>/gs) || [];
       const codeContent = lines.map(line => {
         // Extract text from each div - content is already escaped
         const text = line.replace(/<div[^>]*>(.*?)<\/div>/s, '$1')
@@ -976,7 +996,7 @@ export class MarkdownParser {
    * @param {number} cursorPosition - Current cursor position
    * @returns {Object} List context information
    */
-  static getListContext(text, cursorPosition) {
+  static getListContext(text: string, cursorPosition: number): ListContext {
     // Find the line containing the cursor
     const lines = text.split('\n');
     let currentPos = 0;
@@ -1060,12 +1080,12 @@ export class MarkdownParser {
    * @param {Object} context - List context from getListContext
    * @returns {string} New list item text
    */
-  static createNewListItem(context) {
+  static createNewListItem(context: ListContext): string {
     switch (context.listType) {
       case 'bullet':
         return `${context.indent}${context.marker} `;
       case 'numbered':
-        return `${context.indent}${context.marker + 1}. `;
+        return `${context.indent}${Number(context.marker) + 1}. `;
       case 'checkbox':
         return `${context.indent}${context.marker} [ ] `;
       default:
@@ -1078,7 +1098,7 @@ export class MarkdownParser {
    * @param {string} text - Text containing numbered lists
    * @returns {string} Text with renumbered lists
    */
-  static renumberLists(text) {
+  static renumberLists(text: string): string {
     const lines = text.split('\n');
     const numbersByIndent = new Map();
     let inList = false;

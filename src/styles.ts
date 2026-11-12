@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CSS styles for Marzipan editor
  * Embedded in JavaScript to ensure single-file distribution
